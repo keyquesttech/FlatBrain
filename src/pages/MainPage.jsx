@@ -1,0 +1,346 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, RotateCcw, FileDown, FileUp } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+
+import Navigation from '../components/Navigation';
+import InvoiceForm from '../components/InvoiceForm';
+import InvoicePreview from '../components/InvoicePreview';
+import InvoiceHistory from '../components/InvoiceHistory';
+import BillsBreakdownChart from '../components/BillsBreakdownChart';
+import SelectMenu from '../components/SelectMenu';
+import { getDraft, updateDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
+import { calculateInvoice } from '../utils/calculations';
+import { normalizeDraft } from '../utils/defaults';
+import { newId } from '../utils/id';
+import { captureInvoicePng } from '../utils/invoicePng';
+import { historyToCSV, csvToHistory } from '../utils/historyCsv';
+
+const POLL_MS = 3000;
+const SAVE_DEBOUNCE_MS = 600;
+
+export default function MainPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') === 'history' ? 'history' : 'new';
+  const setView = (newView) => {
+    setSearchParams(newView === 'history' ? { view: 'history' } : {});
+  };
+  const [formData, setFormData] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+  const [chartMonths, setChartMonths] = useState(6);
+  const [busy, setBusy] = useState(false);
+  const [historyDownload, setHistoryDownload] = useState(null);
+  const previewRef = useRef(null);
+  const historyPreviewRef = useRef(null);
+  const importInputRef = useRef(null);
+
+  // Refs so the poller and the debounced save always see the latest state
+  // without re-subscribing on every keystroke.
+  const formDataRef = useRef(null);
+  const lastEditRef = useRef(0);
+  const saveTimerRef = useRef(null);
+  const savePendingRef = useRef(false);
+
+  const applyDraft = (draft) => {
+    const normalized = normalizeDraft(draft);
+    formDataRef.current = normalized;
+    setFormData(normalized);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDraft().then((d) => { if (!cancelled) applyDraft(d); }).catch(() => {});
+    getHistory().then((h) => { if (!cancelled) setInvoices(h); }).catch(() => {});
+
+    // Poll for changes made from the flatmate pages, but never clobber the
+    // form while the user is typing here or has a save in flight.
+    const intervalId = setInterval(() => {
+      getDraft().then((d) => {
+        if (cancelled || savePendingRef.current) return;
+        if (Date.now() - lastEditRef.current < POLL_MS) return;
+        const normalized = normalizeDraft(d);
+        if (JSON.stringify(normalized) !== JSON.stringify(formDataRef.current)) {
+          formDataRef.current = normalized;
+          setFormData(normalized);
+        }
+      }).catch(() => {});
+    }, POLL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      clearTimeout(saveTimerRef.current);
+      // Don't lose the last keystrokes when navigating away mid-debounce.
+      if (savePendingRef.current) updateDraft(formDataRef.current);
+    };
+  }, []);
+
+  // Update the UI instantly but debounce the network/disk write.
+  const handleFormChange = (newData) => {
+    formDataRef.current = newData;
+    lastEditRef.current = Date.now();
+    setFormData(newData);
+    savePendingRef.current = true;
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      savePendingRef.current = false;
+      updateDraft(formDataRef.current).catch(() => {
+        // Keep the pending flag so the next edit or unmount retries the write.
+        savePendingRef.current = true;
+      });
+    }, SAVE_DEBOUNCE_MS);
+  };
+
+  // Cancel any queued draft write so it can't fire after a reset and
+  // resurrect the data we just cleared.
+  const cancelPendingSave = () => {
+    clearTimeout(saveTimerRef.current);
+    savePendingRef.current = false;
+  };
+
+  const saveToHistory = async () => {
+    const data = formDataRef.current;
+    const calc = calculateInvoice(
+      data.bills,
+      data.flatmate1Extras,
+      data.flatmate2Extras,
+      data.flatmate1FullPriceExtras,
+      data.flatmate2FullPriceExtras
+    );
+    const newInvoice = {
+      ...data,
+      id: newId(),
+      timestamp: Date.now(),
+      netTotal: calc.netTotal,
+      eachNetTotal: calc.flatmate1TotalDue,
+      flatmate1TotalDue: calc.flatmate1TotalDue,
+      flatmate2TotalDue: calc.flatmate2TotalDue
+    };
+
+    const res = await saveInvoice(newInvoice);
+    setInvoices(res.history);
+
+    // Reset draft for the next month
+    cancelPendingSave();
+    const reset = await resetDraft();
+    applyDraft(reset.draft);
+    alert('Invoice downloaded, saved to history, and draft reset!');
+  };
+
+  // Single action: download the PNG first (while the invoice is still on
+  // screen), then save it to history and reset the draft for next month.
+  // The busy flag stops a double-click from saving the invoice twice.
+  const saveAndDownload = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const downloaded = await generateImage();
+      if (downloaded) await saveToHistory();
+    } catch (err) {
+      console.error('Error saving invoice', err);
+      alert('The image was downloaded, but saving to history failed. Check the server and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (id) => {
+    if (!window.confirm('Delete this invoice from history?')) return;
+    try {
+      const res = await deleteInvoice(id);
+      setInvoices(res.history);
+    } catch (err) {
+      console.error('Error deleting invoice', err);
+      alert('Failed to delete the invoice. Check the server and try again.');
+    }
+  };
+
+  const loadInvoice = (invoice) => {
+    if (!window.confirm('Load this invoice into the generator? The current draft will be replaced.')) return;
+    const loadedDraft = normalizeDraft({
+      period: invoice.period,
+      dueDate: invoice.dueDate,
+      names: invoice.names,
+      bills: invoice.bills,
+      flatmate1Extras: invoice.flatmate1Extras || [],
+      flatmate2Extras: invoice.flatmate2Extras || [],
+      flatmate1FullPriceExtras: invoice.flatmate1FullPriceExtras || [],
+      flatmate2FullPriceExtras: invoice.flatmate2FullPriceExtras || [],
+      flatmate1Note: invoice.flatmate1Note || '',
+      flatmate2Note: invoice.flatmate2Note || '',
+      bankDetails: invoice.bankDetails
+    });
+    handleFormChange(loadedDraft);
+    setView('new');
+  };
+
+  const exportHistoryCSV = () => {
+    const csv = historyToCSV(invoices);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `billsplitter-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    try {
+      const imported = csvToHistory(await file.text());
+      if (!window.confirm(`Import ${imported.length} invoice${imported.length === 1 ? '' : 's'}? Existing invoices with the same id will be updated; everything else is kept.`)) return;
+      const res = await importHistory(imported);
+      setInvoices(res.history);
+      alert(`Imported ${res.imported} invoice${res.imported === 1 ? '' : 's'}.`);
+    } catch (err) {
+      console.error('Error importing history', err);
+      alert(err.message || 'Failed to import the file.');
+    }
+  };
+
+  const generateImage = async () => {
+    try {
+      await captureInvoicePng(previewRef.current, `Invoice-${formDataRef.current.period || 'Draft'}.png`);
+      return true;
+    } catch (err) {
+      console.error('Error generating image', err);
+      alert('Failed to generate image. See console for details.');
+      return false;
+    }
+  };
+
+  // Re-download a saved invoice's PNG without touching the current draft:
+  // render it into a hidden preview, capture that, then unmount it.
+  const downloadFromHistory = (invoice) => {
+    if (historyDownload) return;
+    setHistoryDownload(invoice);
+  };
+
+  useEffect(() => {
+    if (!historyDownload) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await captureInvoicePng(
+          historyPreviewRef.current,
+          `Invoice-${historyDownload.period || 'Saved'}.png`
+        );
+      } catch (err) {
+        console.error('Error re-generating invoice image', err);
+        if (!cancelled) alert('Failed to generate the invoice image. Please try again.');
+      } finally {
+        if (!cancelled) setHistoryDownload(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [historyDownload]);
+
+  const clearForm = async () => {
+    if (busy) return;
+    if (!window.confirm('Reset the whole form? All bills and extras in the current draft will be cleared.')) return;
+    cancelPendingSave();
+    try {
+      const res = await resetDraft();
+      applyDraft(res.draft);
+    } catch (err) {
+      console.error('Error resetting draft', err);
+      alert('Failed to reset the form. Check the server and try again.');
+    }
+  };
+
+  if (!formData) return <div className="page-loading">Loading…</div>;
+
+  return (
+    <div className="container animate-fade-in">
+      <Navigation activeTab={view === 'history' ? 'history' : 'generator'} names={formData.names} />
+
+      {view === 'new' ? (
+        <>
+          <div className="page-toolbar">
+            <div className="page-toolbar-actions">
+              <button className="btn btn-secondary" onClick={clearForm} disabled={busy}>
+                <RotateCcw size={16} />
+                Reset form
+              </button>
+              <button className="btn btn-primary" onClick={saveAndDownload} disabled={busy}>
+                <Download size={18} />
+                {busy ? 'Saving…' : 'Download & Save'}
+              </button>
+            </div>
+          </div>
+
+          <div className="main-content">
+            <InvoiceForm data={formData} onChange={handleFormChange} />
+            <div className="preview-column">
+              <InvoicePreview data={formData} ref={previewRef} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="page-toolbar">
+            <div className="page-toolbar-actions">
+              <button className="btn btn-secondary" onClick={exportHistoryCSV} disabled={invoices.length === 0}>
+                <FileDown size={16} />
+                Export CSV
+              </button>
+              <button className="btn btn-secondary" onClick={() => importInputRef.current?.click()}>
+                <FileUp size={16} />
+                Import CSV
+              </button>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                ref={importInputRef}
+                onChange={handleImportFile}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+
+          <InvoiceHistory
+            invoices={invoices}
+            onDelete={handleDeleteInvoice}
+            onLoad={loadInvoice}
+            onDownload={downloadFromHistory}
+            downloadingId={historyDownload?.id}
+          />
+
+          {invoices.length > 0 && (
+            <div className="glass-panel chart-panel">
+              <div className="section-header">
+                <h3 className="invoice-section-title">Bills breakdown</h3>
+                <label className="chart-months-select">
+                  Months
+                  <SelectMenu
+                    value={chartMonths}
+                    onChange={setChartMonths}
+                    options={[
+                      { value: 3, label: '3' },
+                      { value: 6, label: '6' },
+                      { value: 12, label: '12' },
+                      { value: 0, label: 'All' }
+                    ]}
+                  />
+                </label>
+              </div>
+              <p className="section-desc">Each month's bills, segmented by bill.</p>
+              <BillsBreakdownChart history={invoices} months={chartMonths} />
+            </div>
+          )}
+        </>
+      )}
+
+      {historyDownload && (
+        <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '720px' }} aria-hidden="true">
+          <InvoicePreview
+            data={{ ...normalizeDraft(historyDownload), timestamp: historyDownload.timestamp }}
+            ref={historyPreviewRef}
+          />
+        </div>
+      )}
+    </div>
+  );
+}

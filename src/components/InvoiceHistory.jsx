@@ -1,0 +1,86 @@
+import React from 'react';
+import { formatCurrency } from '../utils/calculations';
+import { Trash2, Download } from 'lucide-react';
+import { DEFAULT_NAMES } from '../utils/defaults';
+
+function formatPeriod(period) {
+  if (!period) return 'No period';
+  const d = new Date(period + '-01T00:00:00Z');
+  return isNaN(d) ? period : d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload, downloadingId }) {
+  if (!invoices || invoices.length === 0) {
+    return (
+      <div className="glass-panel empty-state">
+        <h2>No invoices yet</h2>
+        <p className="text-muted">Invoices you download &amp; save will appear here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="history-grid">
+      {invoices.map((invoice) => {
+        const names = { ...DEFAULT_NAMES, ...(invoice.names || {}) };
+        return (
+          <div key={invoice.id} className="glass-panel history-card" onClick={() => onLoad(invoice)}>
+            <div className="history-card-head">
+              <div>
+                <h3 className="history-card-title">{formatPeriod(invoice.period)}</h3>
+                <div className="text-muted history-card-date">
+                  Saved {new Date(invoice.timestamp).toLocaleDateString('en-GB')}
+                </div>
+              </div>
+              <div className="history-card-actions">
+                <button
+                  className="btn-icon"
+                  onClick={(e) => { e.stopPropagation(); onDownload(invoice); }}
+                  disabled={downloadingId === invoice.id}
+                  title="Download this invoice as PNG"
+                  aria-label="Download this invoice as PNG"
+                >
+                  <Download size={16} />
+                </button>
+                <button
+                  className="btn btn-danger btn-icon"
+                  onClick={(e) => { e.stopPropagation(); onDelete(invoice.id); }}
+                  title="Delete invoice"
+                  aria-label="Delete invoice"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="history-card-totals">
+              <div className="history-total-row">
+                <span className="text-muted">Grand total</span>
+                <span className="history-total-value">{formatCurrency(invoice.netTotal)}</span>
+              </div>
+              {invoice.flatmate1TotalDue != null && invoice.flatmate2TotalDue != null ? (
+                <>
+                  <div className="history-total-row">
+                    <span className="text-muted">{names.flatmate1} due</span>
+                    <span className="history-total-due">{formatCurrency(invoice.flatmate1TotalDue)}</span>
+                  </div>
+                  <div className="history-total-row">
+                    <span className="text-muted">{names.flatmate2} due</span>
+                    <span className="history-total-due">{formatCurrency(invoice.flatmate2TotalDue)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="history-total-row">
+                  <span className="text-muted">Each due</span>
+                  <span className="history-total-due">{formatCurrency(invoice.eachNetTotal)}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="history-card-hint text-muted">Tap to load into the generator</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

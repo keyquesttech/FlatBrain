@@ -1,0 +1,13 @@
+# Ensure shell scripts always use LF line endings, even when cloned on/from
+# Windows. Prevents "/bin/bash^M: bad interpreter" errors on the Raspberry Pi.
+*.sh text eol=lf
+install.sh text eol=lf
+uninstall.sh text eol=lf
+
+# Normalize common text files
+*.js text
+*.jsx text
+*.json text
+*.css text
+*.html text
+*.md text

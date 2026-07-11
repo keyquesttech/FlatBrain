@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist-ssr
+*.local
+
+# Note: dist/ (the built frontend) IS committed on purpose so the Raspberry Pi
+# can run without building from source (Vite's build toolchain has poor 32-bit
+# ARM support). Rebuild with `npm run build` and commit dist/ after changes.
+
+# Runtime data — created automatically by the server on first run.
+# Kept out of git so the password and personal invoice data are never
+# uploaded to GitHub and each deployment keeps its own state.
+draft.json
+history.json
+password.txt
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
