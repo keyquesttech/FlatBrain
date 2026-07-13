@@ -219,13 +219,6 @@ p {
   color: var(--text-faint);
 }
 
-.field-hint {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  margin-top: 0.35rem;
-  color: var(--text-faint);
-}
-
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -362,10 +355,6 @@ p {
 
 .input-row .action-btn {
   flex: 0 0 auto;
-}
-
-.input-row-top {
-  align-items: flex-start;
 }
 
 input[type="text"],
@@ -529,12 +518,6 @@ input[type="checkbox"]:focus-visible {
   background-color: rgba(255, 255, 255, 0.12);
 }
 
-.btn-accent {
-  background: linear-gradient(135deg, var(--lime), #c8ff6f);
-  color: var(--bg);
-  box-shadow: 0 0 24px rgba(212, 255, 63, 0.35);
-}
-
 .btn-danger {
   background-color: transparent;
   color: var(--danger);
@@ -564,6 +547,16 @@ input[type="checkbox"]:focus-visible {
 .btn-icon:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
+}
+
+.btn-icon-danger {
+  color: var(--danger);
+}
+
+.btn-icon-danger:hover {
+  background: rgba(255, 107, 107, 0.14);
+  border-color: rgba(255, 107, 107, 0.4);
+  color: var(--danger);
 }
 
 /* ---------- Pickers (month / date / select) ---------- */
@@ -1035,7 +1028,6 @@ input[type="checkbox"]:focus-visible {
 /* Label/value collision guards for invoice + flatmate rows */
 .due-line > span:first-child,
 .due-card-total > span:first-child,
-.invoice-row > span:first-child,
 .preview-row > span:first-child {
   min-width: 0;
   overflow-wrap: break-word;
@@ -1044,7 +1036,6 @@ input[type="checkbox"]:focus-visible {
 
 .due-line > span:last-child,
 .due-card-total > span:last-child,
-.invoice-row > span:last-child,
 .preview-row > span:last-child {
   flex-shrink: 0;
   text-align: right;
@@ -1052,7 +1043,6 @@ input[type="checkbox"]:focus-visible {
 }
 
 /* Rows on the flatmate pages (inside translucent panels) */
-.invoice-row,
 .preview-row {
   display: flex;
   justify-content: space-between;
@@ -1061,15 +1051,6 @@ input[type="checkbox"]:focus-visible {
   font-size: 0.88rem;
   color: var(--text-muted);
   border-bottom: 1px dashed var(--border-soft);
-}
-
-.preview-total {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 700;
-  padding-top: 0.75rem;
-  margin-top: 0.5rem;
-  border-top: 1px solid var(--border-soft);
 }
 
 /* ---------- History ---------- */
@@ -1109,10 +1090,15 @@ input[type="checkbox"]:focus-visible {
   cursor: wait;
 }
 
+/* Same treatment as every other card title (lime, mono-role, uppercase) */
 .history-card-title {
   margin: 0 0 0.25rem 0;
-  font-size: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lime);
 }
 
 .history-card-date {
