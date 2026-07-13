@@ -43,7 +43,7 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
                   <Download size={16} />
                 </button>
                 <button
-                  className="btn btn-danger btn-icon"
+                  className="btn-icon btn-icon-danger"
                   onClick={(e) => { e.stopPropagation(); onDelete(invoice.id); }}
                   title="Delete invoice"
                   aria-label="Delete invoice"

@@ -14,7 +14,9 @@ and shared purchases, then generate and download a polished invoice image.
 
 ## Features
 
-- Shared **bills** (Broadband, Electricity, Heating, Water, ...) split 50/50.
+- Shared **bills** (Broadband, Electricity, Heating, Water, ...) — add or
+  remove as many as you need, split by an **adjustable ratio** (50/50 by
+  default, e.g. 60/40 if one room is bigger).
 - Personal **extras** for each flatmate, added from their own page:
   - `/flatmate1` and `/flatmate2` — shareable links so each person can add
     what they bought. Changes sync live to the invoice (no refresh needed).
@@ -23,6 +25,9 @@ and shared purchases, then generate and download a polished invoice image.
   - Prices are per pack: an item with 3 packs at £2.50 bills £7.50 and shows
     as "Item (3 × £2.50)" on the invoice.
 - Per-flatmate **notes** that appear on the invoice.
+- Per-flatmate **discounts** — a fixed £ amount or a % of their total, shown
+  as deduction lines on the invoice (e.g. a bill credit or something they
+  already paid for).
 - Live **invoice preview** that downloads as a fixed-size PNG — identical
   output whether generated from a phone, tablet or desktop.
 - **History** of saved invoices with:
