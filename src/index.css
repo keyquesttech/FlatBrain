@@ -724,6 +724,11 @@ input[type="checkbox"]:focus-visible {
   flex: 0 0 84px;
 }
 
+/* Fixed-width split selector (e.g. 50/50 vs 100%) in extras rows */
+.extra-split-select {
+  flex: 0 0 96px;
+}
+
 .discount-value {
   flex: 0 0 6rem;
 }
