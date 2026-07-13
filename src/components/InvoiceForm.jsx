@@ -148,37 +148,53 @@ export default function InvoiceForm({ data, onChange }) {
     );
   };
 
+  // One card per flatmate: shared-split and 100% items live in one list, and
+  // each row's selector moves it between the two underlying draft lists.
   const renderPersonExtras = (personKey, flatmateLabel) => {
-    const extrasKey = `${personKey}Extras`;
-    const fullPriceKey = `${personKey}FullPriceExtras`;
+    const sharedKey = `${personKey}Extras`;
+    const fullKey = `${personKey}FullPriceExtras`;
     const name = names[personKey].trim() || flatmateLabel;
+    const other = otherName(personKey);
+    const myPct = pctFor(personKey);
+    const theirPct = pctFor(personKey === 'matias' ? 'reka' : 'matias');
+
+    const combined = [
+      ...(data[sharedKey] || []).map((e) => ({ ...e, split: 'shared' })),
+      ...(data[fullKey] || []).map((e) => ({ ...e, split: 'full' }))
+    ];
+
+    const keyOf = (id) => ((data[sharedKey] || []).some((e) => e.id === id) ? sharedKey : fullKey);
+
+    const setSplit = (id, split) => {
+      const fromKey = keyOf(id);
+      const toKey = split === 'full' ? fullKey : sharedKey;
+      if (fromKey === toKey) return;
+      const item = data[fromKey].find((e) => e.id === id);
+      if (!item) return;
+      onChange({
+        ...data,
+        [fromKey]: data[fromKey].filter((e) => e.id !== id),
+        [toKey]: [...data[toKey], item]
+      });
+    };
 
     return (
-      <>
-        <div className="glass-panel">
-          <ExtrasInputList
-            title={`${name}'s ${pctFor(personKey)}% Extras`}
-            description={`Items split ${pctFor(personKey)}/${pctFor(personKey === 'matias' ? 'reka' : 'matias')} with ${otherName(personKey)}.`}
-            extras={data[extrasKey]}
-            onAdd={() => addExtra(extrasKey)}
-            onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
-            onRemove={(id) => removeExtra(extrasKey, id)}
-            addLabel="Add Item"
-          />
-        </div>
-
-        <div className="glass-panel">
-          <ExtrasInputList
-            title={`${name}'s 100% Extras`}
-            description={`Items charged 100% to ${otherName(personKey)}.`}
-            extras={data[fullPriceKey]}
-            onAdd={() => addExtra(fullPriceKey)}
-            onUpdate={(id, field, value) => updateExtra(fullPriceKey, id, field, value)}
-            onRemove={(id) => removeExtra(fullPriceKey, id)}
-            addLabel="Add Item"
-          />
-        </div>
-      </>
+      <div className="glass-panel">
+        <ExtrasInputList
+          title={`${name}'s Extras`}
+          description={`Per item: ${myPct}/${theirPct} split with ${other}, or 100% charged to ${other}.`}
+          extras={combined}
+          onAdd={() => addExtra(sharedKey)}
+          onUpdate={(id, field, value) => updateExtra(keyOf(id), id, field, value)}
+          onRemove={(id) => removeExtra(keyOf(id), id)}
+          splitOptions={[
+            { value: 'shared', label: `${myPct}/${theirPct}` },
+            { value: 'full', label: '100%' }
+          ]}
+          onSplitChange={setSplit}
+          addLabel="Add Item"
+        />
+      </div>
     );
   };
 

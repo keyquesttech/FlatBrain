@@ -88,15 +88,56 @@ export default function UserExtrasPage({ personKey }) {
       });
   };
 
-  const saveListToDraft = (key, newList, setter) => {
-    setter(newList);
+  // Queue one or more draft-key changes for the next debounced write.
+  const saveDraftChanges = (changes) => {
     lastEditRef.current = Date.now();
-    pendingRef.current = { ...pendingRef.current, [key]: newList };
+    pendingRef.current = { ...pendingRef.current, ...changes };
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       saveTimerRef.current = null;
       flushPending();
     }, SAVE_DEBOUNCE_MS);
+  };
+
+  const saveListToDraft = (key, newList, setter) => {
+    setter(newList);
+    saveDraftChanges({ [key]: newList });
+  };
+
+  // The card shows both lists as one; each row's selector decides whether the
+  // item lives in the shared-split list or the 100% (full price) list.
+  const combinedExtras = [
+    ...extras.map((e) => ({ ...e, split: 'shared' })),
+    ...fullPriceExtras.map((e) => ({ ...e, split: 'full' }))
+  ];
+
+  const updateCombined = (id, field, value) => {
+    if (extras.some((e) => e.id === id)) {
+      saveListToDraft(extrasKey, extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)), setExtras);
+    } else {
+      saveListToDraft(fullPriceKey, fullPriceExtras.map((e) => (e.id === id ? { ...e, [field]: value } : e)), setFullPriceExtras);
+    }
+  };
+
+  const removeCombined = (id) => {
+    if (extras.some((e) => e.id === id)) {
+      saveListToDraft(extrasKey, extras.filter((e) => e.id !== id), setExtras);
+    } else {
+      saveListToDraft(fullPriceKey, fullPriceExtras.filter((e) => e.id !== id), setFullPriceExtras);
+    }
+  };
+
+  const setSplitCombined = (id, split) => {
+    const inShared = extras.some((e) => e.id === id);
+    if ((split === 'full') !== inShared) return; // already in the right list
+    const fromList = inShared ? extras : fullPriceExtras;
+    const item = fromList.find((e) => e.id === id);
+    if (!item) return;
+    const newShared = inShared ? extras.filter((e) => e.id !== id) : [...extras, item];
+    const newFull = inShared ? [...fullPriceExtras, item] : fullPriceExtras.filter((e) => e.id !== id);
+    setExtras(newShared);
+    setFullPriceExtras(newFull);
+    saveDraftChanges({ [extrasKey]: newShared, [fullPriceKey]: newFull });
   };
 
   const otherDisplayName = names[otherKey].trim() || otherFlatmateLabel;
@@ -125,23 +166,17 @@ export default function UserExtrasPage({ personKey }) {
       <div className="form-card-stack">
         <div className="glass-panel">
           <ExtrasInputList
-            title={`${displayName}'s ${myPct}% Extras`}
-            description={`Items split ${myPct}/${otherPct} with ${otherDisplayName}.`}
-            extras={extras}
+            title={`${displayName}'s Extras`}
+            description={`Per item: ${myPct}/${otherPct} split with ${otherDisplayName}, or 100% charged to ${otherDisplayName}.`}
+            extras={combinedExtras}
             onAdd={() => saveListToDraft(extrasKey, [...extras, newExtra()], setExtras)}
-            onUpdate={(id, field, value) => saveListToDraft(extrasKey, extras.map((e) => e.id === id ? { ...e, [field]: value } : e), setExtras)}
-            onRemove={(id) => saveListToDraft(extrasKey, extras.filter((e) => e.id !== id), setExtras)}
-          />
-        </div>
-
-        <div className="glass-panel">
-          <ExtrasInputList
-            title={`${displayName}'s 100% Extras`}
-            description={`Items charged 100% to ${otherDisplayName}.`}
-            extras={fullPriceExtras}
-            onAdd={() => saveListToDraft(fullPriceKey, [...fullPriceExtras, newExtra()], setFullPriceExtras)}
-            onUpdate={(id, field, value) => saveListToDraft(fullPriceKey, fullPriceExtras.map((e) => e.id === id ? { ...e, [field]: value } : e), setFullPriceExtras)}
-            onRemove={(id) => saveListToDraft(fullPriceKey, fullPriceExtras.filter((e) => e.id !== id), setFullPriceExtras)}
+            onUpdate={updateCombined}
+            onRemove={removeCombined}
+            splitOptions={[
+              { value: 'shared', label: `${myPct}/${otherPct}` },
+              { value: 'full', label: '100%' }
+            ]}
+            onSplitChange={setSplitCombined}
           />
         </div>
 
