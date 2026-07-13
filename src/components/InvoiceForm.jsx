@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import MonthPicker from './MonthPicker';
 import DatePicker from './DatePicker';
@@ -76,6 +76,21 @@ export default function InvoiceForm({ data, onChange }) {
   const splitPct = clampSplitPercent(data.splitPercent ?? 50);
   const otherPct = Math.round((100 - splitPct) * 100) / 100;
   const pctFor = (personKey) => (personKey === 'flatmate1' ? splitPct : otherPct);
+
+  // Which flatmate the split field's percentage refers to (UI-only choice;
+  // the stored splitPercent is always flatmate 1's share).
+  const [splitPerson, setSplitPerson] = useState('flatmate1');
+  const splitOtherKey = splitPerson === 'flatmate1' ? 'flatmate2' : 'flatmate1';
+  const splitFieldValue = splitPerson === 'flatmate1' ? (data.splitPercent ?? 50) : otherPct;
+
+  const handleSplitChange = (value) => {
+    if (splitPerson === 'flatmate1') {
+      updateField('splitPercent', value);
+    } else {
+      const n = parseFloat(value);
+      updateField('splitPercent', isNaN(n) ? 50 : Math.round((100 - Math.min(100, Math.max(0, n))) * 100) / 100);
+    }
+  };
 
   const renderPersonDiscounts = (personKey, flatmateLabel) => {
     const key = `${personKey}Discounts`;
@@ -188,29 +203,6 @@ export default function InvoiceForm({ data, onChange }) {
             onChange={(val) => updateField('dueDate', val)}
           />
         </div>
-
-        <div className="form-group">
-          <label>Split — {names.flatmate1.trim() || 'Flatmate 1'}'s share</label>
-          <div className="split-row">
-            <div className="currency-input split-input">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                inputMode="decimal"
-                value={data.splitPercent ?? 50}
-                onChange={(e) => updateField('splitPercent', e.target.value)}
-                aria-label="Split percentage"
-              />
-              <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
-            </div>
-            <span className="split-readout">
-              {names.flatmate1.trim() || 'Flatmate 1'} {splitPct}% / {names.flatmate2.trim() || 'Flatmate 2'} {otherPct}%
-            </span>
-          </div>
-          <div className="field-hint">Applies to bills and shared extras.</div>
-        </div>
       </div>
 
       <div className="glass-panel">
@@ -230,6 +222,37 @@ export default function InvoiceForm({ data, onChange }) {
             placeholder="Flatmate 2"
             aria-label="Flatmate 2 name"
           />
+        </div>
+
+        <h4 className="invoice-section-title invoice-section-title--sub split-title">Split</h4>
+        <div className="split-row">
+          <div className="split-person-select">
+            <SelectMenu
+              value={splitPerson}
+              onChange={setSplitPerson}
+              options={[
+                { value: 'flatmate1', label: names.flatmate1.trim() || 'Flatmate 1' },
+                { value: 'flatmate2', label: names.flatmate2.trim() || 'Flatmate 2' }
+              ]}
+              width="100%"
+            />
+          </div>
+          <div className="currency-input split-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              inputMode="decimal"
+              value={splitFieldValue}
+              onChange={(e) => handleSplitChange(e.target.value)}
+              aria-label="Split percentage"
+            />
+            <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
+          </div>
+        </div>
+        <div className="field-hint">
+          {names[splitOtherKey].trim() || (splitOtherKey === 'flatmate1' ? 'Flatmate 1' : 'Flatmate 2')} pays {pctFor(splitOtherKey)}%. Applies to bills and shared extras.
         </div>
       </div>
 
@@ -268,10 +291,6 @@ export default function InvoiceForm({ data, onChange }) {
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Discounts</h3>
-        <p className="section-desc">
-          Money off a flatmate's total — e.g. a bill credit or something they already paid for.
-          £ takes a fixed amount off; % takes a percentage of their total off.
-        </p>
         {renderPersonDiscounts('flatmate1', 'Flatmate 1')}
         {renderPersonDiscounts('flatmate2', 'Flatmate 2')}
       </div>
