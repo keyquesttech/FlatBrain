@@ -196,25 +196,41 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <h3 className="invoice-section-title">{otherDisplayName}'s invoice items</h3>
           <p className="section-desc">
-            What {otherDisplayName} will be charged for, including your full price extras.
+            What {otherDisplayName} will be charged for, including your 100% extras.
           </p>
-          {otherInvoiceItems.map((extra) => (
-            <div key={extra.id} className="preview-row">
-              <span>{formatExtraLabel(extra, names)}</span>
-              <span>{formatCurrency(extraTotal(extra))}</span>
-            </div>
-          ))}
+          {otherInvoiceItems.map((extra) => {
+            const total = extraTotal(extra);
+            const isFullPrice = Boolean(extra.fullPriceFrom);
+            return (
+              <div key={extra.id} className="preview-item">
+                <div className="preview-item-main">
+                  <span>{formatExtraLabel(extra, names)}</span>
+                  <span>{formatCurrency(isFullPrice ? total : (total * otherPct) / 100)}</span>
+                </div>
+                <div className="preview-item-sub">
+                  {isFullPrice
+                    ? `Added by you — charged 100% to ${otherDisplayName}`
+                    : `Added by ${otherDisplayName} — split ${otherPct}/${myPct}, ${otherDisplayName} pays ${otherPct}% of ${formatCurrency(total)}`}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="glass-panel">
           <h3 className="invoice-section-title">Charged to you</h3>
           <p className="section-desc">
-            Full price extras added by {otherDisplayName} that will appear on your invoice.
+            100% extras added by {otherDisplayName} that will appear on your invoice.
           </p>
           {otherFullPricePreviewItems.map((extra) => (
-            <div key={extra.id} className="preview-row">
-              <span>{formatExtraLabel(extra, names)}</span>
-              <span>{formatCurrency(extraTotal(extra))}</span>
+            <div key={extra.id} className="preview-item">
+              <div className="preview-item-main">
+                <span>{formatExtraLabel(extra, names)}</span>
+                <span>{formatCurrency(extraTotal(extra))}</span>
+              </div>
+              <div className="preview-item-sub">
+                Added by {otherDisplayName} — charged 100% to you
+              </div>
             </div>
           ))}
         </div>

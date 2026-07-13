@@ -1030,7 +1030,7 @@ input[type="checkbox"]:focus-visible {
 /* Label/value collision guards for invoice + flatmate rows */
 .due-line > span:first-child,
 .due-card-total > span:first-child,
-.preview-row > span:first-child {
+.preview-item-main > span:first-child {
   min-width: 0;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -1038,21 +1038,33 @@ input[type="checkbox"]:focus-visible {
 
 .due-line > span:last-child,
 .due-card-total > span:last-child,
-.preview-row > span:last-child {
+.preview-item-main > span:last-child {
   flex-shrink: 0;
   text-align: right;
   white-space: nowrap;
 }
 
-/* Rows on the flatmate pages (inside translucent panels) */
-.preview-row {
+/* Item rows on the flatmate preview cards: main line + a small explainer
+   describing how the item is split and who it's charged to */
+.preview-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+.preview-item-main {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0;
   font-size: 0.88rem;
   color: var(--text-muted);
-  border-bottom: 1px dashed var(--border-soft);
+}
+
+.preview-item-sub {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  margin-top: 0.25rem;
+  overflow-wrap: break-word;
 }
 
 /* ---------- History ---------- */
