@@ -117,17 +117,6 @@ export default function InvoiceForm({ data, onChange }) {
               aria-label="Discount reason"
               maxLength={100}
             />
-            <div className="discount-type-select">
-              <SelectMenu
-                value={discount.type}
-                onChange={(v) => updateExtra(key, discount.id, 'type', v)}
-                options={[
-                  { value: 'amount', label: '£' },
-                  { value: 'percent', label: '%' }
-                ]}
-                width="100%"
-              />
-            </div>
             <input
               type="number"
               className="packs-input discount-value"
@@ -139,6 +128,17 @@ export default function InvoiceForm({ data, onChange }) {
               placeholder={discount.type === 'percent' ? '%' : '£'}
               aria-label="Discount value"
             />
+            <div className="discount-type-select">
+              <SelectMenu
+                value={discount.type}
+                onChange={(v) => updateExtra(key, discount.id, 'type', v)}
+                options={[
+                  { value: 'amount', label: '£' },
+                  { value: 'percent', label: '%' }
+                ]}
+                width="100%"
+              />
+            </div>
             <button className="btn btn-danger action-btn" onClick={() => removeExtra(key, discount.id)} aria-label="Remove discount">
               <X size={18} />
             </button>

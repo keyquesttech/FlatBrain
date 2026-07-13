@@ -719,12 +719,9 @@ input[type="checkbox"]:focus-visible {
   margin-top: 1.25rem;
 }
 
-/* Fixed-width £/% selector in discount rows */
-.discount-type-select {
-  flex: 0 0 84px;
-}
-
-/* Fixed-width split selector (e.g. 50/50 vs 100%) in extras rows */
+/* Fixed-width row selectors: £/% in discount rows, split in extras rows.
+   Same width so selector columns align across cards. */
+.discount-type-select,
 .extra-split-select {
   flex: 0 0 96px;
 }
