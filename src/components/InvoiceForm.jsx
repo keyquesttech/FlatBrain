@@ -80,7 +80,6 @@ export default function InvoiceForm({ data, onChange }) {
   // Which flatmate the split field's percentage refers to (UI-only choice;
   // the stored splitPercent is always flatmate 1's share).
   const [splitPerson, setSplitPerson] = useState('matias');
-  const splitOtherKey = splitPerson === 'matias' ? 'reka' : 'matias';
   const splitFieldValue = splitPerson === 'matias' ? (data.splitPercent ?? 50) : otherPct;
 
   const handleSplitChange = (value) => {
@@ -224,35 +223,34 @@ export default function InvoiceForm({ data, onChange }) {
           />
         </div>
 
-        <h4 className="invoice-section-title invoice-section-title--sub split-title">Split</h4>
-        <div className="split-row">
-          <div className="split-person-select">
-            <SelectMenu
-              value={splitPerson}
-              onChange={setSplitPerson}
-              options={[
-                { value: 'matias', label: names.matias.trim() || 'Flatmate 1' },
-                { value: 'reka', label: names.reka.trim() || 'Flatmate 2' }
-              ]}
-              width="100%"
-            />
+        <div className="form-group split-group">
+          <label>Split</label>
+          <div className="split-row">
+            <div className="split-person-select">
+              <SelectMenu
+                value={splitPerson}
+                onChange={setSplitPerson}
+                options={[
+                  { value: 'matias', label: names.matias.trim() || 'Flatmate 1' },
+                  { value: 'reka', label: names.reka.trim() || 'Flatmate 2' }
+                ]}
+                width="100%"
+              />
+            </div>
+            <div className="currency-input split-input">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputMode="decimal"
+                value={splitFieldValue}
+                onChange={(e) => handleSplitChange(e.target.value)}
+                aria-label="Split percentage"
+              />
+              <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
+            </div>
           </div>
-          <div className="currency-input split-input">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              inputMode="decimal"
-              value={splitFieldValue}
-              onChange={(e) => handleSplitChange(e.target.value)}
-              aria-label="Split percentage"
-            />
-            <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
-          </div>
-        </div>
-        <div className="field-hint">
-          {names[splitOtherKey].trim() || (splitOtherKey === 'matias' ? 'Flatmate 1' : 'Flatmate 2')} pays {pctFor(splitOtherKey)}%. Applies to bills and shared extras.
         </div>
       </div>
 
