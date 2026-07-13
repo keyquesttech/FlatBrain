@@ -1,7 +1,6 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
-import SelectMenu from './SelectMenu';
 
 export default function ExtrasInputList({
   title,
@@ -11,10 +10,9 @@ export default function ExtrasInputList({
   onAdd,
   onUpdate,
   onRemove,
-  // When provided, each row gets a split selector (e.g. "50/50" vs "100%").
-  // Rows must carry a `split` value matching one of the option values.
-  splitOptions,
-  onSplitChange,
+  // Name of the flatmate the per-item percent is charged to. When set, each
+  // row gets a % input (stored on the item's `percent` field, default 50).
+  percentTo,
   addLabel = 'Add Item',
   showAddButton = true
 }) {
@@ -60,14 +58,19 @@ export default function ExtrasInputList({
             placeholder="Price"
             aria-label="Price"
           />
-          {splitOptions && (
-            <div className="extra-split-select">
-              <SelectMenu
-                value={extra.split}
-                onChange={(v) => onSplitChange(extra.id, v)}
-                options={splitOptions}
-                width="100%"
+          {percentTo != null && (
+            <div className="currency-input percent-input" title={`% charged to ${percentTo}`}>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputMode="decimal"
+                value={extra.percent ?? 50}
+                onChange={(e) => onUpdate(extra.id, 'percent', e.target.value)}
+                aria-label={`Percent charged to ${percentTo}`}
               />
+              <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
             </div>
           )}
           <button className="btn btn-danger action-btn" onClick={() => onRemove(extra.id)} aria-label="Remove item">

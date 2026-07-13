@@ -17,6 +17,23 @@ export function sumExtras(extras) {
   return (extras || []).reduce((sum, e) => sum + extraTotal(e), 0);
 }
 
+// An extra's percent is the share of it charged to the OTHER flatmate
+// (the one who didn't add it). Defaults to 50; 100 = fully charged over.
+export function extraPercent(extra) {
+  const n = parseFloat(extra?.percent);
+  if (isNaN(n)) return 50;
+  return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
+}
+
+// A person's extras as one list with a normalized percent on every item.
+// Merges the legacy full-price list (pre-per-item-percent drafts/invoices)
+// in as 100% items, so old data keeps computing identically.
+export function mergedExtras(data, personKey) {
+  const own = (data[`${personKey}Extras`] || []).map((e) => ({ ...e, percent: extraPercent(e) }));
+  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => ({ ...e, percent: 100 }));
+  return [...own, ...legacyFull];
+}
+
 // The split percent is flatmate 1 (matias)'s share of all shared costs;
 // flatmate 2 (reka) pays the remainder. Invalid input falls back to 50/50.
 export function clampSplitPercent(value) {
@@ -44,14 +61,17 @@ export function calculateInvoice(data) {
   const matiasBillsShare = billsTotal * p;
   const rekaBillsShare = billsTotal * (1 - p);
 
-  const matiasRegular = sumExtras(data.matiasExtras);
-  const rekaRegular = sumExtras(data.rekaExtras);
-  const matiasFullPrice = sumExtras(data.matiasFullPriceExtras);
-  const rekaFullPrice = sumExtras(data.rekaFullPriceExtras);
+  // Each extra charges its percent to the other flatmate; the person who
+  // added it pays the remainder.
+  const matiasItems = mergedExtras(data, 'matias');
+  const rekaItems = mergedExtras(data, 'reka');
+  const shareOf = (items, isOwn) => items.reduce((sum, e) => {
+    const fraction = extraPercent(e) / 100;
+    return sum + extraTotal(e) * (isOwn ? 1 - fraction : fraction);
+  }, 0);
 
-  const regularTotal = matiasRegular + rekaRegular;
-  const matiasShareExtras = regularTotal * p + rekaFullPrice;
-  const rekaShareExtras = regularTotal * (1 - p) + matiasFullPrice;
+  const matiasShareExtras = shareOf(matiasItems, true) + shareOf(rekaItems, false);
+  const rekaShareExtras = shareOf(rekaItems, true) + shareOf(matiasItems, false);
 
   const matiasBeforeDiscounts = matiasBillsShare + matiasShareExtras;
   const rekaBeforeDiscounts = rekaBillsShare + rekaShareExtras;
@@ -68,10 +88,6 @@ export function calculateInvoice(data) {
     billsTotalEach: billsTotal / 2,
     matiasBillsShare,
     rekaBillsShare,
-    matiasRegular,
-    rekaRegular,
-    matiasFullPrice,
-    rekaFullPrice,
     matiasShareExtras,
     rekaShareExtras,
     matiasBeforeDiscounts,
@@ -84,21 +100,10 @@ export function calculateInvoice(data) {
   };
 }
 
+// A person's extras section on the invoice: the items they added, in full.
 export function getInvoiceExtrasSection(personKey, data) {
-  const otherKey = personKey === 'matias' ? 'reka' : 'matias';
-  const regular = data[`${personKey}Extras`] || [];
-  const fromOtherFullPrice = (data[`${otherKey}FullPriceExtras`] || []).map((e) => ({
-    ...e,
-    fullPriceFrom: otherKey
-  }));
-
-  const items = [...regular, ...fromOtherFullPrice];
-  const regularTotal = sumExtras(regular);
-  const fullPriceTotal = sumExtras(fromOtherFullPrice);
-  const total = regularTotal + fullPriceTotal;
-  const totalEach = regularTotal / 2 + fullPriceTotal;
-
-  return { items, regularTotal, fullPriceTotal, total, totalEach };
+  const items = mergedExtras(data, personKey);
+  return { items, total: sumExtras(items) };
 }
 
 const GBP = new Intl.NumberFormat('en-GB', {
@@ -111,11 +116,6 @@ export function formatCurrency(amount) {
 }
 
 // Always shows the pack count and per-pack price, e.g. "Bulbs (2 × £7.50)".
-export function formatExtraLabel(extra, names) {
-  const packs = ` (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
-  if (extra.fullPriceFrom) {
-    const fromName = names[extra.fullPriceFrom] || extra.fullPriceFrom;
-    return `${extra.thing || 'Unnamed item'}${packs} (full price from ${fromName})`;
-  }
-  return `${extra.thing || 'Unnamed item'}${packs}`;
+export function formatExtraLabel(extra) {
+  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
 }

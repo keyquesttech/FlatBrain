@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import {
   calculateInvoice,
   discountAmount,
+  extraPercent,
   extraTotal,
   formatCurrency,
   formatExtraLabel,
@@ -28,8 +29,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const hasDiscounts = calc.matiasDiscountTotal !== 0 || calc.rekaDiscountTotal !== 0;
 
   const extrasSections = [
-    { key: 'matias', name: names.matias, ...getInvoiceExtrasSection('matias', data) },
-    { key: 'reka', name: names.reka, ...getInvoiceExtrasSection('reka', data) }
+    { key: 'matias', name: names.matias, otherName: names.reka, ...getInvoiceExtrasSection('matias', data) },
+    { key: 'reka', name: names.reka, otherName: names.matias, ...getInvoiceExtrasSection('reka', data) }
   ].filter((person) => person.items.length > 0);
 
   const dueSections = [
@@ -114,7 +115,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <div className="due-card-name">{person.name} Extras</div>
               {person.items.map((extra) => (
                 <div className="due-line" key={extra.id}>
-                  <span>{formatExtraLabel(extra, names)}</span>
+                  <span>{formatExtraLabel(extra)} · {extraPercent(extra)}% to {person.otherName}</span>
                   <span>{formatCurrency(extraTotal(extra))}</span>
                 </div>
               ))}

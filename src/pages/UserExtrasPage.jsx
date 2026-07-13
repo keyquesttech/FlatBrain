@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getDraft, updateDraft, getHistory } from '../api';
-import { clampSplitPercent, extraTotal, formatCurrency, formatExtraLabel, getInvoiceExtrasSection } from '../utils/calculations';
+import { extraPercent, extraTotal, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
@@ -18,11 +18,8 @@ export default function UserExtrasPage({ personKey }) {
   const flatmateLabel = personKey === 'matias' ? 'Flatmate 1' : 'Flatmate 2';
   const otherFlatmateLabel = personKey === 'matias' ? 'Flatmate 2' : 'Flatmate 1';
   const [extras, setExtras] = useState([]);
-  const [fullPriceExtras, setFullPriceExtras] = useState([]);
+  const [otherExtras, setOtherExtras] = useState([]);
   const [note, setNote] = useState('');
-  const [splitPercent, setSplitPercent] = useState(50);
-  const [otherFullPriceExtras, setOtherFullPriceExtras] = useState([]);
-  const [otherInvoiceItems, setOtherInvoiceItems] = useState([]);
   const [names, setNames] = useState(DEFAULT_NAMES);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,13 +32,10 @@ export default function UserExtrasPage({ personKey }) {
     let cancelled = false;
 
     const applyDraft = (draft) => {
-      setExtras(draft[extrasKey] || []);
-      setFullPriceExtras(draft[fullPriceKey] || []);
+      setExtras(mergedExtras(draft, personKey));
+      setOtherExtras(mergedExtras(draft, otherKey));
       setNote(draft[noteKey] || '');
-      setSplitPercent(clampSplitPercent(draft.splitPercent ?? 50));
-      setOtherFullPriceExtras(draft[`${otherKey}FullPriceExtras`] || []);
       setNames({ ...DEFAULT_NAMES, ...(draft.names || {}) });
-      setOtherInvoiceItems(getInvoiceExtrasSection(otherKey, draft).items);
       setLoading(false);
     };
 
@@ -72,7 +66,7 @@ export default function UserExtrasPage({ personKey }) {
       flushPending();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personKey, extrasKey, fullPriceKey, otherKey]);
+  }, [personKey, extrasKey, fullPriceKey, noteKey, otherKey]);
 
   // Merge queued list changes into the latest server draft, so edits made at
   // the same time on other pages aren't lost. On failure the changes are
@@ -99,58 +93,38 @@ export default function UserExtrasPage({ personKey }) {
     }, SAVE_DEBOUNCE_MS);
   };
 
-  const saveListToDraft = (key, newList, setter) => {
-    setter(newList);
-    saveDraftChanges({ [key]: newList });
+  // Writes always clear the legacy full-price list: its items were folded
+  // into the merged list on read, so leaving them behind would duplicate.
+  const saveExtras = (newList) => {
+    setExtras(newList);
+    saveDraftChanges({ [extrasKey]: newList, [fullPriceKey]: [] });
   };
 
-  // The card shows both lists as one; each row's selector decides whether the
-  // item lives in the shared-split list or the 100% (full price) list.
-  const combinedExtras = [
-    ...extras.map((e) => ({ ...e, split: 'shared' })),
-    ...fullPriceExtras.map((e) => ({ ...e, split: 'full' }))
-  ];
-
-  const updateCombined = (id, field, value) => {
-    if (extras.some((e) => e.id === id)) {
-      saveListToDraft(extrasKey, extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)), setExtras);
-    } else {
-      saveListToDraft(fullPriceKey, fullPriceExtras.map((e) => (e.id === id ? { ...e, [field]: value } : e)), setFullPriceExtras);
-    }
-  };
-
-  const removeCombined = (id) => {
-    if (extras.some((e) => e.id === id)) {
-      saveListToDraft(extrasKey, extras.filter((e) => e.id !== id), setExtras);
-    } else {
-      saveListToDraft(fullPriceKey, fullPriceExtras.filter((e) => e.id !== id), setFullPriceExtras);
-    }
-  };
-
-  const setSplitCombined = (id, split) => {
-    const inShared = extras.some((e) => e.id === id);
-    if ((split === 'full') !== inShared) return; // already in the right list
-    const fromList = inShared ? extras : fullPriceExtras;
-    const item = fromList.find((e) => e.id === id);
-    if (!item) return;
-    const newShared = inShared ? extras.filter((e) => e.id !== id) : [...extras, item];
-    const newFull = inShared ? [...fullPriceExtras, item] : fullPriceExtras.filter((e) => e.id !== id);
-    setExtras(newShared);
-    setFullPriceExtras(newFull);
-    saveDraftChanges({ [extrasKey]: newShared, [fullPriceKey]: newFull });
+  const saveNote = (value) => {
+    setNote(value);
+    saveDraftChanges({ [noteKey]: value });
   };
 
   const otherDisplayName = names[otherKey].trim() || otherFlatmateLabel;
   const displayName = names[personKey].trim() || flatmateLabel;
 
-  // This person's share of the split (the main page sets flatmate 1's share).
-  const myPct = personKey === 'matias' ? splitPercent : Math.round((100 - splitPercent) * 100) / 100;
-  const otherPct = Math.round((100 - myPct) * 100) / 100;
+  const fmtPct = (n) => Math.round(n * 100) / 100;
 
-  const otherFullPricePreviewItems = otherFullPriceExtras.map((extra) => ({
-    ...extra,
-    fullPriceFrom: otherKey
-  }));
+  // What the other flatmate pays: their share of items added here, plus
+  // their remainder of items they added themselves.
+  const chargedToOther = [
+    ...extras
+      .map((e) => ({ ...e, addedByYou: true, pct: fmtPct(extraPercent(e)) }))
+      .filter((e) => e.pct > 0),
+    ...otherExtras
+      .map((e) => ({ ...e, addedByYou: false, pct: fmtPct(100 - extraPercent(e)) }))
+      .filter((e) => e.pct > 0)
+  ];
+
+  // Items the other flatmate added that charge this person.
+  const chargedToYou = otherExtras
+    .map((e) => ({ ...e, pct: fmtPct(extraPercent(e)) }))
+    .filter((e) => e.pct > 0);
 
   if (loading) return <div className="page-loading">Loading…</div>;
 
@@ -167,16 +141,12 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <ExtrasInputList
             title={`${displayName}'s Extras`}
-            description={`Per item: ${myPct}/${otherPct} split with ${otherDisplayName}, or 100% charged to ${otherDisplayName}.`}
-            extras={combinedExtras}
-            onAdd={() => saveListToDraft(extrasKey, [...extras, newExtra()], setExtras)}
-            onUpdate={updateCombined}
-            onRemove={removeCombined}
-            splitOptions={[
-              { value: 'shared', label: `${myPct}/${otherPct}` },
-              { value: 'full', label: '100%' }
-            ]}
-            onSplitChange={setSplitCombined}
+            description={`Each item's % is charged to ${otherDisplayName}; you pay the rest. Default 50%.`}
+            extras={extras}
+            onAdd={() => saveExtras([...extras, newExtra()])}
+            onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
+            onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
+            percentTo={otherDisplayName}
           />
         </div>
 
@@ -185,7 +155,7 @@ export default function UserExtrasPage({ personKey }) {
           <p className="section-desc">Optional. Shown on the invoice under your total.</p>
           <textarea
             value={note}
-            onChange={(e) => saveListToDraft(noteKey, e.target.value, setNote)}
+            onChange={(e) => saveNote(e.target.value)}
             placeholder="Optional note shown on the invoice"
             rows={2}
             maxLength={300}
@@ -194,23 +164,20 @@ export default function UserExtrasPage({ personKey }) {
         </div>
 
         <div className="glass-panel">
-          <h3 className="invoice-section-title">{otherDisplayName}'s invoice items</h3>
+          <h3 className="invoice-section-title">Charged to {otherDisplayName}</h3>
           <p className="section-desc">
-            What {otherDisplayName} will be charged for, including your 100% extras.
+            {otherDisplayName}'s share of every extra, including items they added.
           </p>
-          {otherInvoiceItems.map((extra) => {
+          {chargedToOther.map((extra) => {
             const total = extraTotal(extra);
-            const isFullPrice = Boolean(extra.fullPriceFrom);
             return (
               <div key={extra.id} className="preview-item">
                 <div className="preview-item-main">
-                  <span>{formatExtraLabel(extra, names)}</span>
-                  <span>{formatCurrency(isFullPrice ? total : (total * otherPct) / 100)}</span>
+                  <span>{formatExtraLabel(extra)}</span>
+                  <span>{formatCurrency((total * extra.pct) / 100)}</span>
                 </div>
                 <div className="preview-item-sub">
-                  {isFullPrice
-                    ? `Added by you — charged 100% to ${otherDisplayName}`
-                    : `Added by ${otherDisplayName} — split ${otherPct}/${myPct}, ${otherDisplayName} pays ${otherPct}% of ${formatCurrency(total)}`}
+                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {extra.pct}% of {formatCurrency(total)}
                 </div>
               </div>
             );
@@ -220,19 +187,22 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <h3 className="invoice-section-title">Charged to you</h3>
           <p className="section-desc">
-            100% extras added by {otherDisplayName} that will appear on your invoice.
+            Your share of items {otherDisplayName} added. You also pay the remaining % of your own items above.
           </p>
-          {otherFullPricePreviewItems.map((extra) => (
-            <div key={extra.id} className="preview-item">
-              <div className="preview-item-main">
-                <span>{formatExtraLabel(extra, names)}</span>
-                <span>{formatCurrency(extraTotal(extra))}</span>
+          {chargedToYou.map((extra) => {
+            const total = extraTotal(extra);
+            return (
+              <div key={extra.id} className="preview-item">
+                <div className="preview-item-main">
+                  <span>{formatExtraLabel(extra)}</span>
+                  <span>{formatCurrency((total * extra.pct) / 100)}</span>
+                </div>
+                <div className="preview-item-sub">
+                  Added by {otherDisplayName} — you pay {extra.pct}% of {formatCurrency(total)}
+                </div>
               </div>
-              <div className="preview-item-sub">
-                Added by {otherDisplayName} — charged 100% to you
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="glass-panel">

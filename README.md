@@ -20,8 +20,9 @@ and shared purchases, then generate and download a polished invoice image.
 - Personal **extras** for each flatmate, added from their own page:
   - `/flatmate1` and `/flatmate2` — shareable links so each person can add
     what they bought. Changes sync live to the invoice (no refresh needed).
-  - **50% extras** are split evenly; **100% extras** are charged fully to the
-    other person (e.g. "I picked up your parcel postage").
+  - each item has its own **split percentage** — the share charged to the
+    other flatmate (default 50%, or e.g. 100% for "I picked up your parcel
+    postage").
   - Prices are per pack: an item with 3 packs at £2.50 bills £7.50 and shows
     as "Item (3 × £2.50)" on the invoice.
 - Per-flatmate **notes** that appear on the invoice.
@@ -208,7 +209,7 @@ src/                   React source
   pages/               MainPage (generator + history), UserExtrasPage
   components/          InvoiceForm, InvoicePreview, InvoiceHistory, pickers, charts
   utils/
-    calculations.js    Bill-splitting math (packs × price, 50%/100% extras)
+    calculations.js    Bill-splitting math (packs × price, per-item split %)
     historyCsv.js      CSV export/import mapping
     invoicePng.js      Fixed-size PNG capture of the invoice
     defaults.js        Draft shape + placeholder defaults

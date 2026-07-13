@@ -1,3 +1,5 @@
+import { mergedExtras } from './calculations.js';
+
 export const DEFAULT_NAMES = { matias: 'Matias', reka: 'Réka' };
 
 export const DEFAULT_BANK = {
@@ -17,10 +19,12 @@ export function normalizeDraft(draft) {
     dueDate: draft.dueDate || '',
     names: { ...DEFAULT_NAMES, ...(draft.names || {}) },
     bills: draft.bills || [],
-    matiasExtras: draft.matiasExtras || [],
-    rekaExtras: draft.rekaExtras || [],
-    matiasFullPriceExtras: draft.matiasFullPriceExtras || [],
-    rekaFullPriceExtras: draft.rekaFullPriceExtras || [],
+    // Extras are one list per person with a per-item percent; legacy
+    // full-price lists are folded in as 100% items (see mergedExtras).
+    matiasExtras: mergedExtras(draft, 'matias'),
+    rekaExtras: mergedExtras(draft, 'reka'),
+    matiasFullPriceExtras: [],
+    rekaFullPriceExtras: [],
     matiasNote: draft.matiasNote || '',
     rekaNote: draft.rekaNote || '',
     matiasDiscounts: draft.matiasDiscounts || [],

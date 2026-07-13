@@ -10,5 +10,5 @@ export function newId() {
 }
 
 export function newExtra() {
-  return { id: newId(), thing: '', packs: 1, price: '' };
+  return { id: newId(), thing: '', packs: 1, price: '', percent: 50 };
 }
