@@ -37,6 +37,9 @@ const defaultDraft = {
   flatmate2FullPriceExtras: [],
   flatmate1Note: '',
   flatmate2Note: '',
+  flatmate1Discounts: [],
+  flatmate2Discounts: [],
+  splitPercent: 50,
   bankDetails: {
     name: 'Your Name',
     bankName: 'Your Bank',

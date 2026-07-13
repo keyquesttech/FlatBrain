@@ -17,44 +17,70 @@ export function sumExtras(extras) {
   return (extras || []).reduce((sum, e) => sum + extraTotal(e), 0);
 }
 
-export function calculateInvoice(
-  bills,
-  flatmate1Extras,
-  flatmate2Extras,
-  flatmate1FullPriceExtras = [],
-  flatmate2FullPriceExtras = []
-) {
-  const billsTotal = bills.reduce((sum, b) => sum + parseAmount(b.amount), 0);
-  const billsTotalEach = billsTotal / 2;
+// The split percent is flatmate 1 (flatmate1)'s share of all shared costs;
+// flatmate 2 (flatmate2) pays the remainder. Invalid input falls back to 50/50.
+export function clampSplitPercent(value) {
+  const n = parseFloat(value);
+  if (isNaN(n)) return 50;
+  return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
+}
 
-  const flatmate1Regular = sumExtras(flatmate1Extras);
-  const flatmate2Regular = sumExtras(flatmate2Extras);
-  const flatmate1FullPrice = sumExtras(flatmate1FullPriceExtras);
-  const flatmate2FullPrice = sumExtras(flatmate2FullPriceExtras);
+// A discount is { thing, type: 'amount'|'percent', value }. Percent discounts
+// apply to that person's pre-discount total (bills share + extras share).
+export function discountAmount(discount, base) {
+  const v = parseAmount(discount?.value);
+  return discount?.type === 'percent' ? (base * v) / 100 : v;
+}
 
-  const regularExtrasEach = (flatmate1Regular + flatmate2Regular) / 2;
+export function sumDiscounts(discounts, base) {
+  return (discounts || []).reduce((sum, d) => sum + discountAmount(d, base), 0);
+}
 
-  const netTotal = billsTotal + flatmate1Regular + flatmate2Regular + flatmate1FullPrice + flatmate2FullPrice;
+export function calculateInvoice(data) {
+  const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
+  const p = splitPercent / 100;
 
-  const flatmate1ShareExtras = regularExtrasEach + flatmate2FullPrice;
-  const flatmate2ShareExtras = regularExtrasEach + flatmate1FullPrice;
+  const billsTotal = (data.bills || []).reduce((sum, b) => sum + parseAmount(b.amount), 0);
+  const flatmate1BillsShare = billsTotal * p;
+  const flatmate2BillsShare = billsTotal * (1 - p);
 
-  const flatmate1TotalDue = billsTotalEach + flatmate1ShareExtras;
-  const flatmate2TotalDue = billsTotalEach + flatmate2ShareExtras;
+  const flatmate1Regular = sumExtras(data.flatmate1Extras);
+  const flatmate2Regular = sumExtras(data.flatmate2Extras);
+  const flatmate1FullPrice = sumExtras(data.flatmate1FullPriceExtras);
+  const flatmate2FullPrice = sumExtras(data.flatmate2FullPriceExtras);
+
+  const regularTotal = flatmate1Regular + flatmate2Regular;
+  const flatmate1ShareExtras = regularTotal * p + flatmate2FullPrice;
+  const flatmate2ShareExtras = regularTotal * (1 - p) + flatmate1FullPrice;
+
+  const flatmate1BeforeDiscounts = flatmate1BillsShare + flatmate1ShareExtras;
+  const flatmate2BeforeDiscounts = flatmate2BillsShare + flatmate2ShareExtras;
+
+  const flatmate1DiscountTotal = sumDiscounts(data.flatmate1Discounts, flatmate1BeforeDiscounts);
+  const flatmate2DiscountTotal = sumDiscounts(data.flatmate2Discounts, flatmate2BeforeDiscounts);
+
+  const flatmate1TotalDue = flatmate1BeforeDiscounts - flatmate1DiscountTotal;
+  const flatmate2TotalDue = flatmate2BeforeDiscounts - flatmate2DiscountTotal;
 
   return {
+    splitPercent,
     billsTotal,
-    billsTotalEach,
+    billsTotalEach: billsTotal / 2,
+    flatmate1BillsShare,
+    flatmate2BillsShare,
     flatmate1Regular,
     flatmate2Regular,
     flatmate1FullPrice,
     flatmate2FullPrice,
-    regularExtrasEach,
     flatmate1ShareExtras,
     flatmate2ShareExtras,
+    flatmate1BeforeDiscounts,
+    flatmate2BeforeDiscounts,
+    flatmate1DiscountTotal,
+    flatmate2DiscountTotal,
     flatmate1TotalDue,
     flatmate2TotalDue,
-    netTotal
+    netTotal: flatmate1TotalDue + flatmate2TotalDue
   };
 }
 

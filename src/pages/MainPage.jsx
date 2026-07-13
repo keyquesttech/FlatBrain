@@ -100,13 +100,7 @@ export default function MainPage() {
 
   const saveToHistory = async () => {
     const data = formDataRef.current;
-    const calc = calculateInvoice(
-      data.bills,
-      data.flatmate1Extras,
-      data.flatmate2Extras,
-      data.flatmate1FullPriceExtras,
-      data.flatmate2FullPriceExtras
-    );
+    const calc = calculateInvoice(data);
     const newInvoice = {
       ...data,
       id: newId(),
@@ -168,6 +162,9 @@ export default function MainPage() {
       flatmate2FullPriceExtras: invoice.flatmate2FullPriceExtras || [],
       flatmate1Note: invoice.flatmate1Note || '',
       flatmate2Note: invoice.flatmate2Note || '',
+      flatmate1Discounts: invoice.flatmate1Discounts || [],
+      flatmate2Discounts: invoice.flatmate2Discounts || [],
+      splitPercent: invoice.splitPercent ?? 50,
       bankDetails: invoice.bankDetails
     });
     handleFormChange(loadedDraft);

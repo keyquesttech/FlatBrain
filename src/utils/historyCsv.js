@@ -9,12 +9,14 @@ const LIST_COLUMNS = [
   'flatmate1Extras',
   'flatmate2Extras',
   'flatmate1FullPriceExtras',
-  'flatmate2FullPriceExtras'
+  'flatmate2FullPriceExtras',
+  'flatmate1Discounts',
+  'flatmate2Discounts'
 ];
 
 const HEADER = [
   'id', 'period', 'dueDate', 'timestamp',
-  'netTotal', 'eachNetTotal', 'flatmate1TotalDue', 'flatmate2TotalDue',
+  'netTotal', 'eachNetTotal', 'flatmate1TotalDue', 'flatmate2TotalDue', 'splitPercent',
   'flatmate1Name', 'flatmate2Name', 'flatmate1Note', 'flatmate2Note',
   'bankName', 'bankBankName', 'bankSortCode', 'bankAccountNumber',
   ...LIST_COLUMNS
@@ -32,6 +34,7 @@ export function historyToCSV(invoices) {
       inv.eachNetTotal ?? '',
       inv.flatmate1TotalDue ?? '',
       inv.flatmate2TotalDue ?? '',
+      inv.splitPercent ?? 50,
       inv.names?.flatmate1 ?? '',
       inv.names?.flatmate2 ?? '',
       inv.flatmate1Note ?? '',
@@ -84,6 +87,7 @@ export function csvToHistory(text) {
       eachNetTotal: num('eachNetTotal'),
       flatmate1TotalDue: num('flatmate1TotalDue'),
       flatmate2TotalDue: num('flatmate2TotalDue'),
+      splitPercent: get('splitPercent') === '' ? 50 : num('splitPercent'),
       names: { flatmate1: get('flatmate1Name') || 'Flatmate1', flatmate2: get('flatmate2Name') || 'Flatmate2' },
       flatmate1Note: get('flatmate1Note'),
       flatmate2Note: get('flatmate2Note'),
@@ -97,7 +101,9 @@ export function csvToHistory(text) {
       flatmate1Extras: list('flatmate1Extras'),
       flatmate2Extras: list('flatmate2Extras'),
       flatmate1FullPriceExtras: list('flatmate1FullPriceExtras'),
-      flatmate2FullPriceExtras: list('flatmate2FullPriceExtras')
+      flatmate2FullPriceExtras: list('flatmate2FullPriceExtras'),
+      flatmate1Discounts: list('flatmate1Discounts'),
+      flatmate2Discounts: list('flatmate2Discounts')
     });
   }
 

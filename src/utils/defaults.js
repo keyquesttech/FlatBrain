@@ -23,6 +23,9 @@ export function normalizeDraft(draft) {
     flatmate2FullPriceExtras: draft.flatmate2FullPriceExtras || [],
     flatmate1Note: draft.flatmate1Note || '',
     flatmate2Note: draft.flatmate2Note || '',
+    flatmate1Discounts: draft.flatmate1Discounts || [],
+    flatmate2Discounts: draft.flatmate2Discounts || [],
+    splitPercent: draft.splitPercent ?? 50,
     bankDetails: { ...DEFAULT_BANK, ...(draft.bankDetails || {}) }
   };
 }

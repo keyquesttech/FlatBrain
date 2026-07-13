@@ -710,6 +710,54 @@ input[type="checkbox"]:focus-visible {
   padding-bottom: 0;
 }
 
+/* Sub-headers inside a card (e.g. per-flatmate groups in Discounts) */
+.invoice-section-title--sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.discount-group + .discount-group {
+  margin-top: 1.25rem;
+}
+
+/* Fixed-width £/% selector in discount rows */
+.discount-type-select {
+  flex: 0 0 84px;
+}
+
+.discount-value {
+  flex: 0 0 6rem;
+}
+
+/* Split percentage field */
+.split-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.split-input {
+  flex: 0 0 7rem;
+}
+
+.split-suffix {
+  padding-right: 0.9rem;
+  padding-left: 0;
+}
+
+.split-input input {
+  padding: 12px 6px 12px 16px;
+  text-align: right;
+}
+
+.split-readout {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 /* ===================================================================
    Invoice preview — dark "neon blob" document (also exported as PNG)
    =================================================================== */

@@ -1,10 +1,12 @@
 import React, { forwardRef } from 'react';
 import {
   calculateInvoice,
+  discountAmount,
   extraTotal,
   formatCurrency,
   formatExtraLabel,
-  getInvoiceExtrasSection
+  getInvoiceExtrasSection,
+  parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
 
@@ -12,21 +14,18 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const names = { ...DEFAULT_NAMES, ...(data.names || {}) };
   const bank = { ...DEFAULT_BANK, ...(data.bankDetails || {}) };
 
+  const calc = calculateInvoice(data);
   const {
+    splitPercent,
     billsTotal,
     billsTotalEach,
-    flatmate1ShareExtras,
-    flatmate2ShareExtras,
-    flatmate1TotalDue,
-    flatmate2TotalDue,
+    flatmate1BillsShare,
+    flatmate2BillsShare,
     netTotal
-  } = calculateInvoice(
-    data.bills,
-    data.flatmate1Extras,
-    data.flatmate2Extras,
-    data.flatmate1FullPriceExtras,
-    data.flatmate2FullPriceExtras
-  );
+  } = calc;
+  const flatmate2Percent = Math.round((100 - splitPercent) * 100) / 100;
+  const isEvenSplit = splitPercent === 50;
+  const hasDiscounts = calc.flatmate1DiscountTotal !== 0 || calc.flatmate2DiscountTotal !== 0;
 
   const extrasSections = [
     { key: 'flatmate1', name: names.flatmate1, ...getInvoiceExtrasSection('flatmate1', data) },
@@ -34,8 +33,28 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   ].filter((person) => person.items.length > 0);
 
   const dueSections = [
-    { key: 'flatmate1', name: names.flatmate1, shareExtras: flatmate1ShareExtras, total: flatmate1TotalDue, note: data.flatmate1Note },
-    { key: 'flatmate2', name: names.flatmate2, shareExtras: flatmate2ShareExtras, total: flatmate2TotalDue, note: data.flatmate2Note }
+    {
+      key: 'flatmate1',
+      name: names.flatmate1,
+      pct: splitPercent,
+      billsShare: flatmate1BillsShare,
+      shareExtras: calc.flatmate1ShareExtras,
+      before: calc.flatmate1BeforeDiscounts,
+      discounts: data.flatmate1Discounts || [],
+      total: calc.flatmate1TotalDue,
+      note: data.flatmate1Note
+    },
+    {
+      key: 'flatmate2',
+      name: names.flatmate2,
+      pct: flatmate2Percent,
+      billsShare: flatmate2BillsShare,
+      shareExtras: calc.flatmate2ShareExtras,
+      before: calc.flatmate2BeforeDiscounts,
+      discounts: data.flatmate2Discounts || [],
+      total: calc.flatmate2TotalDue,
+      note: data.flatmate2Note
+    }
   ];
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
@@ -68,10 +87,23 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             <span>Bills total</span>
             <span>{formatCurrency(billsTotal)}</span>
           </div>
-          <div className="due-card-total due-card-total-secondary">
-            <span>Bills total each</span>
-            <span>{formatCurrency(billsTotalEach)}</span>
-          </div>
+          {isEvenSplit ? (
+            <div className="due-card-total due-card-total-secondary">
+              <span>Bills total each</span>
+              <span>{formatCurrency(billsTotalEach)}</span>
+            </div>
+          ) : (
+            <>
+              <div className="due-card-total due-card-total-secondary">
+                <span>{names.flatmate1} share ({splitPercent}%)</span>
+                <span>{formatCurrency(flatmate1BillsShare)}</span>
+              </div>
+              <div className="due-card-total due-card-total-secondary">
+                <span>{names.flatmate2} share ({flatmate2Percent}%)</span>
+                <span>{formatCurrency(flatmate2BillsShare)}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -100,13 +132,19 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className="due-card due-card-summary" key={person.key}>
             <div className="due-card-name">{person.name} Total</div>
             <div className="due-line">
-              <span>Share of bills</span>
-              <span>{formatCurrency(billsTotalEach)}</span>
+              <span>Share of bills ({person.pct}%)</span>
+              <span>{formatCurrency(person.billsShare)}</span>
             </div>
             <div className="due-line">
               <span>Share of extras</span>
               <span>{formatCurrency(person.shareExtras)}</span>
             </div>
+            {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
+              <div className="due-line" key={d.id}>
+                <span>{d.thing?.trim() || 'Discount'}{d.type === 'percent' ? ` (${parseAmount(d.value)}%)` : ''}</span>
+                <span>−{formatCurrency(discountAmount(d, person.before))}</span>
+              </div>
+            ))}
             <div className="due-card-total">
               <span>Total due</span>
               <span>{formatCurrency(person.total)}</span>
@@ -116,7 +154,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
         <div className="due-card due-card-total-grand">
           <div className="due-card-total grand-total-line">
-            <span>Grand total (bills + all extras)</span>
+            <span>Grand total ({hasDiscounts ? 'bills + extras − discounts' : 'bills + all extras'})</span>
             <span className="grand-total-amount">{formatCurrency(netTotal)}</span>
           </div>
         </div>

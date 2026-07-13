@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getDraft, updateDraft, getHistory } from '../api';
-import { extraTotal, formatCurrency, formatExtraLabel, getInvoiceExtrasSection } from '../utils/calculations';
+import { clampSplitPercent, extraTotal, formatCurrency, formatExtraLabel, getInvoiceExtrasSection } from '../utils/calculations';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
@@ -20,6 +20,7 @@ export default function UserExtrasPage({ personKey }) {
   const [extras, setExtras] = useState([]);
   const [fullPriceExtras, setFullPriceExtras] = useState([]);
   const [note, setNote] = useState('');
+  const [splitPercent, setSplitPercent] = useState(50);
   const [otherFullPriceExtras, setOtherFullPriceExtras] = useState([]);
   const [otherInvoiceItems, setOtherInvoiceItems] = useState([]);
   const [names, setNames] = useState(DEFAULT_NAMES);
@@ -37,6 +38,7 @@ export default function UserExtrasPage({ personKey }) {
       setExtras(draft[extrasKey] || []);
       setFullPriceExtras(draft[fullPriceKey] || []);
       setNote(draft[noteKey] || '');
+      setSplitPercent(clampSplitPercent(draft.splitPercent ?? 50));
       setOtherFullPriceExtras(draft[`${otherKey}FullPriceExtras`] || []);
       setNames({ ...DEFAULT_NAMES, ...(draft.names || {}) });
       setOtherInvoiceItems(getInvoiceExtrasSection(otherKey, draft).items);
@@ -100,6 +102,10 @@ export default function UserExtrasPage({ personKey }) {
   const otherDisplayName = names[otherKey].trim() || otherFlatmateLabel;
   const displayName = names[personKey].trim() || flatmateLabel;
 
+  // This person's share of the split (the main page sets flatmate 1's share).
+  const myPct = personKey === 'flatmate1' ? splitPercent : Math.round((100 - splitPercent) * 100) / 100;
+  const otherPct = Math.round((100 - myPct) * 100) / 100;
+
   const otherFullPricePreviewItems = otherFullPriceExtras.map((extra) => ({
     ...extra,
     fullPriceFrom: otherKey
@@ -119,8 +125,8 @@ export default function UserExtrasPage({ personKey }) {
       <div className="form-card-stack">
         <div className="glass-panel">
           <ExtrasInputList
-            title={`${displayName}'s 50% Extras`}
-            description={`Items split 50/50 with ${otherDisplayName}.`}
+            title={`${displayName}'s ${myPct}% Extras`}
+            description={`Items split ${myPct}/${otherPct} with ${otherDisplayName}.`}
             extras={extras}
             onAdd={() => saveListToDraft(extrasKey, [...extras, newExtra()], setExtras)}
             onUpdate={(id, field, value) => saveListToDraft(extrasKey, extras.map((e) => e.id === id ? { ...e, [field]: value } : e), setExtras)}

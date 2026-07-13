@@ -1,10 +1,13 @@
 import React from 'react';
+import { Plus, X } from 'lucide-react';
 import MonthPicker from './MonthPicker';
 import DatePicker from './DatePicker';
 import ExtrasInputList from './ExtrasInputList';
 import CurrencyInput from './CurrencyInput';
+import SelectMenu from './SelectMenu';
 import { DEFAULT_NAMES } from '../utils/defaults';
-import { newExtra } from '../utils/id';
+import { newExtra, newId } from '../utils/id';
+import { clampSplitPercent } from '../utils/calculations';
 
 export default function InvoiceForm({ data, onChange }) {
   const names = { ...DEFAULT_NAMES, ...(data.names || {}) };
@@ -41,6 +44,14 @@ export default function InvoiceForm({ data, onChange }) {
     updateField('bills', newBills);
   };
 
+  const addBill = () => {
+    updateField('bills', [...data.bills, { id: newId(), thing: '', amount: '' }]);
+  };
+
+  const removeBill = (id) => {
+    updateField('bills', data.bills.filter((b) => b.id !== id));
+  };
+
   const updateExtra = (listKey, id, field, value) => {
     const newExtras = data[listKey].map((e) =>
       e.id === id ? { ...e, [field]: value } : e
@@ -62,6 +73,67 @@ export default function InvoiceForm({ data, onChange }) {
     return names[otherKey].trim() || flatmateLabel;
   };
 
+  const splitPct = clampSplitPercent(data.splitPercent ?? 50);
+  const otherPct = Math.round((100 - splitPct) * 100) / 100;
+  const pctFor = (personKey) => (personKey === 'flatmate1' ? splitPct : otherPct);
+
+  const renderPersonDiscounts = (personKey, flatmateLabel) => {
+    const key = `${personKey}Discounts`;
+    const list = data[key] || [];
+    const name = names[personKey].trim() || flatmateLabel;
+
+    return (
+      <div className="discount-group">
+        <div className="extras-section-header">
+          <h4 className="invoice-section-title invoice-section-title--sub">{name}</h4>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => updateField(key, [...list, { id: newId(), thing: '', type: 'amount', value: '' }])}
+          >
+            <Plus size={16} /> Add Discount
+          </button>
+        </div>
+        {list.map((discount) => (
+          <div key={discount.id} className="input-row extras-row">
+            <input
+              type="text"
+              value={discount.thing}
+              onChange={(e) => updateExtra(key, discount.id, 'thing', e.target.value)}
+              placeholder="Reason (e.g. Broadband credit)"
+              aria-label="Discount reason"
+              maxLength={100}
+            />
+            <div className="discount-type-select">
+              <SelectMenu
+                value={discount.type}
+                onChange={(v) => updateExtra(key, discount.id, 'type', v)}
+                options={[
+                  { value: 'amount', label: '£' },
+                  { value: 'percent', label: '%' }
+                ]}
+                width="100%"
+              />
+            </div>
+            <input
+              type="number"
+              className="packs-input discount-value"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={discount.value}
+              onChange={(e) => updateExtra(key, discount.id, 'value', e.target.value)}
+              placeholder={discount.type === 'percent' ? '%' : '£'}
+              aria-label="Discount value"
+            />
+            <button className="btn btn-danger action-btn" onClick={() => removeExtra(key, discount.id)} aria-label="Remove discount">
+              <X size={18} />
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderPersonExtras = (personKey, flatmateLabel) => {
     const extrasKey = `${personKey}Extras`;
     const fullPriceKey = `${personKey}FullPriceExtras`;
@@ -71,8 +143,8 @@ export default function InvoiceForm({ data, onChange }) {
       <>
         <div className="glass-panel">
           <ExtrasInputList
-            title={`${name}'s 50% Extras`}
-            description={`Items split 50/50 with ${otherName(personKey)}.`}
+            title={`${name}'s ${pctFor(personKey)}% Extras`}
+            description={`Items split ${pctFor(personKey)}/${pctFor(personKey === 'flatmate1' ? 'flatmate2' : 'flatmate1')} with ${otherName(personKey)}.`}
             extras={data[extrasKey]}
             onAdd={() => addExtra(extrasKey)}
             onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
@@ -116,6 +188,29 @@ export default function InvoiceForm({ data, onChange }) {
             onChange={(val) => updateField('dueDate', val)}
           />
         </div>
+
+        <div className="form-group">
+          <label>Split — {names.flatmate1.trim() || 'Flatmate 1'}'s share</label>
+          <div className="split-row">
+            <div className="currency-input split-input">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputMode="decimal"
+                value={data.splitPercent ?? 50}
+                onChange={(e) => updateField('splitPercent', e.target.value)}
+                aria-label="Split percentage"
+              />
+              <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
+            </div>
+            <span className="split-readout">
+              {names.flatmate1.trim() || 'Flatmate 1'} {splitPct}% / {names.flatmate2.trim() || 'Flatmate 2'} {otherPct}%
+            </span>
+          </div>
+          <div className="field-hint">Applies to bills and shared extras.</div>
+        </div>
       </div>
 
       <div className="glass-panel">
@@ -139,26 +234,47 @@ export default function InvoiceForm({ data, onChange }) {
       </div>
 
       <div className="glass-panel">
-        <h3 className="invoice-section-title">Bills</h3>
+        <div className="extras-section-header">
+          <h3 className="invoice-section-title">Bills</h3>
+          <button className="btn btn-primary btn-sm" onClick={addBill}>
+            <Plus size={16} /> Add Bill
+          </button>
+        </div>
         {data.bills.map((bill) => (
-          <div key={bill.id} className="input-row">
+          <div key={bill.id} className="input-row extras-row">
             <input
               type="text"
               value={bill.thing}
               onChange={(e) => updateBill(bill.id, 'thing', e.target.value)}
-              placeholder="Bill Name"
+              placeholder="Bill name"
+              aria-label="Bill name"
+              maxLength={100}
             />
             <CurrencyInput
               value={bill.amount}
               onChange={(e) => updateBill(bill.id, 'amount', e.target.value)}
               placeholder="Amount"
+              aria-label="Bill amount"
             />
+            <button className="btn btn-danger action-btn" onClick={() => removeBill(bill.id)} aria-label="Remove bill">
+              <X size={18} />
+            </button>
           </div>
         ))}
       </div>
 
       {renderPersonExtras('flatmate1', 'Flatmate 1')}
       {renderPersonExtras('flatmate2', 'Flatmate 2')}
+
+      <div className="glass-panel">
+        <h3 className="invoice-section-title">Discounts</h3>
+        <p className="section-desc">
+          Money off a flatmate's total — e.g. a bill credit or something they already paid for.
+          £ takes a fixed amount off; % takes a percentage of their total off.
+        </p>
+        {renderPersonDiscounts('flatmate1', 'Flatmate 1')}
+        {renderPersonDiscounts('flatmate2', 'Flatmate 2')}
+      </div>
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Notes</h3>
