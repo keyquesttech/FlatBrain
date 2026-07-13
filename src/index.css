@@ -710,10 +710,16 @@ input[type="checkbox"]:focus-visible {
   padding-bottom: 0;
 }
 
-/* Sub-headers inside a card (e.g. per-flatmate groups in Discounts) */
-.invoice-section-title--sub {
+/* Field-style label (same look as the Period/Due Date labels) for headings
+   that sit outside a .form-group, e.g. the per-flatmate Discounts groups */
+.field-label {
+  display: block;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
 }
 
 .discount-group + .discount-group {

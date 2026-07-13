@@ -99,7 +99,7 @@ export default function InvoiceForm({ data, onChange }) {
     return (
       <div className="discount-group">
         <div className="extras-section-header">
-          <h4 className="invoice-section-title invoice-section-title--sub">{name}</h4>
+          <h4 className="field-label">{name}</h4>
           <button
             className="btn btn-primary btn-sm"
             onClick={() => updateField(key, [...list, { id: newId(), thing: '', type: 'amount', value: '' }])}
