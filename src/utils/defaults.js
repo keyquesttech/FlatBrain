@@ -1,3 +1,5 @@
+import { mergedExtras } from './calculations.js';
+
 export const DEFAULT_NAMES = { flatmate1: 'Flatmate1', flatmate2: 'Flatmate2' };
 
 export const DEFAULT_BANK = {
@@ -17,10 +19,12 @@ export function normalizeDraft(draft) {
     dueDate: draft.dueDate || '',
     names: { ...DEFAULT_NAMES, ...(draft.names || {}) },
     bills: draft.bills || [],
-    flatmate1Extras: draft.flatmate1Extras || [],
-    flatmate2Extras: draft.flatmate2Extras || [],
-    flatmate1FullPriceExtras: draft.flatmate1FullPriceExtras || [],
-    flatmate2FullPriceExtras: draft.flatmate2FullPriceExtras || [],
+    // Extras are one list per person with a per-item percent; legacy
+    // full-price lists are folded in as 100% items (see mergedExtras).
+    flatmate1Extras: mergedExtras(draft, 'flatmate1'),
+    flatmate2Extras: mergedExtras(draft, 'flatmate2'),
+    flatmate1FullPriceExtras: [],
+    flatmate2FullPriceExtras: [],
     flatmate1Note: draft.flatmate1Note || '',
     flatmate2Note: draft.flatmate2Note || '',
     flatmate1Discounts: draft.flatmate1Discounts || [],

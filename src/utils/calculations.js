@@ -17,6 +17,23 @@ export function sumExtras(extras) {
   return (extras || []).reduce((sum, e) => sum + extraTotal(e), 0);
 }
 
+// An extra's percent is the share of it charged to the OTHER flatmate
+// (the one who didn't add it). Defaults to 50; 100 = fully charged over.
+export function extraPercent(extra) {
+  const n = parseFloat(extra?.percent);
+  if (isNaN(n)) return 50;
+  return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
+}
+
+// A person's extras as one list with a normalized percent on every item.
+// Merges the legacy full-price list (pre-per-item-percent drafts/invoices)
+// in as 100% items, so old data keeps computing identically.
+export function mergedExtras(data, personKey) {
+  const own = (data[`${personKey}Extras`] || []).map((e) => ({ ...e, percent: extraPercent(e) }));
+  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => ({ ...e, percent: 100 }));
+  return [...own, ...legacyFull];
+}
+
 // The split percent is flatmate 1 (flatmate1)'s share of all shared costs;
 // flatmate 2 (flatmate2) pays the remainder. Invalid input falls back to 50/50.
 export function clampSplitPercent(value) {
@@ -44,14 +61,17 @@ export function calculateInvoice(data) {
   const flatmate1BillsShare = billsTotal * p;
   const flatmate2BillsShare = billsTotal * (1 - p);
 
-  const flatmate1Regular = sumExtras(data.flatmate1Extras);
-  const flatmate2Regular = sumExtras(data.flatmate2Extras);
-  const flatmate1FullPrice = sumExtras(data.flatmate1FullPriceExtras);
-  const flatmate2FullPrice = sumExtras(data.flatmate2FullPriceExtras);
+  // Each extra charges its percent to the other flatmate; the person who
+  // added it pays the remainder.
+  const flatmate1Items = mergedExtras(data, 'flatmate1');
+  const flatmate2Items = mergedExtras(data, 'flatmate2');
+  const shareOf = (items, isOwn) => items.reduce((sum, e) => {
+    const fraction = extraPercent(e) / 100;
+    return sum + extraTotal(e) * (isOwn ? 1 - fraction : fraction);
+  }, 0);
 
-  const regularTotal = flatmate1Regular + flatmate2Regular;
-  const flatmate1ShareExtras = regularTotal * p + flatmate2FullPrice;
-  const flatmate2ShareExtras = regularTotal * (1 - p) + flatmate1FullPrice;
+  const flatmate1ShareExtras = shareOf(flatmate1Items, true) + shareOf(flatmate2Items, false);
+  const flatmate2ShareExtras = shareOf(flatmate2Items, true) + shareOf(flatmate1Items, false);
 
   const flatmate1BeforeDiscounts = flatmate1BillsShare + flatmate1ShareExtras;
   const flatmate2BeforeDiscounts = flatmate2BillsShare + flatmate2ShareExtras;
@@ -68,10 +88,6 @@ export function calculateInvoice(data) {
     billsTotalEach: billsTotal / 2,
     flatmate1BillsShare,
     flatmate2BillsShare,
-    flatmate1Regular,
-    flatmate2Regular,
-    flatmate1FullPrice,
-    flatmate2FullPrice,
     flatmate1ShareExtras,
     flatmate2ShareExtras,
     flatmate1BeforeDiscounts,
@@ -84,21 +100,10 @@ export function calculateInvoice(data) {
   };
 }
 
+// A person's extras section on the invoice: the items they added, in full.
 export function getInvoiceExtrasSection(personKey, data) {
-  const otherKey = personKey === 'flatmate1' ? 'flatmate2' : 'flatmate1';
-  const regular = data[`${personKey}Extras`] || [];
-  const fromOtherFullPrice = (data[`${otherKey}FullPriceExtras`] || []).map((e) => ({
-    ...e,
-    fullPriceFrom: otherKey
-  }));
-
-  const items = [...regular, ...fromOtherFullPrice];
-  const regularTotal = sumExtras(regular);
-  const fullPriceTotal = sumExtras(fromOtherFullPrice);
-  const total = regularTotal + fullPriceTotal;
-  const totalEach = regularTotal / 2 + fullPriceTotal;
-
-  return { items, regularTotal, fullPriceTotal, total, totalEach };
+  const items = mergedExtras(data, personKey);
+  return { items, total: sumExtras(items) };
 }
 
 const GBP = new Intl.NumberFormat('en-GB', {
@@ -111,11 +116,6 @@ export function formatCurrency(amount) {
 }
 
 // Always shows the pack count and per-pack price, e.g. "Bulbs (2 × £7.50)".
-export function formatExtraLabel(extra, names) {
-  const packs = ` (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
-  if (extra.fullPriceFrom) {
-    const fromName = names[extra.fullPriceFrom] || extra.fullPriceFrom;
-    return `${extra.thing || 'Unnamed item'}${packs} (full price from ${fromName})`;
-  }
-  return `${extra.thing || 'Unnamed item'}${packs}`;
+export function formatExtraLabel(extra) {
+  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
 }
