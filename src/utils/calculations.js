@@ -100,12 +100,6 @@ export function calculateInvoice(data) {
   };
 }
 
-// A person's extras section on the invoice: the items they added, in full.
-export function getInvoiceExtrasSection(personKey, data) {
-  const items = mergedExtras(data, personKey);
-  return { items, total: sumExtras(items) };
-}
-
 const GBP = new Intl.NumberFormat('en-GB', {
   style: 'currency',
   currency: 'GBP'

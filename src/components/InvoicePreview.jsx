@@ -6,7 +6,7 @@ import {
   extraTotal,
   formatCurrency,
   formatExtraLabel,
-  getInvoiceExtrasSection,
+  mergedExtras,
   parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
@@ -28,10 +28,18 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const isEvenSplit = splitPercent === 50;
   const hasDiscounts = calc.matiasDiscountTotal !== 0 || calc.rekaDiscountTotal !== 0;
 
-  const extrasSections = [
-    { key: 'matias', name: names.matias, otherName: names.reka, ...getInvoiceExtrasSection('matias', data) },
-    { key: 'reka', name: names.reka, otherName: names.matias, ...getInvoiceExtrasSection('reka', data) }
-  ].filter((person) => person.items.length > 0);
+  // Each person's itemized extras: their remainder of items they added, plus
+  // their charged share of the other's items. Zero-share lines are omitted.
+  const extraLinesFor = (personKey) => {
+    const otherKey = personKey === 'matias' ? 'reka' : 'matias';
+    return [
+      ...mergedExtras(data, personKey).map((e) => ({
+        item: e,
+        pct: Math.round((100 - extraPercent(e)) * 100) / 100
+      })),
+      ...mergedExtras(data, otherKey).map((e) => ({ item: e, pct: extraPercent(e) }))
+    ].filter((line) => line.pct > 0);
+  };
 
   const dueSections = [
     {
@@ -39,7 +47,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.matias,
       pct: splitPercent,
       billsShare: matiasBillsShare,
-      shareExtras: calc.matiasShareExtras,
+      extraLines: extraLinesFor('matias'),
       before: calc.matiasBeforeDiscounts,
       discounts: data.matiasDiscounts || [],
       total: calc.matiasTotalDue,
@@ -50,7 +58,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.reka,
       pct: rekaPercent,
       billsShare: rekaBillsShare,
-      shareExtras: calc.rekaShareExtras,
+      extraLines: extraLinesFor('reka'),
       before: calc.rekaBeforeDiscounts,
       discounts: data.rekaDiscounts || [],
       total: calc.rekaTotalDue,
@@ -108,26 +116,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         </div>
       </div>
 
-      {extrasSections.length > 0 && (
-        <div className="invoice-section">
-          {extrasSections.map((person) => (
-            <div className="due-card due-card-extras" key={person.key}>
-              <div className="due-card-name">{person.name} Extras</div>
-              {person.items.map((extra) => (
-                <div className="due-line" key={extra.id}>
-                  <span>{formatExtraLabel(extra)} · {person.name} pays {formatCurrency(extraTotal(extra) * (100 - extraPercent(extra)) / 100)}</span>
-                  <span>{formatCurrency(extraTotal(extra))}</span>
-                </div>
-              ))}
-              <div className="due-card-total">
-                <span>Total</span>
-                <span>{formatCurrency(person.total)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="invoice-section">
         {dueSections.map((person) => (
           <div className="due-card due-card-summary" key={person.key}>
@@ -136,10 +124,12 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>Share of bills ({person.pct}%)</span>
               <span>{formatCurrency(person.billsShare)}</span>
             </div>
-            <div className="due-line">
-              <span>Share of extras</span>
-              <span>{formatCurrency(person.shareExtras)}</span>
-            </div>
+            {person.extraLines.map(({ item, pct }) => (
+              <div className="due-line" key={item.id}>
+                <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
+                <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
+              </div>
+            ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
               <div className="due-line" key={d.id}>
                 <span>{d.thing?.trim() || 'Discount'}{d.type === 'percent' ? ` (${parseAmount(d.value)}%)` : ''}</span>
