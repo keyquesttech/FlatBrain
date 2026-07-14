@@ -115,7 +115,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <div className="due-card-name">{person.name} Extras</div>
               {person.items.map((extra) => (
                 <div className="due-line" key={extra.id}>
-                  <span>{formatExtraLabel(extra)} · {person.otherName} pays {extraPercent(extra)}% of {formatCurrency(extraTotal(extra))}</span>
+                  <span>{formatExtraLabel(extra)} · {person.name} pays {formatCurrency(extraTotal(extra) * (100 - extraPercent(extra)) / 100)}</span>
                   <span>{formatCurrency(extraTotal(extra))}</span>
                 </div>
               ))}
