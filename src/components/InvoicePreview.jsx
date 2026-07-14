@@ -6,7 +6,7 @@ import {
   extraTotal,
   formatCurrency,
   formatExtraLabel,
-  getInvoiceExtrasSection,
+  mergedExtras,
   parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
@@ -28,10 +28,18 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const isEvenSplit = splitPercent === 50;
   const hasDiscounts = calc.flatmate1DiscountTotal !== 0 || calc.flatmate2DiscountTotal !== 0;
 
-  const extrasSections = [
-    { key: 'flatmate1', name: names.flatmate1, otherName: names.flatmate2, ...getInvoiceExtrasSection('flatmate1', data) },
-    { key: 'flatmate2', name: names.flatmate2, otherName: names.flatmate1, ...getInvoiceExtrasSection('flatmate2', data) }
-  ].filter((person) => person.items.length > 0);
+  // Each person's itemized extras: their remainder of items they added, plus
+  // their charged share of the other's items. Zero-share lines are omitted.
+  const extraLinesFor = (personKey) => {
+    const otherKey = personKey === 'flatmate1' ? 'flatmate2' : 'flatmate1';
+    return [
+      ...mergedExtras(data, personKey).map((e) => ({
+        item: e,
+        pct: Math.round((100 - extraPercent(e)) * 100) / 100
+      })),
+      ...mergedExtras(data, otherKey).map((e) => ({ item: e, pct: extraPercent(e) }))
+    ].filter((line) => line.pct > 0);
+  };
 
   const dueSections = [
     {
@@ -39,7 +47,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.flatmate1,
       pct: splitPercent,
       billsShare: flatmate1BillsShare,
-      shareExtras: calc.flatmate1ShareExtras,
+      extraLines: extraLinesFor('flatmate1'),
       before: calc.flatmate1BeforeDiscounts,
       discounts: data.flatmate1Discounts || [],
       total: calc.flatmate1TotalDue,
@@ -50,7 +58,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.flatmate2,
       pct: flatmate2Percent,
       billsShare: flatmate2BillsShare,
-      shareExtras: calc.flatmate2ShareExtras,
+      extraLines: extraLinesFor('flatmate2'),
       before: calc.flatmate2BeforeDiscounts,
       discounts: data.flatmate2Discounts || [],
       total: calc.flatmate2TotalDue,
@@ -108,26 +116,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         </div>
       </div>
 
-      {extrasSections.length > 0 && (
-        <div className="invoice-section">
-          {extrasSections.map((person) => (
-            <div className="due-card due-card-extras" key={person.key}>
-              <div className="due-card-name">{person.name} Extras</div>
-              {person.items.map((extra) => (
-                <div className="due-line" key={extra.id}>
-                  <span>{formatExtraLabel(extra)} · {person.name} pays {formatCurrency(extraTotal(extra) * (100 - extraPercent(extra)) / 100)}</span>
-                  <span>{formatCurrency(extraTotal(extra))}</span>
-                </div>
-              ))}
-              <div className="due-card-total">
-                <span>Total</span>
-                <span>{formatCurrency(person.total)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="invoice-section">
         {dueSections.map((person) => (
           <div className="due-card due-card-summary" key={person.key}>
@@ -136,10 +124,12 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>Share of bills ({person.pct}%)</span>
               <span>{formatCurrency(person.billsShare)}</span>
             </div>
-            <div className="due-line">
-              <span>Share of extras</span>
-              <span>{formatCurrency(person.shareExtras)}</span>
-            </div>
+            {person.extraLines.map(({ item, pct }) => (
+              <div className="due-line" key={item.id}>
+                <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
+                <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
+              </div>
+            ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
               <div className="due-line" key={d.id}>
                 <span>{d.thing?.trim() || 'Discount'}{d.type === 'percent' ? ` (${parseAmount(d.value)}%)` : ''}</span>

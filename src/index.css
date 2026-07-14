@@ -932,19 +932,6 @@ input[type="checkbox"]:focus-visible {
   border-top-color: rgba(212, 255, 63, 0.3);
 }
 
-/* Extras — pink */
-.due-card-extras {
-  background: rgba(255, 95, 212, 0.08);
-  border-color: rgba(255, 95, 212, 0.28);
-}
-.due-card-extras .due-card-name,
-.due-card-extras .due-card-total {
-  color: var(--pink-soft);
-}
-.due-card-extras .due-card-total {
-  border-top-color: rgba(255, 95, 212, 0.32);
-}
-
 /* Per-person summary — blue */
 .due-card-summary {
   background: rgba(120, 190, 255, 0.08);
