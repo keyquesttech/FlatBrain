@@ -210,7 +210,7 @@ export default function InvoiceForm({ data, onChange }) {
         </div>
 
         <div className="form-group split-group">
-          <label>Split</label>
+          <label>Bills split</label>
           <div className="split-row">
             <div className="split-person-select">
               <SelectMenu
