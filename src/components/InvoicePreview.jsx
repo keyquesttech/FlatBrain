@@ -118,7 +118,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
       <div className="invoice-section">
         {dueSections.map((person) => (
-          <div className="due-card due-card-summary" key={person.key}>
+          <div className={`due-card due-card-summary due-card-summary-${person.key}`} key={person.key}>
             <div className="due-card-name">{person.name} Total</div>
             <div className="due-line">
               <span>Share of bills ({person.pct}%)</span>
@@ -151,7 +151,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         </div>
 
         {dueSections.filter((person) => person.note?.trim()).map((person) => (
-          <div className="due-card due-card-note" key={`${person.key}-note`}>
+          <div className={`due-card due-card-note due-card-note-${person.key}`} key={`${person.key}-note`}>
             <div className="due-card-name">{person.name} Note</div>
             <p className="due-note-text">{person.note}</p>
           </div>

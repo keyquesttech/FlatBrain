@@ -932,27 +932,48 @@ input[type="checkbox"]:focus-visible {
   border-top-color: rgba(212, 255, 63, 0.3);
 }
 
-/* Per-person summary — blue */
-.due-card-summary {
+/* Per-person totals — flatmate 1 blue, flatmate 2 violet */
+.due-card-summary-matias {
   background: rgba(120, 190, 255, 0.08);
   border-color: rgba(120, 190, 255, 0.3);
 }
-.due-card-summary .due-card-name,
-.due-card-summary .due-card-total {
+.due-card-summary-matias .due-card-name,
+.due-card-summary-matias .due-card-total {
   color: var(--blue-soft);
 }
-.due-card-summary .due-card-total {
+.due-card-summary-matias .due-card-total {
   border-top-color: rgba(120, 190, 255, 0.35);
 }
 
-/* Flatmate notes — amber, matching the bank details card */
-.due-card-note {
-  background: rgba(255, 200, 80, 0.08);
-  border-color: rgba(255, 200, 80, 0.28);
+.due-card-summary-reka {
+  background: rgba(167, 139, 250, 0.09);
+  border-color: rgba(167, 139, 250, 0.35);
 }
-.due-card-note .due-card-name {
-  color: var(--amber-soft);
+.due-card-summary-reka .due-card-name,
+.due-card-summary-reka .due-card-total {
+  color: #c4b0ff;
 }
+.due-card-summary-reka .due-card-total {
+  border-top-color: rgba(167, 139, 250, 0.4);
+}
+
+/* Flatmate notes — flatmate 1 teal, flatmate 2 orange */
+.due-card-note-matias {
+  background: rgba(75, 214, 182, 0.08);
+  border-color: rgba(75, 214, 182, 0.3);
+}
+.due-card-note-matias .due-card-name {
+  color: #7fe6cd;
+}
+
+.due-card-note-reka {
+  background: rgba(255, 138, 95, 0.08);
+  border-color: rgba(255, 138, 95, 0.3);
+}
+.due-card-note-reka .due-card-name {
+  color: #ffab8a;
+}
+
 .due-note-text {
   font-size: 0.85rem;
   color: var(--text-muted);
