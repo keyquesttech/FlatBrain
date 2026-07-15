@@ -164,9 +164,9 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         ))}
 
         <div className="due-card due-card-total-grand">
-          <div className="due-line">
+          <div className="due-card-total grand-total-line">
             <span>Total extras</span>
-            <span>{formatCurrency(calc.extrasTotal)}</span>
+            <span className="grand-total-amount">{formatCurrency(calc.extrasTotal)}</span>
           </div>
           <div className="due-card-total grand-total-line">
             <span>Grand total (bills + all extras)</span>
