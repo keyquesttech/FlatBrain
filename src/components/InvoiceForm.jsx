@@ -248,7 +248,7 @@ export default function InvoiceForm({ data, onChange }) {
           </button>
         </div>
         <p className="section-desc">
-          Tick a bill to discount it, then pick who it's discounted from — N/A discounts it from the whole invoice.
+          Tick a bill to discount it, then pick who it's discounted from — All discounts it from the whole invoice.
         </p>
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
@@ -280,7 +280,7 @@ export default function InvoiceForm({ data, onChange }) {
                   value={bill.discountedFrom || 'na'}
                   onChange={(v) => updateBill(bill.id, 'discountedFrom', v)}
                   options={[
-                    { value: 'na', label: 'N/A' },
+                    { value: 'na', label: 'All' },
                     { value: 'flatmate1', label: names.flatmate1.trim() || 'Flatmate 1' },
                     { value: 'flatmate2', label: names.flatmate2.trim() || 'Flatmate 2' }
                   ]}
