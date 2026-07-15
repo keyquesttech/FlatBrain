@@ -57,7 +57,12 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  const billsTotal = (data.bills || []).reduce((sum, b) => sum + parseAmount(b.amount), 0);
+  // Bills ticked as discounted stay listed on the invoice but are excluded
+  // from the totals and both flatmates' shares.
+  const billsTotal = (data.bills || []).reduce(
+    (sum, b) => (b.discounted ? sum : sum + parseAmount(b.amount)),
+    0
+  );
   const matiasBillsShare = billsTotal * p;
   const rekaBillsShare = billsTotal * (1 - p);
 

@@ -5,7 +5,7 @@ function billsTotalOf(invoice) {
     const n = parseFloat(v);
     return isNaN(n) ? 0 : n;
   };
-  return (invoice.bills || []).reduce((sum, b) => sum + parse(b.amount), 0);
+  return (invoice.bills || []).reduce((sum, b) => (b.discounted ? sum : sum + parse(b.amount)), 0);
 }
 
 export default function SpendingChart({ history }) {

@@ -94,8 +94,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         <div className="due-card due-card-bills">
           <div className="due-card-name">Bills</div>
           {data.bills.map((bill) => (
-            <div className="due-line" key={bill.id}>
-              <span>{bill.thing}</span>
+            <div className={`due-line${bill.discounted ? ' due-line-discounted' : ''}`} key={bill.id}>
+              <span>{bill.thing}{bill.discounted ? ' · discounted' : ''}</span>
               <span>{formatCurrency(bill.amount)}</span>
             </div>
           ))}
