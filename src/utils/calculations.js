@@ -63,20 +63,9 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  // Discounted bills stay listed on the invoice but aren't charged: with
-  // discountedFrom 'na' (or unset) the whole bill is waived; with a flatmate
-  // selected only that person's share is waived — the other still pays theirs.
-  let matiasBillsShare = 0;
-  let rekaBillsShare = 0;
-  (data.bills || []).forEach((b) => {
-    const amount = parseAmount(b.amount);
-    const from = b.discounted ? (b.discountedFrom || 'na') : null;
-    if (from !== 'na' && from !== 'matias') matiasBillsShare += amount * p;
-    if (from !== 'na' && from !== 'reka') rekaBillsShare += amount * (1 - p);
-  });
-  matiasBillsShare = round2(matiasBillsShare);
-  rekaBillsShare = round2(rekaBillsShare);
-  const billsTotal = round2(matiasBillsShare + rekaBillsShare);
+  const billsTotal = round2((data.bills || []).reduce((sum, b) => sum + parseAmount(b.amount), 0));
+  const matiasBillsShare = round2(billsTotal * p);
+  const rekaBillsShare = round2(billsTotal * (1 - p));
 
   // Each extra charges its percent to the other flatmate; the person who
   // added it pays the remainder.

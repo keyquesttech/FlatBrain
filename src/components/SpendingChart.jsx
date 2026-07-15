@@ -5,10 +5,7 @@ function billsTotalOf(invoice) {
     const n = parseFloat(v);
     return isNaN(n) ? 0 : n;
   };
-  // Skip bills discounted from the whole invoice; partially discounted bills
-  // (waived for one flatmate) were still charged, so they count.
-  const fullyDiscounted = (b) => b.discounted && (!b.discountedFrom || b.discountedFrom === 'na');
-  return (invoice.bills || []).reduce((sum, b) => (fullyDiscounted(b) ? sum : sum + parse(b.amount)), 0);
+  return (invoice.bills || []).reduce((sum, b) => sum + parse(b.amount), 0);
 }
 
 export default function SpendingChart({ history }) {
