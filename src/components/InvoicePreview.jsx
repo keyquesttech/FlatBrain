@@ -23,7 +23,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     rekaBillsShare
   } = calc;
   const rekaPercent = Math.round((100 - splitPercent) * 100) / 100;
-  const isEvenSplit = splitPercent === 50;
   const hasBillDiscounts = calc.billDiscountLines.length > 0;
   // People with a waived bill get an "after discounts" note on their share line
   const billsDiscountedFor = (personKey) =>
@@ -106,28 +105,18 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               </div>
             );
           })}
-          <div className="due-card-total">
-            <span>Bills total</span>
-            <span>{formatCurrency(calc.billsRawTotal)}</span>
+          <div className="due-card-total due-card-total-secondary due-card-total-first">
+            <span>{names.matias} pays{hasBillDiscounts ? '' : ` (${splitPercent}%)`}</span>
+            <span>{formatCurrency(matiasBillsShare)}</span>
           </div>
-          {hasBillDiscounts && (
-            <div className="due-card-total due-card-total-secondary">
-              <span>Total charged</span>
-              <span>{formatCurrency(billsTotal)}</span>
-            </div>
-          )}
-          {(hasBillDiscounts || !isEvenSplit || matiasBillsShare !== rekaBillsShare) && (
-            <>
-              <div className="due-card-total due-card-total-secondary">
-                <span>{names.matias} pays{hasBillDiscounts ? '' : ` (${splitPercent}%)`}</span>
-                <span>{formatCurrency(matiasBillsShare)}</span>
-              </div>
-              <div className="due-card-total due-card-total-secondary">
-                <span>{names.reka} pays{hasBillDiscounts ? '' : ` (${rekaPercent}%)`}</span>
-                <span>{formatCurrency(rekaBillsShare)}</span>
-              </div>
-            </>
-          )}
+          <div className="due-card-total due-card-total-secondary">
+            <span>{names.reka} pays{hasBillDiscounts ? '' : ` (${rekaPercent}%)`}</span>
+            <span>{formatCurrency(rekaBillsShare)}</span>
+          </div>
+          <div className="due-card-total">
+            <span>Bills total{hasBillDiscounts ? ' (after discounts)' : ''}</span>
+            <span>{formatCurrency(billsTotal)}</span>
+          </div>
         </div>
       </div>
 
@@ -185,7 +174,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       <div className="invoice-section">
         <div className="due-card due-card-bank">
           <div className="due-card-name">Bank Details</div>
-          <p className="due-card-hint">Send your Total due to this account.</p>
           <div className="due-line due-line-text">
             <span>Name:</span>
             <span>{bank.name}</span>
@@ -207,6 +195,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
       <div className="invoice-footer">
         <p>Thank you for settling the bills promptly!</p>
+        <p>Send your Total due to this account.</p>
         {data.dueDate && (
           <p className="invoice-due-date">
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}

@@ -967,6 +967,14 @@ input[type="checkbox"]:focus-visible {
   margin-top: 2px;
 }
 
+/* First line of a totals group: keeps the divider above it that
+   due-card-total-secondary strips. */
+.due-card-total-first {
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
 /* Bills ticked as discounted: visible but clearly not charged */
 .due-line-discounted {
   opacity: 0.6;
@@ -1063,12 +1071,6 @@ input[type="checkbox"]:focus-visible {
 }
 .due-card-bank .due-card-name {
   color: var(--amber-soft);
-}
-
-.due-card-hint {
-  font-size: 0.78rem;
-  color: var(--text-faint);
-  margin: -4px 0 8px;
 }
 
 /* Grand total — gradient tint + gradient figure */
