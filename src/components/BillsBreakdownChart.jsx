@@ -30,6 +30,7 @@ export default function BillsBreakdownChart({ history, months }) {
   const monthData = periods.map((inv) => {
     const totals = {};
     (inv.bills || []).forEach((b) => {
+      if (b.discounted) return;
       const name = (b.thing || '').trim() || 'Unnamed';
       totals[name] = (totals[name] || 0) + parseAmt(b.amount);
       if (!categories.includes(name)) categories.push(name);

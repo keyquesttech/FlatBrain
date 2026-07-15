@@ -724,6 +724,43 @@ input[type="checkbox"]:focus-visible {
   flex: 0 0 96px;
 }
 
+/* Standalone checkbox matching the app's checkbox styling (bill rows) */
+.neon-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  border: 2px solid var(--border-soft);
+  border-radius: 6px;
+  background-color: var(--pill-bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.neon-check:checked {
+  background: linear-gradient(135deg, var(--lime), var(--pink));
+  border-color: transparent;
+}
+
+.neon-check:checked::after {
+  content: '';
+  position: absolute;
+  left: 0.33rem;
+  top: 0.1rem;
+  width: 0.3rem;
+  height: 0.6rem;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.neon-check:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 /* Per-item percent input in extras rows */
 .percent-input {
   flex: 0 0 84px;
@@ -917,6 +954,15 @@ input[type="checkbox"]:focus-visible {
   border-top: none;
   padding-top: 0;
   margin-top: 2px;
+}
+
+/* Bills ticked as discounted: visible but clearly not charged */
+.due-line-discounted {
+  opacity: 0.6;
+}
+
+.due-line-discounted > span:last-child {
+  text-decoration: line-through;
 }
 
 /* Invoice extras item: main line + smaller explainer beneath it */
@@ -1502,6 +1548,11 @@ input[type="checkbox"]:focus-visible {
 
   .extras-row > input[type="text"] {
     flex: 1 1 100%;
+  }
+
+  /* Bill rows: the checkbox shares the first line with the name */
+  .extras-row.bill-row > input[type="text"] {
+    flex: 1 1 calc(100% - 1.25rem - 10px);
   }
 
   .invoice-meta {
