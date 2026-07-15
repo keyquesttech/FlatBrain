@@ -3,6 +3,12 @@ export function parseAmount(val) {
   return isNaN(num) ? 0 : num;
 }
 
+// All computed amounts round to whole pence (0.00) so displayed lines and
+// totals always agree.
+export function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
 export function packsOf(extra) {
   const n = parseInt(extra?.packs, 10);
   return isNaN(n) || n < 1 ? 1 : n;
@@ -57,14 +63,20 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  // Bills ticked as discounted stay listed on the invoice but are excluded
-  // from the totals and both flatmates' shares.
-  const billsTotal = (data.bills || []).reduce(
-    (sum, b) => (b.discounted ? sum : sum + parseAmount(b.amount)),
-    0
-  );
-  const matiasBillsShare = billsTotal * p;
-  const rekaBillsShare = billsTotal * (1 - p);
+  // Discounted bills stay listed on the invoice but aren't charged: with
+  // discountedFrom 'na' (or unset) the whole bill is waived; with a flatmate
+  // selected only that person's share is waived — the other still pays theirs.
+  let matiasBillsShare = 0;
+  let rekaBillsShare = 0;
+  (data.bills || []).forEach((b) => {
+    const amount = parseAmount(b.amount);
+    const from = b.discounted ? (b.discountedFrom || 'na') : null;
+    if (from !== 'na' && from !== 'matias') matiasBillsShare += amount * p;
+    if (from !== 'na' && from !== 'reka') rekaBillsShare += amount * (1 - p);
+  });
+  matiasBillsShare = round2(matiasBillsShare);
+  rekaBillsShare = round2(rekaBillsShare);
+  const billsTotal = round2(matiasBillsShare + rekaBillsShare);
 
   // Each extra charges its percent to the other flatmate; the person who
   // added it pays the remainder.
@@ -75,22 +87,22 @@ export function calculateInvoice(data) {
     return sum + extraTotal(e) * (isOwn ? 1 - fraction : fraction);
   }, 0);
 
-  const matiasShareExtras = shareOf(matiasItems, true) + shareOf(rekaItems, false);
-  const rekaShareExtras = shareOf(rekaItems, true) + shareOf(matiasItems, false);
+  const matiasShareExtras = round2(shareOf(matiasItems, true) + shareOf(rekaItems, false));
+  const rekaShareExtras = round2(shareOf(rekaItems, true) + shareOf(matiasItems, false));
 
-  const matiasBeforeDiscounts = matiasBillsShare + matiasShareExtras;
-  const rekaBeforeDiscounts = rekaBillsShare + rekaShareExtras;
+  const matiasBeforeDiscounts = round2(matiasBillsShare + matiasShareExtras);
+  const rekaBeforeDiscounts = round2(rekaBillsShare + rekaShareExtras);
 
-  const matiasDiscountTotal = sumDiscounts(data.matiasDiscounts, matiasBeforeDiscounts);
-  const rekaDiscountTotal = sumDiscounts(data.rekaDiscounts, rekaBeforeDiscounts);
+  const matiasDiscountTotal = round2(sumDiscounts(data.matiasDiscounts, matiasBeforeDiscounts));
+  const rekaDiscountTotal = round2(sumDiscounts(data.rekaDiscounts, rekaBeforeDiscounts));
 
-  const matiasTotalDue = matiasBeforeDiscounts - matiasDiscountTotal;
-  const rekaTotalDue = rekaBeforeDiscounts - rekaDiscountTotal;
+  const matiasTotalDue = round2(matiasBeforeDiscounts - matiasDiscountTotal);
+  const rekaTotalDue = round2(rekaBeforeDiscounts - rekaDiscountTotal);
 
   return {
     splitPercent,
     billsTotal,
-    billsTotalEach: billsTotal / 2,
+    billsTotalEach: round2(billsTotal / 2),
     matiasBillsShare,
     rekaBillsShare,
     matiasShareExtras,
@@ -101,7 +113,7 @@ export function calculateInvoice(data) {
     rekaDiscountTotal,
     matiasTotalDue,
     rekaTotalDue,
-    netTotal: matiasTotalDue + rekaTotalDue
+    netTotal: round2(matiasTotalDue + rekaTotalDue)
   };
 }
 

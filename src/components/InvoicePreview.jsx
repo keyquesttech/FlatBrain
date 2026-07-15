@@ -93,17 +93,23 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       <div className="invoice-section">
         <div className="due-card due-card-bills">
           <div className="due-card-name">Bills</div>
-          {data.bills.map((bill) => (
-            <div className={`due-line${bill.discounted ? ' due-line-discounted' : ''}`} key={bill.id}>
-              <span>{bill.thing}{bill.discounted ? ' · discounted' : ''}</span>
-              <span>{formatCurrency(bill.amount)}</span>
-            </div>
-          ))}
+          {data.bills.map((bill) => {
+            const from = bill.discounted ? (bill.discountedFrom || 'na') : null;
+            return (
+              <div className={`due-line${from === 'na' ? ' due-line-discounted' : ''}`} key={bill.id}>
+                <span>
+                  {bill.thing}
+                  {from === 'na' ? ' · discounted' : from ? ` · discounted for ${names[from]}` : ''}
+                </span>
+                <span>{formatCurrency(bill.amount)}</span>
+              </div>
+            );
+          })}
           <div className="due-card-total">
             <span>Bills total</span>
             <span>{formatCurrency(billsTotal)}</span>
           </div>
-          {isEvenSplit ? (
+          {isEvenSplit && matiasBillsShare === rekaBillsShare ? (
             <div className="due-card-total due-card-total-secondary">
               <span>Bills total each</span>
               <span>{formatCurrency(billsTotalEach)}</span>

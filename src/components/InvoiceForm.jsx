@@ -247,7 +247,9 @@ export default function InvoiceForm({ data, onChange }) {
             <Plus size={16} /> Add Bill
           </button>
         </div>
-        <p className="section-desc">Tick a bill to discount it from this month's invoice.</p>
+        <p className="section-desc">
+          Tick a bill to discount it, then pick who it's discounted from — N/A discounts it from the whole invoice.
+        </p>
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
             <input
@@ -272,6 +274,20 @@ export default function InvoiceForm({ data, onChange }) {
               placeholder="Amount"
               aria-label="Bill amount"
             />
+            {bill.discounted && (
+              <div className="bill-discount-select" title="Who this bill is discounted from">
+                <SelectMenu
+                  value={bill.discountedFrom || 'na'}
+                  onChange={(v) => updateBill(bill.id, 'discountedFrom', v)}
+                  options={[
+                    { value: 'na', label: 'N/A' },
+                    { value: 'matias', label: names.matias.trim() || 'Flatmate 1' },
+                    { value: 'reka', label: names.reka.trim() || 'Flatmate 2' }
+                  ]}
+                  width="100%"
+                />
+              </div>
+            )}
             <button className="btn btn-danger action-btn" onClick={() => removeBill(bill.id)} aria-label="Remove bill">
               <X size={18} />
             </button>
