@@ -3,6 +3,12 @@ export function parseAmount(val) {
   return isNaN(num) ? 0 : num;
 }
 
+// All computed amounts round to whole pence (0.00) so displayed lines and
+// totals always agree.
+export function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
 export function packsOf(extra) {
   const n = parseInt(extra?.packs, 10);
   return isNaN(n) || n < 1 ? 1 : n;
@@ -57,14 +63,20 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  // Bills ticked as discounted stay listed on the invoice but are excluded
-  // from the totals and both flatmates' shares.
-  const billsTotal = (data.bills || []).reduce(
-    (sum, b) => (b.discounted ? sum : sum + parseAmount(b.amount)),
-    0
-  );
-  const flatmate1BillsShare = billsTotal * p;
-  const flatmate2BillsShare = billsTotal * (1 - p);
+  // Discounted bills stay listed on the invoice but aren't charged: with
+  // discountedFrom 'na' (or unset) the whole bill is waived; with a flatmate
+  // selected only that person's share is waived — the other still pays theirs.
+  let flatmate1BillsShare = 0;
+  let flatmate2BillsShare = 0;
+  (data.bills || []).forEach((b) => {
+    const amount = parseAmount(b.amount);
+    const from = b.discounted ? (b.discountedFrom || 'na') : null;
+    if (from !== 'na' && from !== 'flatmate1') flatmate1BillsShare += amount * p;
+    if (from !== 'na' && from !== 'flatmate2') flatmate2BillsShare += amount * (1 - p);
+  });
+  flatmate1BillsShare = round2(flatmate1BillsShare);
+  flatmate2BillsShare = round2(flatmate2BillsShare);
+  const billsTotal = round2(flatmate1BillsShare + flatmate2BillsShare);
 
   // Each extra charges its percent to the other flatmate; the person who
   // added it pays the remainder.
@@ -75,22 +87,22 @@ export function calculateInvoice(data) {
     return sum + extraTotal(e) * (isOwn ? 1 - fraction : fraction);
   }, 0);
 
-  const flatmate1ShareExtras = shareOf(flatmate1Items, true) + shareOf(flatmate2Items, false);
-  const flatmate2ShareExtras = shareOf(flatmate2Items, true) + shareOf(flatmate1Items, false);
+  const flatmate1ShareExtras = round2(shareOf(flatmate1Items, true) + shareOf(flatmate2Items, false));
+  const flatmate2ShareExtras = round2(shareOf(flatmate2Items, true) + shareOf(flatmate1Items, false));
 
-  const flatmate1BeforeDiscounts = flatmate1BillsShare + flatmate1ShareExtras;
-  const flatmate2BeforeDiscounts = flatmate2BillsShare + flatmate2ShareExtras;
+  const flatmate1BeforeDiscounts = round2(flatmate1BillsShare + flatmate1ShareExtras);
+  const flatmate2BeforeDiscounts = round2(flatmate2BillsShare + flatmate2ShareExtras);
 
-  const flatmate1DiscountTotal = sumDiscounts(data.flatmate1Discounts, flatmate1BeforeDiscounts);
-  const flatmate2DiscountTotal = sumDiscounts(data.flatmate2Discounts, flatmate2BeforeDiscounts);
+  const flatmate1DiscountTotal = round2(sumDiscounts(data.flatmate1Discounts, flatmate1BeforeDiscounts));
+  const flatmate2DiscountTotal = round2(sumDiscounts(data.flatmate2Discounts, flatmate2BeforeDiscounts));
 
-  const flatmate1TotalDue = flatmate1BeforeDiscounts - flatmate1DiscountTotal;
-  const flatmate2TotalDue = flatmate2BeforeDiscounts - flatmate2DiscountTotal;
+  const flatmate1TotalDue = round2(flatmate1BeforeDiscounts - flatmate1DiscountTotal);
+  const flatmate2TotalDue = round2(flatmate2BeforeDiscounts - flatmate2DiscountTotal);
 
   return {
     splitPercent,
     billsTotal,
-    billsTotalEach: billsTotal / 2,
+    billsTotalEach: round2(billsTotal / 2),
     flatmate1BillsShare,
     flatmate2BillsShare,
     flatmate1ShareExtras,
@@ -101,7 +113,7 @@ export function calculateInvoice(data) {
     flatmate2DiscountTotal,
     flatmate1TotalDue,
     flatmate2TotalDue,
-    netTotal: flatmate1TotalDue + flatmate2TotalDue
+    netTotal: round2(flatmate1TotalDue + flatmate2TotalDue)
   };
 }
 

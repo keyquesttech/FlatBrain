@@ -724,6 +724,11 @@ input[type="checkbox"]:focus-visible {
   flex: 0 0 96px;
 }
 
+/* Who-is-this-bill-discounted-from selector */
+.bill-discount-select {
+  flex: 0 0 112px;
+}
+
 /* Standalone checkbox matching the app's checkbox styling (bill rows) */
 .neon-check {
   appearance: none;
