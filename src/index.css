@@ -1071,19 +1071,6 @@ input[type="checkbox"]:focus-visible {
   margin: -4px 0 8px;
 }
 
-/* Total extras — pink tint */
-.due-card-extras-total {
-  background: rgba(255, 95, 212, 0.08);
-  border-color: rgba(255, 95, 212, 0.28);
-}
-
-.extras-total-line {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
-  color: var(--pink-soft);
-}
-
 /* Grand total — gradient tint + gradient figure */
 .due-card-total-grand {
   background: linear-gradient(135deg, rgba(255, 95, 212, 0.2), rgba(212, 255, 63, 0.14));
