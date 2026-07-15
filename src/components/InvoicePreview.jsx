@@ -19,7 +19,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const {
     splitPercent,
     billsTotal,
-    billsTotalEach,
     matiasBillsShare,
     rekaBillsShare,
     netTotal
@@ -103,12 +102,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             <span>Bills total</span>
             <span>{formatCurrency(billsTotal)}</span>
           </div>
-          {isEvenSplit ? (
-            <div className="due-card-total due-card-total-secondary">
-              <span>Bills total each</span>
-              <span>{formatCurrency(billsTotalEach)}</span>
-            </div>
-          ) : (
+          {!isEvenSplit && (
             <>
               <div className="due-card-total due-card-total-secondary">
                 <span>{names.matias} share ({splitPercent}%)</span>
