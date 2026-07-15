@@ -724,6 +724,47 @@ input[type="checkbox"]:focus-visible {
   flex: 0 0 96px;
 }
 
+/* Who-is-this-bill-discounted-from selector */
+.bill-discount-select {
+  flex: 0 0 112px;
+}
+
+/* Standalone checkbox matching the app's checkbox styling (bill rows) */
+.neon-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  border: 2px solid var(--border-soft);
+  border-radius: 6px;
+  background-color: var(--pill-bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.neon-check:checked {
+  background: linear-gradient(135deg, var(--lime), var(--pink));
+  border-color: transparent;
+}
+
+.neon-check:checked::after {
+  content: '';
+  position: absolute;
+  left: 0.33rem;
+  top: 0.1rem;
+  width: 0.3rem;
+  height: 0.6rem;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.neon-check:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
 
 /* Per-item percent input in extras rows */
 .percent-input {
@@ -920,6 +961,14 @@ input[type="checkbox"]:focus-visible {
   margin-top: 2px;
 }
 
+/* Bills ticked as discounted: visible but clearly not charged */
+.due-line-discounted {
+  opacity: 0.6;
+}
+
+.due-line-discounted > span:last-child {
+  text-decoration: line-through;
+}
 
 /* Invoice extras item: main line + smaller explainer beneath it */
 .due-item {
@@ -1572,6 +1621,17 @@ input[type="checkbox"]:focus-visible {
   .extras-row .discount-type-select {
     order: 4;
     flex: 1 1 36%;
+  }
+
+  /* Bill rows: checkbox + name + remove on line 1; amount (and the
+     discounted-from selector when shown) on line 2 */
+  .extras-row.bill-row > input[type="text"] {
+    flex: 1 1 calc(100% - 52px - 30px);
+  }
+
+  .extras-row .bill-discount-select {
+    order: 5;
+    flex: 1 1 40%;
   }
 
   .invoice-meta {
