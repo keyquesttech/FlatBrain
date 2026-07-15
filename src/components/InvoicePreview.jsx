@@ -26,6 +26,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   const rekaPercent = Math.round((100 - splitPercent) * 100) / 100;
   const isEvenSplit = splitPercent === 50;
   const hasDiscounts = calc.matiasDiscountTotal !== 0 || calc.rekaDiscountTotal !== 0;
+  const hasBillDiscounts = calc.billDiscountLines.length > 0;
+  // People with a waived bill get an "after discounts" note on their share line
+  const billsDiscountedFor = (personKey) =>
+    calc.billDiscountLines.some((line) => line.from === 'na' || line.from === personKey);
 
   // Each person's itemized extras: their remainder of items they added, plus
   // their charged share of the other's items. Zero-share lines are omitted.
@@ -106,16 +110,32 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           })}
           <div className="due-card-total">
             <span>Bills total</span>
-            <span>{formatCurrency(billsTotal)}</span>
+            <span>{formatCurrency(calc.billsRawTotal)}</span>
           </div>
-          {(!isEvenSplit || matiasBillsShare !== rekaBillsShare) && (
+          {calc.billDiscountLines.map((line) => (
+            <div className="due-card-total due-card-total-secondary" key={line.id}>
+              <span>
+                Discounted: {line.from === 'na'
+                  ? (line.thing || 'bill')
+                  : `${names[line.from]}'s share of ${line.thing || 'bill'} (${line.from === 'matias' ? splitPercent : rekaPercent}%)`}
+              </span>
+              <span>−{formatCurrency(line.waived)}</span>
+            </div>
+          ))}
+          {hasBillDiscounts && (
+            <div className="due-card-total due-card-total-secondary">
+              <span>Total charged</span>
+              <span>{formatCurrency(billsTotal)}</span>
+            </div>
+          )}
+          {(hasBillDiscounts || !isEvenSplit || matiasBillsShare !== rekaBillsShare) && (
             <>
               <div className="due-card-total due-card-total-secondary">
-                <span>{names.matias} share ({splitPercent}%)</span>
+                <span>{names.matias} pays{hasBillDiscounts ? '' : ` (${splitPercent}%)`}</span>
                 <span>{formatCurrency(matiasBillsShare)}</span>
               </div>
               <div className="due-card-total due-card-total-secondary">
-                <span>{names.reka} share ({rekaPercent}%)</span>
+                <span>{names.reka} pays{hasBillDiscounts ? '' : ` (${rekaPercent}%)`}</span>
                 <span>{formatCurrency(rekaBillsShare)}</span>
               </div>
             </>
@@ -128,7 +148,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className={`due-card due-card-summary due-card-summary-${person.key}`} key={person.key}>
             <div className="due-card-name">{person.name} Total</div>
             <div className="due-line">
-              <span>Share of bills ({person.pct}%)</span>
+              <span>Share of bills ({person.pct}%{billsDiscountedFor(person.key) ? ', after discounts' : ''})</span>
               <span>{formatCurrency(person.billsShare)}</span>
             </div>
             {person.extraLines.map(({ item, pct, addedBy }) => (

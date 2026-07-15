@@ -66,16 +66,40 @@ export function calculateInvoice(data) {
   // Discounted bills stay listed on the invoice but aren't charged: with
   // discountedFrom 'na' (or unset) the whole bill is waived; with a flatmate
   // selected only that person's share is waived — the other still pays theirs.
+  // Per bill, one part is rounded to pence and the rest derived by
+  // subtraction, so parts + waived always equal the bill exactly and every
+  // displayed total reconciles.
   let matiasBillsShare = 0;
   let rekaBillsShare = 0;
+  let billsRawTotal = 0;
+  const billDiscountLines = [];
   (data.bills || []).forEach((b) => {
-    const amount = parseAmount(b.amount);
+    const amount = round2(parseAmount(b.amount));
     const from = b.discounted ? (b.discountedFrom || 'na') : null;
-    if (from !== 'na' && from !== 'matias') matiasBillsShare += amount * p;
-    if (from !== 'na' && from !== 'reka') rekaBillsShare += amount * (1 - p);
+    billsRawTotal = round2(billsRawTotal + amount);
+
+    let mPart = 0;
+    let rPart = 0;
+    if (from === null) {
+      mPart = round2(amount * p);
+      rPart = round2(amount - mPart);
+    } else if (from === 'reka') {
+      mPart = round2(amount * p);
+    } else if (from === 'matias') {
+      rPart = round2(amount * (1 - p));
+    }
+    matiasBillsShare = round2(matiasBillsShare + mPart);
+    rekaBillsShare = round2(rekaBillsShare + rPart);
+
+    if (from !== null) {
+      billDiscountLines.push({
+        id: b.id,
+        thing: b.thing,
+        from,
+        waived: round2(amount - mPart - rPart)
+      });
+    }
   });
-  matiasBillsShare = round2(matiasBillsShare);
-  rekaBillsShare = round2(rekaBillsShare);
   const billsTotal = round2(matiasBillsShare + rekaBillsShare);
 
   // Each extra charges its percent to the other flatmate; the person who
@@ -103,6 +127,8 @@ export function calculateInvoice(data) {
     splitPercent,
     billsTotal,
     billsTotalEach: round2(billsTotal / 2),
+    billsRawTotal,
+    billDiscountLines,
     matiasBillsShare,
     rekaBillsShare,
     matiasShareExtras,
