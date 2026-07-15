@@ -51,6 +51,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       key: 'matias',
       name: names.matias,
       pct: splitPercent,
+      otherName: names.reka,
       billsShare: matiasBillsShare,
       extraLines: extraLinesFor('matias'),
       before: calc.matiasBeforeDiscounts,
@@ -62,6 +63,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       key: 'reka',
       name: names.reka,
       pct: rekaPercent,
+      otherName: names.matias,
       billsShare: rekaBillsShare,
       extraLines: extraLinesFor('reka'),
       before: calc.rekaBeforeDiscounts,
@@ -135,7 +137,9 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
                   <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
                   <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
                 </div>
-                <div className="due-item-sub">Added by {addedBy}</div>
+                <div className="due-item-sub">
+                  Added by {addedBy} — {person.otherName} pays {formatCurrency((extraTotal(item) * (100 - pct)) / 100)}
+                </div>
               </div>
             ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
