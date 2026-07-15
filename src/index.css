@@ -919,6 +919,24 @@ input[type="checkbox"]:focus-visible {
   margin-top: 2px;
 }
 
+/* Invoice extras item: main line + smaller explainer beneath it */
+.due-item {
+  padding: 5px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.due-item .due-line {
+  padding: 0;
+  border-bottom: none;
+}
+
+.due-item-sub {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  margin-top: 2px;
+  overflow-wrap: break-word;
+}
+
 /* Bills — lime */
 .due-card-bills {
   background: rgba(212, 255, 63, 0.08);

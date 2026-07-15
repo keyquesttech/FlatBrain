@@ -35,9 +35,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     return [
       ...mergedExtras(data, personKey).map((e) => ({
         item: e,
-        pct: Math.round((100 - extraPercent(e)) * 100) / 100
+        pct: Math.round((100 - extraPercent(e)) * 100) / 100,
+        addedBy: names[personKey]
       })),
-      ...mergedExtras(data, otherKey).map((e) => ({ item: e, pct: extraPercent(e) }))
+      ...mergedExtras(data, otherKey).map((e) => ({
+        item: e,
+        pct: extraPercent(e),
+        addedBy: names[otherKey]
+      }))
     ].filter((line) => line.pct > 0);
   };
 
@@ -124,10 +129,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>Share of bills ({person.pct}%)</span>
               <span>{formatCurrency(person.billsShare)}</span>
             </div>
-            {person.extraLines.map(({ item, pct }) => (
-              <div className="due-line" key={item.id}>
-                <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
-                <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
+            {person.extraLines.map(({ item, pct, addedBy }) => (
+              <div className="due-item" key={item.id}>
+                <div className="due-line">
+                  <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
+                </div>
+                <div className="due-item-sub">
+                  Added by {addedBy} — {person.name} pays {formatCurrency((extraTotal(item) * pct) / 100)}
+                </div>
               </div>
             ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
