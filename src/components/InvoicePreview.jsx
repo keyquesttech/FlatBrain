@@ -20,12 +20,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     splitPercent,
     billsTotal,
     flatmate1BillsShare,
-    flatmate2BillsShare,
-    netTotal
+    flatmate2BillsShare
   } = calc;
   const flatmate2Percent = Math.round((100 - splitPercent) * 100) / 100;
   const isEvenSplit = splitPercent === 50;
-  const hasDiscounts = calc.flatmate1DiscountTotal !== 0 || calc.flatmate2DiscountTotal !== 0;
   const hasBillDiscounts = calc.billDiscountLines.length > 0;
   // People with a waived bill get an "after discounts" note on their share line
   const billsDiscountedFor = (personKey) =>
@@ -165,10 +163,17 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           </div>
         ))}
 
+        <div className="due-card due-card-extras-total">
+          <div className="due-card-total extras-total-line">
+            <span>Total extras</span>
+            <span>{formatCurrency(calc.extrasTotal)}</span>
+          </div>
+        </div>
+
         <div className="due-card due-card-total-grand">
           <div className="due-card-total grand-total-line">
-            <span>Grand total ({hasDiscounts ? 'bills + extras − discounts' : 'bills + all extras'})</span>
-            <span className="grand-total-amount">{formatCurrency(netTotal)}</span>
+            <span>Grand total (bills + all extras)</span>
+            <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
           </div>
         </div>
 

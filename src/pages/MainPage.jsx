@@ -105,7 +105,7 @@ export default function MainPage() {
       ...data,
       id: newId(),
       timestamp: Date.now(),
-      netTotal: calc.netTotal,
+      netTotal: calc.grandTotal,
       eachNetTotal: calc.flatmate1TotalDue,
       flatmate1TotalDue: calc.flatmate1TotalDue,
       flatmate2TotalDue: calc.flatmate2TotalDue

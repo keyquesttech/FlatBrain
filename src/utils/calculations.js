@@ -113,6 +113,7 @@ export function calculateInvoice(data) {
 
   const flatmate1ShareExtras = round2(shareOf(flatmate1Items, true) + shareOf(flatmate2Items, false));
   const flatmate2ShareExtras = round2(shareOf(flatmate2Items, true) + shareOf(flatmate1Items, false));
+  const extrasTotal = round2(sumExtras(flatmate1Items) + sumExtras(flatmate2Items));
 
   const flatmate1BeforeDiscounts = round2(flatmate1BillsShare + flatmate1ShareExtras);
   const flatmate2BeforeDiscounts = round2(flatmate2BillsShare + flatmate2ShareExtras);
@@ -139,6 +140,9 @@ export function calculateInvoice(data) {
     flatmate2DiscountTotal,
     flatmate1TotalDue,
     flatmate2TotalDue,
+    extrasTotal,
+    // Grand total counts the full bills and extras, before any discounts
+    grandTotal: round2(billsRawTotal + extrasTotal),
     netTotal: round2(flatmate1TotalDue + flatmate2TotalDue)
   };
 }
