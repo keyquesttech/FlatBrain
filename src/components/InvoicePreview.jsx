@@ -48,6 +48,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       pct: splitPercent,
       billsShare: flatmate1BillsShare,
       extraLines: extraLinesFor('flatmate1'),
+      extrasTotal: calc.flatmate1ShareExtras,
       before: calc.flatmate1BeforeDiscounts,
       discounts: data.flatmate1Discounts || [],
       total: calc.flatmate1TotalDue,
@@ -59,6 +60,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       pct: flatmate2Percent,
       billsShare: flatmate2BillsShare,
       extraLines: extraLinesFor('flatmate2'),
+      extrasTotal: calc.flatmate2ShareExtras,
       before: calc.flatmate2BeforeDiscounts,
       discounts: data.flatmate2Discounts || [],
       total: calc.flatmate2TotalDue,
@@ -137,6 +139,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               </div>
             ))}
             <div className="due-card-total">
+              <span>Bills due</span>
+              <span>{formatCurrency(person.billsShare)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Extras due</span>
+              <span>{formatCurrency(person.extrasTotal)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
               <span>Total due</span>
               <span>{formatCurrency(person.total)}</span>
             </div>
