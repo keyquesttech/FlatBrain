@@ -990,6 +990,12 @@ input[type="checkbox"]:focus-visible {
   color: var(--amber-soft);
 }
 
+.due-card-hint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  margin: -4px 0 8px;
+}
+
 /* Grand total — gradient tint + gradient figure */
 .due-card-total-grand {
   background: linear-gradient(135deg, rgba(255, 95, 212, 0.2), rgba(212, 255, 63, 0.14));
