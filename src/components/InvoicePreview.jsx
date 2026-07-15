@@ -112,16 +112,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             <span>Bills total</span>
             <span>{formatCurrency(calc.billsRawTotal)}</span>
           </div>
-          {calc.billDiscountLines.map((line) => (
-            <div className="due-card-total due-card-total-secondary" key={line.id}>
-              <span>
-                Discounted: {line.from === 'na'
-                  ? (line.thing || 'bill')
-                  : `${names[line.from]}'s share of ${line.thing || 'bill'} (${line.from === 'flatmate1' ? splitPercent : flatmate2Percent}%)`}
-              </span>
-              <span>−{formatCurrency(line.waived)}</span>
-            </div>
-          ))}
           {hasBillDiscounts && (
             <div className="due-card-total due-card-total-secondary">
               <span>Total charged</span>
