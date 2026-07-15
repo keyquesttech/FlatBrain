@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getDraft, updateDraft, getHistory } from '../api';
-import { extraPercent, extraTotal, formatCurrency, formatExtraLabel, mergedExtras, packsOf } from '../utils/calculations';
+import { extraPercent, extraTotal, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
@@ -177,7 +177,7 @@ export default function UserExtrasPage({ personKey }) {
                   <span>{formatCurrency((total * extra.pct) / 100)}</span>
                 </div>
                 <div className="preview-item-sub">
-                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {extra.pct}%{packsOf(extra) > 1 ? ` of ${formatCurrency(total)}` : ''}
+                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {extra.pct}% of {formatCurrency(total)}
                 </div>
               </div>
             );
@@ -198,7 +198,7 @@ export default function UserExtrasPage({ personKey }) {
                   <span>{formatCurrency((total * extra.pct) / 100)}</span>
                 </div>
                 <div className="preview-item-sub">
-                  Added by {otherDisplayName} — you pay {extra.pct}%{packsOf(extra) > 1 ? ` of ${formatCurrency(total)}` : ''}
+                  Added by {otherDisplayName} — you pay {extra.pct}% of {formatCurrency(total)}
                 </div>
               </div>
             );

@@ -7,7 +7,6 @@ import {
   formatCurrency,
   formatExtraLabel,
   mergedExtras,
-  packsOf,
   parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
@@ -122,20 +121,18 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className={`due-card due-card-summary due-card-summary-${person.key}`} key={person.key}>
             <div className="due-card-name">{person.name} Total</div>
             <div className="due-line">
-              <span>Share of bills ({person.pct}% of {formatCurrency(billsTotal)})</span>
+              <span>Share of bills ({person.pct}%)</span>
               <span>{formatCurrency(person.billsShare)}</span>
             </div>
             {person.extraLines.map(({ item, pct }) => (
               <div className="due-line" key={item.id}>
-                {/* "of £total" is only informative for multi-pack items — for a
-                    single pack the total already appears in the label */}
-                <span>{formatExtraLabel(item)} · {pct}%{packsOf(item) > 1 ? ` of ${formatCurrency(extraTotal(item))}` : ''}</span>
+                <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
                 <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
               </div>
             ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (
               <div className="due-line" key={d.id}>
-                <span>Discount: {d.thing?.trim() || 'discount'}{d.type === 'percent' ? ` (${parseAmount(d.value)}%)` : ''}</span>
+                <span>{d.thing?.trim() || 'Discount'}{d.type === 'percent' ? ` (${parseAmount(d.value)}%)` : ''}</span>
                 <span>−{formatCurrency(discountAmount(d, person.before))}</span>
               </div>
             ))}
