@@ -75,6 +75,10 @@ export default function BackupCard() {
     }
   };
 
+  // Refresh the device list without touching the message line (used after
+  // eject/selection so the dropdown reflects what's really plugged in).
+  const rescanQuietly = () => getBackupDevices().then((r) => setDevices(r.devices)).catch(() => {});
+
   // Selecting a drive turns automatic backups on; picking "No backups"
   // clears the drive and turns them off.
   const pickDevice = async (devicePath) => {
@@ -91,7 +95,9 @@ export default function BackupCard() {
       }
       await refresh();
     } catch {
-      setMessage(devicePath ? 'Failed to mount that drive. Is it formatted?' : 'Failed to update the settings.');
+      // e.g. the stick was unplugged between scanning and picking it
+      setMessage(devicePath ? 'That drive is no longer available — rescan and try again.' : 'Failed to update the settings.');
+      await rescanQuietly();
     } finally {
       setBusy('');
     }
@@ -148,6 +154,8 @@ export default function BackupCard() {
     }
   };
 
+  // Ejecting also clears the selection (backups off); the quiet rescan
+  // keeps the drive in the dropdown for a quick re-select if it stays in.
   const eject = async () => {
     setBusy('eject');
     setMessage('Ejecting…');
@@ -155,6 +163,7 @@ export default function BackupCard() {
       const res = await ejectBackupDevice();
       setMessage(res.success ? res.message : `Eject failed: ${res.error}`);
       await refresh();
+      if (res.success) await rescanQuietly();
     } catch {
       setMessage('Eject failed — check the server.');
     } finally {

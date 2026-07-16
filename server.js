@@ -177,23 +177,17 @@ app.get('/api/backup/devices', (req, res) => {
   }
 });
 
-// Mount a USB partition and remember it as the backup target. Only paths
-// that lsblk reports as removable/USB are accepted.
+// Select + mount a USB partition as the backup target (which turns
+// automatic backups on). Only paths lsblk reports as removable/USB are
+// accepted; a previously selected different stick is unmounted.
 app.post('/api/backup/mount', (req, res) => {
   const { path: devPath } = req.body || {};
   try {
-    const device = backup.listUsbCandidates().find((d) => d.path === devPath);
-    if (!device) {
-      return res.status(400).json({ success: false, error: 'Not a removable USB partition' });
-    }
-    const mountpoint = backup.mountDevice(device);
-    const cfg = backup.readConfig();
-    // Selecting a drive is what turns automatic backups on
-    cfg.device = { uuid: device.uuid, label: device.label, path: device.path, fstype: device.fstype };
-    backup.writeConfig(cfg);
-    res.json({ success: true, mountpoint, device: cfg.device });
+    const result = backup.selectDevice(devPath);
+    res.json({ success: true, ...result });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    const status = err.message === 'Not a removable USB partition' ? 400 : 500;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 

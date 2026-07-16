@@ -104,6 +104,13 @@ export function createBackupManager(baseDir) {
       // fall through to sudo mount
     }
     run('sudo', ['mkdir', '-p', FALLBACK_MOUNTPOINT]);
+    // A stick yanked without ejecting leaves a dead mount here that would
+    // block the next one — lazily clear it first (no-op when nothing's there)
+    try {
+      run('sudo', ['umount', '-l', FALLBACK_MOUNTPOINT]);
+    } catch {
+      /* nothing mounted there */
+    }
     const ownable = ['vfat', 'exfat', 'ntfs'].includes(device.fstype);
     const opts = ownable ? ['-o', `uid=${process.getuid()},gid=${process.getgid()}`] : [];
     run('sudo', ['mount', ...opts, device.path, FALLBACK_MOUNTPOINT]);
@@ -114,6 +121,35 @@ export function createBackupManager(baseDir) {
       run('sudo', ['chown', `${process.getuid()}:${process.getgid()}`, dir]);
     }
     return FALLBACK_MOUNTPOINT;
+  }
+
+  function unmountDevice(device) {
+    try {
+      run('udisksctl', ['unmount', '-b', device.path, '--no-user-interaction']);
+    } catch {
+      run('sudo', ['umount', device.path]);
+    }
+  }
+
+  // Select a drive as the backup target: mounts it and remembers it, which
+  // is what turns automatic backups on. If a different stick was selected
+  // before, it's unmounted best-effort so only one target stays mounted.
+  function selectDevice(devPath) {
+    const device = listUsbCandidates().find((d) => d.path === devPath);
+    if (!device) throw new Error('Not a removable USB partition');
+    const cfg = readConfig();
+    if (cfg.device && cfg.device.uuid !== device.uuid) {
+      try {
+        const old = findConfiguredDevice(cfg);
+        if (old?.mountpoint) unmountDevice(old);
+      } catch {
+        /* best effort — the new selection proceeds regardless */
+      }
+    }
+    const mountpoint = mountDevice(device);
+    cfg.device = { uuid: device.uuid, label: device.label, path: device.path, fstype: device.fstype };
+    writeConfig(cfg);
+    return { mountpoint, device: cfg.device };
   }
 
   // Backups are ordered by folder mtime, newest first — the folder names
@@ -249,26 +285,33 @@ export function createBackupManager(baseDir) {
     return { success: true, restored: staged.map(([f]) => f) };
   }
 
-  // Unmount the configured stick so it's safe to unplug. udisksctl flushes
-  // and detaches; the sudo fallback covers mounts made outside udisks.
+  // Eject = "stop using this stick": unmount it AND clear the selection,
+  // which switches automatic backups off (the schedule settings stay).
+  // If the drive is busy, nothing changes and the error says so; if it was
+  // already yanked, the selection still clears so the state is consistent.
   function ejectDevice() {
     const cfg = readConfig();
     if (!cfg.device) throw new Error('No USB drive selected');
+    const label = cfg.device.label;
     const device = findConfiguredDevice(cfg);
-    if (!device) throw new Error(`USB drive "${cfg.device.label}" is not plugged in`);
-    if (!device.mountpoint) {
-      return { success: true, message: 'Drive is not mounted — already safe to unplug.' };
+    const clearSelection = () => {
+      const fresh = readConfig();
+      fresh.device = null;
+      writeConfig(fresh);
+    };
+    if (!device) {
+      clearSelection();
+      return { success: true, message: `${label} is already unplugged — automatic backups switched off.` };
     }
-    try {
-      run('udisksctl', ['unmount', '-b', device.path, '--no-user-interaction']);
-    } catch {
+    if (device.mountpoint) {
       try {
-        run('sudo', ['umount', device.path]);
+        unmountDevice(device);
       } catch {
         throw new Error('Could not eject — the drive is busy. Try again in a moment.');
       }
     }
-    return { success: true, message: `${device.label} ejected — safe to unplug.` };
+    clearSelection();
+    return { success: true, message: `${label} ejected — safe to unplug. Automatic backups are off.` };
   }
 
   // Delete one backup folder from the stick (manual housekeeping from the
@@ -364,6 +407,7 @@ export function createBackupManager(baseDir) {
     writeConfig,
     listUsbCandidates,
     mountDevice,
+    selectDevice,
     performBackup,
     restoreBackup,
     deleteBackup,
