@@ -906,12 +906,24 @@ input[type="checkbox"]:focus-visible {
   min-width: 0;
 }
 
-/* Tinted accent cards inside the invoice */
+/* Tinted accent cards inside the invoice. Each variant below paints its own
+   colour into --halo (glow) and --halo-edge (border/highlight tint); the base
+   rule turns those into a coloured halo, gradient lift and inset top sheen so
+   every card pops off the invoice with its own identity. */
 .due-card {
   position: relative;
   border-radius: 18px;
   padding: 16px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--halo-edge, var(--border-soft));
+  background:
+    linear-gradient(160deg, var(--halo, rgba(255, 255, 255, 0.05)), transparent 65%),
+    rgba(255, 255, 255, 0.02);
+  box-shadow:
+    0 0 0 1px var(--halo-edge, transparent),
+    0 0 18px 1px var(--halo, transparent),
+    0 0 40px 4px var(--halo, transparent),
+    0 10px 30px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .due-card-name {
@@ -997,8 +1009,8 @@ input[type="checkbox"]:focus-visible {
 
 /* Bills — lime */
 .due-card-bills {
-  background: rgba(212, 255, 63, 0.08);
-  border-color: rgba(212, 255, 63, 0.25);
+  --halo: rgba(212, 255, 63, 0.3);
+  --halo-edge: rgba(212, 255, 63, 0.4);
 }
 .due-card-bills .due-card-name,
 .due-card-bills .due-card-total {
@@ -1010,8 +1022,8 @@ input[type="checkbox"]:focus-visible {
 
 /* Per-person totals — flatmate 1 blue, flatmate 2 violet */
 .due-card-summary-matias {
-  background: rgba(120, 190, 255, 0.08);
-  border-color: rgba(120, 190, 255, 0.3);
+  --halo: rgba(120, 190, 255, 0.32);
+  --halo-edge: rgba(120, 190, 255, 0.45);
 }
 .due-card-summary-matias .due-card-name,
 .due-card-summary-matias .due-card-total {
@@ -1022,8 +1034,8 @@ input[type="checkbox"]:focus-visible {
 }
 
 .due-card-summary-reka {
-  background: rgba(167, 139, 250, 0.09);
-  border-color: rgba(167, 139, 250, 0.35);
+  --halo: rgba(167, 139, 250, 0.34);
+  --halo-edge: rgba(167, 139, 250, 0.5);
 }
 .due-card-summary-reka .due-card-name,
 .due-card-summary-reka .due-card-total {
@@ -1035,16 +1047,16 @@ input[type="checkbox"]:focus-visible {
 
 /* Flatmate notes — flatmate 1 teal, flatmate 2 orange */
 .due-card-note-matias {
-  background: rgba(75, 214, 182, 0.08);
-  border-color: rgba(75, 214, 182, 0.3);
+  --halo: rgba(75, 214, 182, 0.3);
+  --halo-edge: rgba(75, 214, 182, 0.44);
 }
 .due-card-note-matias .due-card-name {
   color: #7fe6cd;
 }
 
 .due-card-note-reka {
-  background: rgba(255, 138, 95, 0.08);
-  border-color: rgba(255, 138, 95, 0.3);
+  --halo: rgba(255, 138, 95, 0.3);
+  --halo-edge: rgba(255, 138, 95, 0.44);
 }
 .due-card-note-reka .due-card-name {
   color: #ffab8a;
@@ -1059,17 +1071,19 @@ input[type="checkbox"]:focus-visible {
 
 /* Bank details — amber */
 .due-card-bank {
-  background: rgba(255, 200, 80, 0.08);
-  border-color: rgba(255, 200, 80, 0.28);
+  --halo: rgba(255, 200, 80, 0.3);
+  --halo-edge: rgba(255, 200, 80, 0.42);
 }
 .due-card-bank .due-card-name {
   color: var(--amber-soft);
 }
 
-/* Grand total — gradient tint + gradient figure */
+/* Grand total — dual-tone gradient tint + gradient figure, pink halo */
 .due-card-total-grand {
-  background: linear-gradient(135deg, rgba(255, 95, 212, 0.2), rgba(212, 255, 63, 0.14));
-  border-color: rgba(255, 95, 212, 0.4);
+  --halo: rgba(255, 95, 212, 0.4);
+  --halo-edge: rgba(255, 95, 212, 0.55);
+  background:
+    linear-gradient(135deg, rgba(255, 95, 212, 0.24), rgba(212, 255, 63, 0.16));
 }
 
 .grand-total-line {
