@@ -47,7 +47,8 @@ export default function ExtrasInputList({
             value={extra.packs}
             onChange={(e) => onUpdate(extra.id, 'packs', e.target.value)}
             placeholder="Packs"
-            aria-label="Packs"
+            aria-label="Number of packs"
+            title="How many packs were bought (total = packs × price)"
             min="1"
             step="1"
             inputMode="numeric"
@@ -55,11 +56,12 @@ export default function ExtrasInputList({
           <CurrencyInput
             value={extra.price}
             onChange={(e) => onUpdate(extra.id, 'price', e.target.value)}
-            placeholder="Price"
-            aria-label="Price"
+            placeholder="Per pack"
+            aria-label="Price per pack"
+            title="Price of one pack"
           />
           {percentTo != null && (
-            <div className="currency-input percent-input" title={`% charged to ${percentTo}`}>
+            <div className="currency-input percent-input" title={`% of this item charged to ${percentTo} (the rest stays with whoever added it)`}>
               <input
                 type="number"
                 min="0"
