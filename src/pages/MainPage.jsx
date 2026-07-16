@@ -127,7 +127,14 @@ export default function MainPage() {
       splitPercent: data.splitPercent ?? 50
     };
     applyDraft(nextDraft);
-    await updateDraft(nextDraft);
+    try {
+      await updateDraft(nextDraft);
+    } catch {
+      // The invoice IS saved — don't surface this as a save failure. Queue
+      // the settings write like any edit; it retries on the next change or
+      // unmount, and the pending flag stops the poller clobbering the form.
+      savePendingRef.current = true;
+    }
     alert('Invoice downloaded, saved to history, and draft reset!');
   };
 
@@ -259,7 +266,12 @@ export default function MainPage() {
         splitPercent: current?.splitPercent ?? 50
       };
       applyDraft(nextDraft);
-      await updateDraft(nextDraft);
+      // Same as after a save: a failed settings write isn't a failed reset.
+      try {
+        await updateDraft(nextDraft);
+      } catch {
+        savePendingRef.current = true;
+      }
     } catch (err) {
       console.error('Error resetting draft', err);
       alert('Failed to reset the form. Check the server and try again.');
