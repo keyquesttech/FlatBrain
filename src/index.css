@@ -52,6 +52,20 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Fluid type: every rem-based size scales gently with the window —
+     ~14.5px on narrow phones up to 16px from ~740px wide. (PNG export is
+     unaffected: html2canvas resolves this inside its 1024px window.) */
+  font-size: clamp(14.5px, 13.4px + 0.35vw, 16px);
+}
+
+/* Text always fits its box: wrap at word boundaries wherever it lives */
+h1,
+h2,
+h3,
+h4,
+p,
+label {
+  overflow-wrap: break-word;
 }
 
 body {
@@ -134,7 +148,7 @@ p {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: clamp(0.85rem, 3vw, 2rem);
+  padding: clamp(0.75rem, 2.5vw, 2rem);
 }
 
 .container-narrow {
@@ -151,6 +165,10 @@ p {
 .page-header {
   text-align: center;
   margin: 1rem 0 2rem;
+}
+
+.page-header h1 {
+  font-size: clamp(1.35rem, 1rem + 2vw, 1.9rem);
 }
 
 .page-toolbar {
@@ -171,7 +189,7 @@ p {
 .main-content {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
-  gap: 22px;
+  gap: clamp(1rem, 2.2vw, 22px);
   align-items: start;
 }
 
@@ -188,13 +206,13 @@ p {
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
-  padding: clamp(1.1rem, 3vw, 1.4rem);
+  padding: clamp(0.95rem, 2.5vw, 1.4rem);
 }
 
 .form-card-stack {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(12px, 1.8vw, 18px);
 }
 
 .section-header {
@@ -215,7 +233,7 @@ p {
 .section-desc {
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  margin: 0 0 1rem 0;
+  margin: 0 0 clamp(0.7rem, 2vw, 1rem);
   color: var(--text-faint);
   text-wrap: pretty;
 }
@@ -283,7 +301,7 @@ p {
 }
 
 .brand-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 0.95rem + 1.2vw, 1.5rem);
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--text);
@@ -1146,8 +1164,8 @@ input[type="checkbox"]:focus-visible {
 /* ---------- History ---------- */
 .history-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .history-card {
@@ -1565,10 +1583,6 @@ input[type="checkbox"]:focus-visible {
     font-size: 1rem;
   }
 
-  .brand-title {
-    font-size: 1.2rem;
-  }
-
   .tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1613,26 +1627,10 @@ input[type="checkbox"]:focus-visible {
     flex: 1 1 auto;
   }
 
-  /* Uniform compact rhythm: same padding, gaps and radii on every card */
-  .container {
-    padding: 0.75rem;
-  }
-
+  /* Mobile-only rhythm bits — padding and gaps are fluid clamps in the
+     base rules and need no override here */
   .glass-panel {
-    padding: 0.95rem;
     border-radius: 18px;
-  }
-
-  .form-card-stack {
-    gap: 12px;
-  }
-
-  .main-content {
-    gap: 1rem;
-  }
-
-  .section-desc {
-    margin-bottom: 0.75rem;
   }
 
   .form-group {
@@ -1773,11 +1771,6 @@ input[type="checkbox"]:focus-visible {
   .invoice-meta {
     flex-direction: column;
     gap: 0.15rem;
-  }
-
-  .history-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
   }
 
   .history-card-actions .btn-icon {
