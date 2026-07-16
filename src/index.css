@@ -219,6 +219,11 @@ p {
   color: var(--text-faint);
 }
 
+/* Live explainer under the Bills split control */
+.section-desc.split-desc {
+  margin: 8px 0 0;
+}
+
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
