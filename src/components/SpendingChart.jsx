@@ -1,14 +1,10 @@
 import React from 'react';
+import { chargedBillAmount } from '../utils/calculations';
 
+// Sums what was actually paid: 'All'-discounted portions are excluded,
+// portions discounted for one flatmate were still charged (to the other).
 function billsTotalOf(invoice) {
-  const parse = (v) => {
-    const n = parseFloat(v);
-    return isNaN(n) ? 0 : n;
-  };
-  // Skip bills discounted from the whole invoice; partially discounted bills
-  // (waived for one flatmate) were still charged, so they count.
-  const fullyDiscounted = (b) => b.discounted && (!b.discountedFrom || b.discountedFrom === 'na');
-  return (invoice.bills || []).reduce((sum, b) => (fullyDiscounted(b) ? sum : sum + parse(b.amount)), 0);
+  return (invoice.bills || []).reduce((sum, b) => sum + chargedBillAmount(b), 0);
 }
 
 export default function SpendingChart({ history }) {

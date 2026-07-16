@@ -1,5 +1,7 @@
 import React, { forwardRef } from 'react';
 import {
+  billDiscountFrom,
+  billDiscountPercent,
   calculateInvoice,
   discountAmount,
   extraPercent,
@@ -114,12 +116,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         <div className="due-card due-card-bills">
           <div className="due-card-name">Bills</div>
           {data.bills.map((bill) => {
-            const from = bill.discounted ? (bill.discountedFrom || 'na') : null;
+            const from = billDiscountFrom(bill);
+            const percent = billDiscountPercent(bill);
+            const pctLabel = percent === 100 ? 'discounted' : `${percent}% discounted`;
             return (
-              <div className={`due-line${from === 'na' ? ' due-line-discounted' : ''}`} key={bill.id}>
+              <div className={`due-line${from === 'na' && percent === 100 ? ' due-line-discounted' : ''}`} key={bill.id}>
                 <span>
                   {bill.thing}
-                  {from === 'na' ? ' · discounted' : from ? ` · discounted for ${names[from]}` : ''}
+                  {from === 'na' ? ` · ${pctLabel}` : from ? ` · ${pctLabel} for ${names[from]}` : ''}
                 </span>
                 <span>{formatCurrency(bill.amount)}</span>
               </div>
@@ -151,11 +155,11 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             {person.discountBills.map((line) => (
               <div className="due-item" key={line.id}>
                 <div className="due-line">
-                  <span>{line.thing}</span>
-                  <span>{formatCurrency(line.amount)}</span>
+                  <span>{line.thing}{line.percent === 100 ? '' : <> · {line.percent}% of {formatCurrency(line.amount)}</>}</span>
+                  <span>{formatCurrency(line.portion)}</span>
                 </div>
                 <div className="due-item-sub">
-                  Discounted for {names[line.from]}
+                  Discounted for {names[line.from]} — {person.name} covers {line.percent === 100 ? 'it in full' : `${line.percent}%`}
                 </div>
               </div>
             ))}

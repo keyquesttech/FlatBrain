@@ -7,7 +7,7 @@ import CurrencyInput from './CurrencyInput';
 import SelectMenu from './SelectMenu';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra, newId } from '../utils/id';
-import { clampSplitPercent } from '../utils/calculations';
+import { billDiscountPercent, clampSplitPercent } from '../utils/calculations';
 
 export default function InvoiceForm({ data, onChange }) {
   const names = { ...DEFAULT_NAMES, ...(data.names || {}) };
@@ -45,7 +45,7 @@ export default function InvoiceForm({ data, onChange }) {
   };
 
   const addBill = () => {
-    updateField('bills', [...data.bills, { id: newId(), thing: '', amount: '', discounted: false }]);
+    updateField('bills', [...data.bills, { id: newId(), thing: '', amount: '', discountPercent: '', discountedFrom: 'na' }]);
   };
 
   const removeBill = (id) => {
@@ -248,18 +248,10 @@ export default function InvoiceForm({ data, onChange }) {
           </button>
         </div>
         <p className="section-desc">
-          Tick a bill to discount it, then pick who it's discounted for — the other flatmate pays that bill in full. All waives it for everyone.
+          Set a % to discount part of a bill, then pick who it's discounted for — the other flatmate covers that part. All waives it for everyone.
         </p>
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
-            <input
-              type="checkbox"
-              className="neon-check"
-              checked={!!bill.discounted}
-              onChange={(e) => updateBill(bill.id, 'discounted', e.target.checked)}
-              aria-label={`Discount ${bill.thing || 'this bill'} from the invoice`}
-              title="Discount this bill from the invoice"
-            />
             <input
               type="text"
               value={bill.thing}
@@ -274,7 +266,21 @@ export default function InvoiceForm({ data, onChange }) {
               placeholder="Amount"
               aria-label="Bill amount"
             />
-            {bill.discounted && (
+            <div className="currency-input percent-input" title="% of this bill to discount">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputMode="decimal"
+                value={bill.discountPercent ?? ''}
+                onChange={(e) => updateBill(bill.id, 'discountPercent', e.target.value)}
+                placeholder="0"
+                aria-label={`Percent of ${bill.thing || 'this bill'} to discount`}
+              />
+              <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
+            </div>
+            {billDiscountPercent(bill) > 0 && (
               <div className="bill-discount-select" title="Who this bill is discounted for">
                 <SelectMenu
                   value={bill.discountedFrom || 'na'}

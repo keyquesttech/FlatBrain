@@ -46,6 +46,33 @@ export function mergedExtras(data, personKey) {
   return [...own, ...legacyFull];
 }
 
+// A bill's discount percent: how much of it is discounted (0–100). Bills
+// predating the percent box carry discounted: true, which meant 100%.
+export function billDiscountPercent(bill) {
+  if (bill?.discountPercent != null && bill.discountPercent !== '') {
+    const n = parseFloat(bill.discountPercent);
+    if (isNaN(n)) return 0;
+    return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
+  }
+  return bill?.discounted ? 100 : 0;
+}
+
+// Who the discounted portion is discounted for: 'na' (everyone — nobody pays
+// it), a flatmate key (the other flatmate covers it), or null when the bill
+// isn't discounted at all.
+export function billDiscountFrom(bill) {
+  return billDiscountPercent(bill) > 0 ? (bill?.discountedFrom || 'na') : null;
+}
+
+// The slice of a bill somebody actually pays (drives the history charts):
+// an 'All' discount waives its percent of the bill; a bill discounted for
+// one flatmate is still charged in full, just entirely to the other person.
+export function chargedBillAmount(bill) {
+  const amount = round2(parseAmount(bill?.amount));
+  if (billDiscountFrom(bill) !== 'na') return amount;
+  return round2(amount - round2((amount * billDiscountPercent(bill)) / 100));
+}
+
 // The split percent is flatmate 1 (flatmate1)'s share of all shared costs;
 // flatmate 2 (flatmate2) pays the remainder. Invalid input falls back to 50/50.
 export function clampSplitPercent(value) {
@@ -69,36 +96,42 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  // Undiscounted bills are split between the flatmates at the split percent.
-  // A bill "discounted for" one flatmate is charged in full to the other;
-  // with discountedFrom 'na' (or unset) the whole bill is waived and nobody
-  // pays. Per shared bill one part is rounded to pence and the other derived
-  // by subtraction, so the two shares always sum to the charged total exactly.
+  // Each bill's discount percent carves off a "discounted portion"; the rest
+  // is split between the flatmates at the split percent. Portion discounted
+  // for 'na'/All: waived, nobody pays it. Portion discounted for a flatmate:
+  // the OTHER flatmate covers it (itemized on their card). The portion is
+  // rounded to pence and the shared remainder derived by subtraction, then
+  // one split part is rounded and the other derived the same way — so every
+  // charged penny lands on exactly one flatmate and all totals reconcile.
   let flatmate1SharedShare = 0;
   let flatmate2SharedShare = 0;
-  let flatmate1DiscountedBills = 0; // bills discounted for Flatmate2 — Flatmate1 pays them in full
-  let flatmate2DiscountedBills = 0; // bills discounted for Flatmate1 — Flatmate2 pays them in full
+  let flatmate1DiscountedBills = 0; // portions discounted for Flatmate2 — Flatmate1 covers them
+  let flatmate2DiscountedBills = 0; // portions discounted for Flatmate1 — Flatmate2 covers them
   let billsRawTotal = 0;
   const billDiscountLines = [];
   (data.bills || []).forEach((b) => {
     const amount = round2(parseAmount(b.amount));
-    const from = b.discounted ? (b.discountedFrom || 'na') : null;
+    const percent = billDiscountPercent(b);
+    const from = billDiscountFrom(b);
     billsRawTotal = round2(billsRawTotal + amount);
 
-    if (from === null) {
-      const mPart = round2(amount * p);
-      flatmate1SharedShare = round2(flatmate1SharedShare + mPart);
-      flatmate2SharedShare = round2(flatmate2SharedShare + round2(amount - mPart));
-      return;
-    }
-    if (from === 'flatmate2') flatmate1DiscountedBills = round2(flatmate1DiscountedBills + amount);
-    if (from === 'flatmate1') flatmate2DiscountedBills = round2(flatmate2DiscountedBills + amount);
+    const portion = round2((amount * percent) / 100);
+    const shared = round2(amount - portion);
+    const mPart = round2(shared * p);
+    flatmate1SharedShare = round2(flatmate1SharedShare + mPart);
+    flatmate2SharedShare = round2(flatmate2SharedShare + round2(shared - mPart));
+
+    if (from === null) return;
+    if (from === 'flatmate2') flatmate1DiscountedBills = round2(flatmate1DiscountedBills + portion);
+    if (from === 'flatmate1') flatmate2DiscountedBills = round2(flatmate2DiscountedBills + portion);
     billDiscountLines.push({
       id: b.id,
       thing: b.thing,
       from,
+      percent,
       amount,
-      waived: from === 'na' ? amount : 0
+      portion,
+      waived: from === 'na' ? portion : 0
     });
   });
   const flatmate1BillsShare = round2(flatmate1SharedShare + flatmate1DiscountedBills);

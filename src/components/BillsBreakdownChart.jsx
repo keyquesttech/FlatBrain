@@ -1,11 +1,7 @@
 import React from 'react';
+import { chargedBillAmount } from '../utils/calculations';
 
 const COLORS = ['#d4ff3f', '#ff5fd4', '#5fb2ff', '#ffc850', '#a78bfa', '#4bd6b6', '#ff8a5f', '#8ee06a'];
-
-function parseAmt(v) {
-  const n = parseFloat(v);
-  return isNaN(n) ? 0 : n;
-}
 
 export default function BillsBreakdownChart({ history, months }) {
   // One invoice per period; if a month was saved more than once, the latest wins.
@@ -30,9 +26,12 @@ export default function BillsBreakdownChart({ history, months }) {
   const monthData = periods.map((inv) => {
     const totals = {};
     (inv.bills || []).forEach((b) => {
-      if (b.discounted && (!b.discountedFrom || b.discountedFrom === 'na')) return;
+      // Only the charged slice counts: 'All'-discounted portions were never
+      // paid; portions discounted for one flatmate were (by the other).
+      const charged = chargedBillAmount(b);
+      if (charged <= 0) return;
       const name = (b.thing || '').trim() || 'Unnamed';
-      totals[name] = (totals[name] || 0) + parseAmt(b.amount);
+      totals[name] = (totals[name] || 0) + charged;
       if (!categories.includes(name)) categories.push(name);
     });
     return {
