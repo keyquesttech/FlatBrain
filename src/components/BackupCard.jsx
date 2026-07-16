@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { HardDrive, RefreshCw } from 'lucide-react';
+import { HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import SelectMenu from './SelectMenu';
-import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow } from '../api';
+import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, deleteBackup } from '../api';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Monday' },
@@ -74,6 +74,24 @@ export default function BackupCard() {
       await refresh();
     } catch {
       setMessage('Failed to mount that drive. Is it formatted?');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const removeBackup = async (name) => {
+    if (!window.confirm(`Delete ${name} from the USB stick? This can't be undone.`)) return;
+    setBusy('delete');
+    try {
+      const res = await deleteBackup(name);
+      if (res.success) {
+        setMessage(`Deleted ${name}.`);
+        setStatus((s) => ({ ...s, backups: res.backups }));
+      } else {
+        setMessage(`Delete failed: ${res.error}`);
+      }
+    } catch {
+      setMessage('Delete failed — check the server and the USB drive.');
     } finally {
       setBusy('');
     }
@@ -217,7 +235,18 @@ export default function BackupCard() {
           {status.backups.map((b) => (
             <div className="backup-item" key={b.name}>
               <span>{b.name}</span>
-              <span>{b.files} file{b.files === 1 ? '' : 's'}</span>
+              <span className="backup-item-meta">
+                {b.files} file{b.files === 1 ? '' : 's'}
+                <button
+                  className="btn-icon btn-icon-danger"
+                  onClick={() => removeBackup(b.name)}
+                  disabled={!!busy}
+                  title="Delete this backup from the stick"
+                  aria-label={`Delete ${b.name}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </span>
             </div>
           ))}
         </div>
