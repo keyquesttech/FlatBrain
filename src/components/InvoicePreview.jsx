@@ -35,31 +35,32 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     return calc.billDiscountLines.filter((line) => line.from === otherKey);
   };
 
-  // Each person's itemized extras: their remainder of items they added, plus
-  // their charged share of the other's items. Zero-share lines are omitted.
-  // Amounts come from extraShares so the lines sum to the card total exactly.
+  // Each person's itemized extras: their own share of items they added
+  // (the item's %), plus the charged remainder of the other's items.
+  // Zero-share lines are omitted. Amounts come from extraShares so the
+  // lines sum to the card total exactly.
   const extraLinesFor = (personKey) => {
     const otherKey = personKey === 'flatmate1' ? 'flatmate2' : 'flatmate1';
     return [
       ...mergedExtras(data, personKey).map((e) => {
-        const { total, charged, remainder } = extraShares(e);
-        return {
-          item: e,
-          pct: Math.round((100 - extraPercent(e)) * 100) / 100,
-          total,
-          amount: remainder,
-          otherAmount: charged,
-          addedBy: names[personKey]
-        };
-      }),
-      ...mergedExtras(data, otherKey).map((e) => {
-        const { total, charged, remainder } = extraShares(e);
+        const { total, own, other } = extraShares(e);
         return {
           item: e,
           pct: extraPercent(e),
           total,
-          amount: charged,
-          otherAmount: remainder,
+          amount: own,
+          otherAmount: other,
+          addedBy: names[personKey]
+        };
+      }),
+      ...mergedExtras(data, otherKey).map((e) => {
+        const { total, own, other } = extraShares(e);
+        return {
+          item: e,
+          pct: Math.round((100 - extraPercent(e)) * 100) / 100,
+          total,
+          amount: other,
+          otherAmount: own,
           addedBy: names[otherKey]
         };
       })

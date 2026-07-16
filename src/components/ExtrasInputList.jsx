@@ -11,9 +11,11 @@ export default function ExtrasInputList({
   onAdd,
   onUpdate,
   onRemove,
-  // Name of the flatmate the per-item percent is charged to. When set, each
-  // row gets a % input (stored on the item's `percent` field, default 50).
-  percentTo,
+  // Names for the per-item % input: percentPayer is whoever added the item
+  // (the % is THEIR share, stored on `percent`, default 50) and percentOther
+  // is the flatmate charged the rest. The input shows when percentPayer set.
+  percentPayer,
+  percentOther,
   addLabel = 'Add Item',
   showAddButton = true
 }) {
@@ -59,10 +61,12 @@ export default function ExtrasInputList({
             onChange={(e) => onUpdate(extra.id, 'price', e.target.value)}
             placeholder="Per pack"
             aria-label="Price per pack"
-            title="Price of one pack"
+            title="Price of one pack — long decimals are fine (e.g. 2.3333), the total rounds to pennies"
+            maxDecimals={10}
+            step="any"
           />
-          {percentTo != null && (
-            <div className="currency-input percent-input" title={`% of this item charged to ${percentTo} (the rest stays with whoever added it)`}>
+          {percentPayer != null && (
+            <div className="currency-input percent-input" title={`% of this item ${percentPayer} pays — the rest is charged to ${percentOther}`}>
               <input
                 type="number"
                 min="0"
@@ -71,7 +75,7 @@ export default function ExtrasInputList({
                 inputMode="decimal"
                 value={extra.percent ?? 50}
                 onChange={(e) => onUpdate(extra.id, 'percent', limitDecimals(e.target.value))}
-                aria-label={`Percent charged to ${percentTo}`}
+                aria-label={`Percent of the item ${percentPayer} pays`}
               />
               <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>
             </div>

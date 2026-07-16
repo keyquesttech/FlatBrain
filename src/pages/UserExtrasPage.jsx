@@ -110,21 +110,22 @@ export default function UserExtrasPage({ personKey }) {
 
   const fmtPct = (n) => Math.round(n * 100) / 100;
 
-  // What the other flatmate pays: their share of items added here, plus
-  // their remainder of items they added themselves. Amounts use the same
-  // rounded parts as the invoice so every page shows identical pennies.
+  // What the other flatmate pays: the charged remainder of items added here
+  // (100 − your %), plus their own share of items they added themselves.
+  // Amounts use the same rounded parts as the invoice so every page shows
+  // identical pennies.
   const chargedToOther = [
     ...extras
-      .map((e) => ({ ...e, addedByYou: true, pct: fmtPct(extraPercent(e)), share: extraShares(e).charged }))
+      .map((e) => ({ ...e, addedByYou: true, pct: fmtPct(100 - extraPercent(e)), share: extraShares(e).other }))
       .filter((e) => e.pct > 0),
     ...otherExtras
-      .map((e) => ({ ...e, addedByYou: false, pct: fmtPct(100 - extraPercent(e)), share: extraShares(e).remainder }))
+      .map((e) => ({ ...e, addedByYou: false, pct: fmtPct(extraPercent(e)), share: extraShares(e).own }))
       .filter((e) => e.pct > 0)
   ];
 
-  // Items the other flatmate added that charge this person.
+  // Items the other flatmate added that charge this person (their remainder).
   const chargedToYou = otherExtras
-    .map((e) => ({ ...e, pct: fmtPct(extraPercent(e)), share: extraShares(e).charged }))
+    .map((e) => ({ ...e, pct: fmtPct(100 - extraPercent(e)), share: extraShares(e).other }))
     .filter((e) => e.pct > 0);
 
   if (loading) return <div className="page-loading">Loading…</div>;
@@ -142,12 +143,13 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <ExtrasInputList
             title={`${displayName}'s Extras`}
-            description={`Things you bought for the flat (packs × price per pack). The % is the slice of each item charged to ${otherDisplayName}; you pay the rest — 50% splits it evenly, 100% charges it fully to ${otherDisplayName}.`}
+            description={`Things you bought for the flat (packs × price per pack). The % is the slice YOU pay of each item; the rest is charged to ${otherDisplayName} — 50% splits it evenly, 0% charges it fully to ${otherDisplayName}.`}
             extras={extras}
             onAdd={() => saveExtras([...extras, newExtra()])}
             onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
             onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
-            percentTo={otherDisplayName}
+            percentPayer={displayName}
+            percentOther={otherDisplayName}
           />
         </div>
 

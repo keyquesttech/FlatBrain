@@ -10,5 +10,7 @@ export function newId() {
 }
 
 export function newExtra() {
-  return { id: newId(), thing: '', packs: 1, price: '', percent: 50 };
+  // percentOwn marks the percent as "share the adder pays" (current
+  // semantics) — items without it are legacy and get inverted on read.
+  return { id: newId(), thing: '', packs: 1, price: '', percent: 50, percentOwn: true };
 }

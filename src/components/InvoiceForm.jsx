@@ -157,12 +157,13 @@ export default function InvoiceForm({ data, onChange }) {
       <div className="glass-panel">
         <ExtrasInputList
           title={`${name}'s Extras`}
-          description={`Things ${name} bought for the flat (packs × price per pack). The % is the slice of each item charged to ${other}; ${name} pays the rest — 50% splits it evenly, 100% charges it fully to ${other}.`}
+          description={`Things ${name} bought for the flat (packs × price per pack). The % is the slice ${name} pays of each item; the rest is charged to ${other} — 50% splits it evenly, 0% charges it fully to ${other}.`}
           extras={data[extrasKey]}
           onAdd={() => addExtra(extrasKey)}
           onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
           onRemove={(id) => removeExtra(extrasKey, id)}
-          percentTo={other}
+          percentPayer={name}
+          percentOther={other}
           addLabel="Add Item"
         />
       </div>

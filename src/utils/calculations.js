@@ -15,12 +15,13 @@ export function round2(n) {
   return Math.ceil(cents) / 100;
 }
 
-// Trims typed input to two decimal places, so a third decimal can never be
-// entered (computed amounts round up instead — see round2).
-export function limitDecimals(value) {
+// Trims typed input to `places` decimals (default two, so a third decimal
+// can't be entered; computed amounts round up instead — see round2). The
+// extras price field passes a higher limit for prices like 14/6 = 2.3333….
+export function limitDecimals(value, places = 2) {
   const s = String(value ?? '');
   const i = s.indexOf('.');
-  return i === -1 ? s : s.slice(0, i + 3);
+  return i === -1 ? s : s.slice(0, i + 1 + places);
 }
 
 export function packsOf(extra) {
@@ -33,30 +34,36 @@ export function extraTotal(extra) {
   return packsOf(extra) * parseAmount(extra?.price);
 }
 
-// An extra's percent is the share of it charged to the OTHER flatmate
-// (the one who didn't add it). Defaults to 50; 100 = fully charged over.
+// An extra's percent is the share of it its ADDER pays; the rest is charged
+// to the other flatmate. Defaults to 50; 0 = fully charged to the other.
 export function extraPercent(extra) {
   const n = parseFloat(extra?.percent);
   if (isNaN(n)) return 50;
   return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
 }
 
-// An extra splits into the part charged to the other flatmate and the
-// remainder kept by whoever added it. The charged part is rounded to pence
-// and the remainder derived by subtraction, so the parts always sum to the
-// item's total exactly and displayed lines reconcile with card totals.
+// An extra splits into the share its adder pays (own) and the rest charged
+// to the other flatmate. The own part is rounded to pence and the other
+// derived by subtraction, so the parts always sum to the item's total
+// exactly and displayed lines reconcile with card totals.
 export function extraShares(extra) {
   const total = round2(extraTotal(extra));
-  const charged = round2((total * extraPercent(extra)) / 100);
-  return { total, charged, remainder: round2(total - charged) };
+  const own = round2((total * extraPercent(extra)) / 100);
+  return { total, own, other: round2(total - own) };
 }
 
-// A person's extras as one list with a normalized percent on every item.
-// Merges the legacy full-price list (pre-per-item-percent drafts/invoices)
-// in as 100% items, so old data keeps computing identically.
+// A person's extras as one list with a normalized percent on every item,
+// where percent = the share the ADDER pays (marked percentOwn: true).
+// Items saved before this flip stored the share charged to the OTHER
+// flatmate — those (no marker) are inverted once here, so old drafts and
+// history keep charging the same person. Legacy full-price lists fold in
+// as 0% items (the adder pays nothing; the other flatmate pays it all).
 export function mergedExtras(data, personKey) {
-  const own = (data[`${personKey}Extras`] || []).map((e) => ({ ...e, percent: extraPercent(e) }));
-  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => ({ ...e, percent: 100 }));
+  const normalizeExtra = (e) => e.percentOwn
+    ? { ...e, percent: extraPercent(e) }
+    : { ...e, percent: Math.round((100 - extraPercent(e)) * 100) / 100, percentOwn: true };
+  const own = (data[`${personKey}Extras`] || []).map(normalizeExtra);
+  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => ({ ...e, percent: 0, percentOwn: true }));
   return [...own, ...legacyFull];
 }
 
@@ -153,13 +160,13 @@ export function calculateInvoice(data) {
   const flatmate2BillsShare = round2(flatmate2SharedShare + flatmate2DiscountedBills);
   const billsTotal = round2(flatmate1BillsShare + flatmate2BillsShare);
 
-  // Each extra charges its percent to the other flatmate; the person who
-  // added it pays the remainder. Per-item rounded parts are summed so the
-  // itemized lines always add up to the share exactly.
+  // Each extra's percent is the share its adder pays; the other flatmate is
+  // charged the rest. Per-item rounded parts are summed so the itemized
+  // lines always add up to the share exactly.
   const flatmate1Items = mergedExtras(data, 'flatmate1');
   const flatmate2Items = mergedExtras(data, 'flatmate2');
   const shareOf = (items, isOwn) => items.reduce(
-    (sum, e) => round2(sum + extraShares(e)[isOwn ? 'remainder' : 'charged']),
+    (sum, e) => round2(sum + extraShares(e)[isOwn ? 'own' : 'other']),
     0
   );
 
