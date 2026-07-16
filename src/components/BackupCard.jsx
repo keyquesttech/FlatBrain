@@ -122,9 +122,7 @@ export default function BackupCard() {
         </button>
       </div>
       <p className="section-desc">
-        Copies the app's data (draft, history, password) into a BillSplitterBackups folder on a USB
-        stick plugged into the Pi. Runs on the schedule below and always keeps the newest {cfg.keep}{' '}
-        backups — the current one and {cfg.keep - 1} behind.
+        Copies the app's data to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
       </p>
 
       <p className="backup-device-state">

@@ -136,14 +136,14 @@ export default function UserExtrasPage({ personKey }) {
 
       <div className="page-header">
         <h1>{displayName}'s Extras</h1>
-        <p className="text-muted">Add things you bought for the flat — they appear on this month's invoice as you type.</p>
+        <p className="text-muted">Things you bought sync straight to this month's invoice.</p>
       </div>
 
       <div className="form-card-stack">
         <div className="glass-panel">
           <ExtrasInputList
             title={`${displayName}'s Extras`}
-            description={`Things you bought for the flat (packs × price per pack). The % is the slice YOU pay of each item; the rest is charged to ${otherDisplayName} — 50% splits it evenly, 0% charges it fully to ${otherDisplayName}.`}
+            description={`Packs × price per pack. % = the share you pay — e.g. 10% means you pay 10%, ${otherDisplayName} 90%.`}
             extras={extras}
             onAdd={() => saveExtras([...extras, newExtra()])}
             onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
@@ -155,7 +155,7 @@ export default function UserExtrasPage({ personKey }) {
 
         <div className="glass-panel">
           <h3 className="invoice-section-title">Your notes</h3>
-          <p className="section-desc">Optional message shown on the invoice in your own note card, below the totals.</p>
+          <p className="section-desc">Optional — shown on the invoice.</p>
           <textarea
             value={note}
             onChange={(e) => saveNote(e.target.value)}
@@ -168,10 +168,7 @@ export default function UserExtrasPage({ personKey }) {
 
         <div className="glass-panel">
           <h3 className="invoice-section-title">Charged to {otherDisplayName}</h3>
-          <p className="section-desc">
-            Everything {otherDisplayName} pays for extras this month: their % of items you added,
-            plus the part of their own items that isn't charged to you.
-          </p>
+          <p className="section-desc">Everything {otherDisplayName} pays for extras this month.</p>
           {chargedToOther.map((extra) => {
             const total = extraShares(extra).total;
             return (
@@ -190,10 +187,7 @@ export default function UserExtrasPage({ personKey }) {
 
         <div className="glass-panel">
           <h3 className="invoice-section-title">Charged to you</h3>
-          <p className="section-desc">
-            Your share of items {otherDisplayName} added. On top of this, you pay whatever part
-            of your own items above isn't charged to {otherDisplayName}.
-          </p>
+          <p className="section-desc">Your share of {otherDisplayName}'s items.</p>
           {chargedToYou.map((extra) => {
             const total = extraShares(extra).total;
             return (
@@ -212,7 +206,7 @@ export default function UserExtrasPage({ personKey }) {
 
         <div className="glass-panel">
           <h3 className="invoice-section-title">History</h3>
-          <p className="section-desc">What the bills came to each month, from saved invoices. Waived (All-discounted) portions aren't counted.</p>
+          <p className="section-desc">Bills per month from saved invoices.</p>
           <SpendingChart history={history} />
         </div>
       </div>
