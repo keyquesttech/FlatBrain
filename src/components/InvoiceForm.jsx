@@ -248,7 +248,7 @@ export default function InvoiceForm({ data, onChange }) {
           </button>
         </div>
         <p className="section-desc">
-          Tick a bill to discount it, then pick who it's discounted from — All discounts it from the whole invoice.
+          Tick a bill to discount it, then pick who it's discounted for — the other flatmate pays that bill in full. All waives it for everyone.
         </p>
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
@@ -275,7 +275,7 @@ export default function InvoiceForm({ data, onChange }) {
               aria-label="Bill amount"
             />
             {bill.discounted && (
-              <div className="bill-discount-select" title="Who this bill is discounted from">
+              <div className="bill-discount-select" title="Who this bill is discounted for">
                 <SelectMenu
                   value={bill.discountedFrom || 'na'}
                   onChange={(v) => updateBill(bill.id, 'discountedFrom', v)}

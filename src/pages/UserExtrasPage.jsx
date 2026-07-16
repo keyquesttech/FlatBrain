@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getDraft, updateDraft, getHistory } from '../api';
-import { extraPercent, extraTotal, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
+import { extraPercent, extraShares, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
@@ -111,19 +111,20 @@ export default function UserExtrasPage({ personKey }) {
   const fmtPct = (n) => Math.round(n * 100) / 100;
 
   // What the other flatmate pays: their share of items added here, plus
-  // their remainder of items they added themselves.
+  // their remainder of items they added themselves. Amounts use the same
+  // rounded parts as the invoice so every page shows identical pennies.
   const chargedToOther = [
     ...extras
-      .map((e) => ({ ...e, addedByYou: true, pct: fmtPct(extraPercent(e)) }))
+      .map((e) => ({ ...e, addedByYou: true, pct: fmtPct(extraPercent(e)), share: extraShares(e).charged }))
       .filter((e) => e.pct > 0),
     ...otherExtras
-      .map((e) => ({ ...e, addedByYou: false, pct: fmtPct(100 - extraPercent(e)) }))
+      .map((e) => ({ ...e, addedByYou: false, pct: fmtPct(100 - extraPercent(e)), share: extraShares(e).remainder }))
       .filter((e) => e.pct > 0)
   ];
 
   // Items the other flatmate added that charge this person.
   const chargedToYou = otherExtras
-    .map((e) => ({ ...e, pct: fmtPct(extraPercent(e)) }))
+    .map((e) => ({ ...e, pct: fmtPct(extraPercent(e)), share: extraShares(e).charged }))
     .filter((e) => e.pct > 0);
 
   if (loading) return <div className="page-loading">Loading…</div>;
@@ -169,12 +170,12 @@ export default function UserExtrasPage({ personKey }) {
             {otherDisplayName}'s share of every extra, including items they added.
           </p>
           {chargedToOther.map((extra) => {
-            const total = extraTotal(extra);
+            const total = extraShares(extra).total;
             return (
               <div key={extra.id} className="preview-item">
                 <div className="preview-item-main">
                   <span>{formatExtraLabel(extra)}</span>
-                  <span>{formatCurrency((total * extra.pct) / 100)}</span>
+                  <span>{formatCurrency(extra.share)}</span>
                 </div>
                 <div className="preview-item-sub">
                   Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {extra.pct}% of {formatCurrency(total)}
@@ -190,12 +191,12 @@ export default function UserExtrasPage({ personKey }) {
             Your share of items {otherDisplayName} added. You also pay the remaining % of your own items above.
           </p>
           {chargedToYou.map((extra) => {
-            const total = extraTotal(extra);
+            const total = extraShares(extra).total;
             return (
               <div key={extra.id} className="preview-item">
                 <div className="preview-item-main">
                   <span>{formatExtraLabel(extra)}</span>
-                  <span>{formatCurrency((total * extra.pct) / 100)}</span>
+                  <span>{formatCurrency(extra.share)}</span>
                 </div>
                 <div className="preview-item-sub">
                   Added by {otherDisplayName} — you pay {extra.pct}% of {formatCurrency(total)}
