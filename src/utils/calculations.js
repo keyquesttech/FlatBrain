@@ -19,16 +19,22 @@ export function extraTotal(extra) {
   return packsOf(extra) * parseAmount(extra?.price);
 }
 
-export function sumExtras(extras) {
-  return (extras || []).reduce((sum, e) => sum + extraTotal(e), 0);
-}
-
 // An extra's percent is the share of it charged to the OTHER flatmate
 // (the one who didn't add it). Defaults to 50; 100 = fully charged over.
 export function extraPercent(extra) {
   const n = parseFloat(extra?.percent);
   if (isNaN(n)) return 50;
   return Math.round(Math.min(100, Math.max(0, n)) * 100) / 100;
+}
+
+// An extra splits into the part charged to the other flatmate and the
+// remainder kept by whoever added it. The charged part is rounded to pence
+// and the remainder derived by subtraction, so the parts always sum to the
+// item's total exactly and displayed lines reconcile with card totals.
+export function extraShares(extra) {
+  const total = round2(extraTotal(extra));
+  const charged = round2((total * extraPercent(extra)) / 100);
+  return { total, charged, remainder: round2(total - charged) };
 }
 
 // A person's extras as one list with a normalized percent on every item.
@@ -63,14 +69,15 @@ export function calculateInvoice(data) {
   const splitPercent = clampSplitPercent(data.splitPercent ?? 50);
   const p = splitPercent / 100;
 
-  // Discounted bills stay listed on the invoice but aren't charged: with
-  // discountedFrom 'na' (or unset) the whole bill is waived; with a flatmate
-  // selected only that person's share is waived — the other still pays theirs.
-  // Per bill, one part is rounded to pence and the rest derived by
-  // subtraction, so parts + waived always equal the bill exactly and every
-  // displayed total reconciles.
-  let matiasBillsShare = 0;
-  let rekaBillsShare = 0;
+  // Undiscounted bills are split between the flatmates at the split percent.
+  // A bill "discounted for" one flatmate is charged in full to the other;
+  // with discountedFrom 'na' (or unset) the whole bill is waived and nobody
+  // pays. Per shared bill one part is rounded to pence and the other derived
+  // by subtraction, so the two shares always sum to the charged total exactly.
+  let matiasSharedShare = 0;
+  let rekaSharedShare = 0;
+  let matiasDiscountedBills = 0; // bills discounted for Réka — Matias pays them in full
+  let rekaDiscountedBills = 0; // bills discounted for Matias — Réka pays them in full
   let billsRawTotal = 0;
   const billDiscountLines = [];
   (data.bills || []).forEach((b) => {
@@ -78,42 +85,41 @@ export function calculateInvoice(data) {
     const from = b.discounted ? (b.discountedFrom || 'na') : null;
     billsRawTotal = round2(billsRawTotal + amount);
 
-    let mPart = 0;
-    let rPart = 0;
     if (from === null) {
-      mPart = round2(amount * p);
-      rPart = round2(amount - mPart);
-    } else if (from === 'reka') {
-      mPart = round2(amount * p);
-    } else if (from === 'matias') {
-      rPart = round2(amount * (1 - p));
+      const mPart = round2(amount * p);
+      matiasSharedShare = round2(matiasSharedShare + mPart);
+      rekaSharedShare = round2(rekaSharedShare + round2(amount - mPart));
+      return;
     }
-    matiasBillsShare = round2(matiasBillsShare + mPart);
-    rekaBillsShare = round2(rekaBillsShare + rPart);
-
-    if (from !== null) {
-      billDiscountLines.push({
-        id: b.id,
-        thing: b.thing,
-        from,
-        waived: round2(amount - mPart - rPart)
-      });
-    }
+    if (from === 'reka') matiasDiscountedBills = round2(matiasDiscountedBills + amount);
+    if (from === 'matias') rekaDiscountedBills = round2(rekaDiscountedBills + amount);
+    billDiscountLines.push({
+      id: b.id,
+      thing: b.thing,
+      from,
+      amount,
+      waived: from === 'na' ? amount : 0
+    });
   });
+  const matiasBillsShare = round2(matiasSharedShare + matiasDiscountedBills);
+  const rekaBillsShare = round2(rekaSharedShare + rekaDiscountedBills);
   const billsTotal = round2(matiasBillsShare + rekaBillsShare);
 
   // Each extra charges its percent to the other flatmate; the person who
-  // added it pays the remainder.
+  // added it pays the remainder. Per-item rounded parts are summed so the
+  // itemized lines always add up to the share exactly.
   const matiasItems = mergedExtras(data, 'matias');
   const rekaItems = mergedExtras(data, 'reka');
-  const shareOf = (items, isOwn) => items.reduce((sum, e) => {
-    const fraction = extraPercent(e) / 100;
-    return sum + extraTotal(e) * (isOwn ? 1 - fraction : fraction);
-  }, 0);
+  const shareOf = (items, isOwn) => items.reduce(
+    (sum, e) => round2(sum + extraShares(e)[isOwn ? 'remainder' : 'charged']),
+    0
+  );
 
   const matiasShareExtras = round2(shareOf(matiasItems, true) + shareOf(rekaItems, false));
   const rekaShareExtras = round2(shareOf(rekaItems, true) + shareOf(matiasItems, false));
-  const extrasTotal = round2(sumExtras(matiasItems) + sumExtras(rekaItems));
+  // Every item's charged part + remainder equals its total, so this is the
+  // exact sum of all item totals.
+  const extrasTotal = round2(matiasShareExtras + rekaShareExtras);
 
   const matiasBeforeDiscounts = round2(matiasBillsShare + matiasShareExtras);
   const rekaBeforeDiscounts = round2(rekaBillsShare + rekaShareExtras);
@@ -127,9 +133,10 @@ export function calculateInvoice(data) {
   return {
     splitPercent,
     billsTotal,
-    billsTotalEach: round2(billsTotal / 2),
     billsRawTotal,
     billDiscountLines,
+    matiasSharedShare,
+    rekaSharedShare,
     matiasBillsShare,
     rekaBillsShare,
     matiasShareExtras,
@@ -141,8 +148,10 @@ export function calculateInvoice(data) {
     matiasTotalDue,
     rekaTotalDue,
     extrasTotal,
-    // Grand total counts the full bills and extras, before any discounts
-    grandTotal: round2(billsRawTotal + extrasTotal),
+    // Grand total = charged bills + all extras, so it always equals the
+    // Bills card total plus the Total extras line (and the flatmates' dues
+    // before their personal discounts).
+    grandTotal: round2(billsTotal + extrasTotal),
     netTotal: round2(matiasTotalDue + rekaTotalDue)
   };
 }

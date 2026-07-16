@@ -3,7 +3,7 @@ import {
   calculateInvoice,
   discountAmount,
   extraPercent,
-  extraTotal,
+  extraShares,
   formatCurrency,
   formatExtraLabel,
   mergedExtras,
@@ -24,25 +24,43 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   } = calc;
   const rekaPercent = Math.round((100 - splitPercent) * 100) / 100;
   const hasBillDiscounts = calc.billDiscountLines.length > 0;
-  // People with a waived bill get an "after discounts" note on their share line
-  const billsDiscountedFor = (personKey) =>
-    calc.billDiscountLines.some((line) => line.from === 'na' || line.from === personKey);
+  // Only 'All' discounts remove money from the bills total; bills discounted
+  // for one flatmate are still charged in full (to the other flatmate).
+  const hasWaivedBills = billsTotal !== calc.billsRawTotal;
+  // Bills discounted for one flatmate are itemized on the other's card.
+  const discountBillsPaidBy = (personKey) => {
+    const otherKey = personKey === 'matias' ? 'reka' : 'matias';
+    return calc.billDiscountLines.filter((line) => line.from === otherKey);
+  };
 
   // Each person's itemized extras: their remainder of items they added, plus
   // their charged share of the other's items. Zero-share lines are omitted.
+  // Amounts come from extraShares so the lines sum to the card total exactly.
   const extraLinesFor = (personKey) => {
     const otherKey = personKey === 'matias' ? 'reka' : 'matias';
     return [
-      ...mergedExtras(data, personKey).map((e) => ({
-        item: e,
-        pct: Math.round((100 - extraPercent(e)) * 100) / 100,
-        addedBy: names[personKey]
-      })),
-      ...mergedExtras(data, otherKey).map((e) => ({
-        item: e,
-        pct: extraPercent(e),
-        addedBy: names[otherKey]
-      }))
+      ...mergedExtras(data, personKey).map((e) => {
+        const { total, charged, remainder } = extraShares(e);
+        return {
+          item: e,
+          pct: Math.round((100 - extraPercent(e)) * 100) / 100,
+          total,
+          amount: remainder,
+          otherAmount: charged,
+          addedBy: names[personKey]
+        };
+      }),
+      ...mergedExtras(data, otherKey).map((e) => {
+        const { total, charged, remainder } = extraShares(e);
+        return {
+          item: e,
+          pct: extraPercent(e),
+          total,
+          amount: charged,
+          otherAmount: remainder,
+          addedBy: names[otherKey]
+        };
+      })
     ].filter((line) => line.pct > 0);
   };
 
@@ -52,7 +70,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.matias,
       pct: splitPercent,
       otherName: names.reka,
-      billsShare: matiasBillsShare,
+      sharedShare: calc.matiasSharedShare,
+      discountBills: discountBillsPaidBy('matias'),
       extraLines: extraLinesFor('matias'),
       before: calc.matiasBeforeDiscounts,
       discounts: data.matiasDiscounts || [],
@@ -64,7 +83,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       name: names.reka,
       pct: rekaPercent,
       otherName: names.matias,
-      billsShare: rekaBillsShare,
+      sharedShare: calc.rekaSharedShare,
+      discountBills: discountBillsPaidBy('reka'),
       extraLines: extraLinesFor('reka'),
       before: calc.rekaBeforeDiscounts,
       discounts: data.rekaDiscounts || [],
@@ -114,7 +134,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             <span>{formatCurrency(rekaBillsShare)}</span>
           </div>
           <div className="due-card-total">
-            <span>Bills total{hasBillDiscounts ? ' (after discounts)' : ''}</span>
+            <span>Bills total{hasWaivedBills ? ' (after discounts)' : ''}</span>
             <span>{formatCurrency(billsTotal)}</span>
           </div>
         </div>
@@ -125,17 +145,23 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className={`due-card due-card-summary due-card-summary-${person.key}`} key={person.key}>
             <div className="due-card-name">{person.name} Total</div>
             <div className="due-line">
-              <span>Share of bills ({person.pct}%{billsDiscountedFor(person.key) ? ', after discounts' : ''})</span>
-              <span>{formatCurrency(person.billsShare)}</span>
+              <span>Share of bills ({person.pct}%)</span>
+              <span>{formatCurrency(person.sharedShare)}</span>
             </div>
-            {person.extraLines.map(({ item, pct, addedBy }) => (
+            {person.discountBills.map((line) => (
+              <div className="due-line" key={line.id}>
+                <span>{line.thing} · discounted for {names[line.from]}</span>
+                <span>{formatCurrency(line.amount)}</span>
+              </div>
+            ))}
+            {person.extraLines.map(({ item, pct, total, amount, otherAmount, addedBy }) => (
               <div className="due-item" key={item.id}>
                 <div className="due-line">
-                  <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(extraTotal(item))}</span>
-                  <span>{formatCurrency((extraTotal(item) * pct) / 100)}</span>
+                  <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(total)}</span>
+                  <span>{formatCurrency(amount)}</span>
                 </div>
                 <div className="due-item-sub">
-                  Added by {addedBy} — {person.otherName} pays {formatCurrency((extraTotal(item) * (100 - pct)) / 100)}
+                  Added by {addedBy} — {person.otherName} pays {formatCurrency(otherAmount)}
                 </div>
               </div>
             ))}
@@ -195,7 +221,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
       <div className="invoice-footer">
         <p>Thank you for settling the bills promptly!</p>
-        <p>Send your Total due to this account.</p>
+        <p>Send your Total due to the account above.</p>
         {data.dueDate && (
           <p className="invoice-due-date">
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
