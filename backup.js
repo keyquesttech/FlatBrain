@@ -186,6 +186,28 @@ export function createBackupManager(baseDir) {
     }
   }
 
+  // Unmount the configured stick so it's safe to unplug. udisksctl flushes
+  // and detaches; the sudo fallback covers mounts made outside udisks.
+  function ejectDevice() {
+    const cfg = readConfig();
+    if (!cfg.device) throw new Error('No USB drive selected');
+    const device = findConfiguredDevice(cfg);
+    if (!device) throw new Error(`USB drive "${cfg.device.label}" is not plugged in`);
+    if (!device.mountpoint) {
+      return { success: true, message: 'Drive is not mounted — already safe to unplug.' };
+    }
+    try {
+      run('udisksctl', ['unmount', '-b', device.path, '--no-user-interaction']);
+    } catch {
+      try {
+        run('sudo', ['umount', device.path]);
+      } catch {
+        throw new Error('Could not eject — the drive is busy. Try again in a moment.');
+      }
+    }
+    return { success: true, message: `${device.label} ejected — safe to unplug.` };
+  }
+
   // Delete one backup folder from the stick (manual housekeeping from the
   // Backup card). The name must be a plain "backup…" folder name — no
   // separators — so nothing outside BillSplitterBackups can be touched.
@@ -263,6 +285,7 @@ export function createBackupManager(baseDir) {
     mountDevice,
     performBackup,
     deleteBackup,
+    ejectDevice,
     lastScheduledOccurrence,
     checkSchedule,
     status

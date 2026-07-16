@@ -222,6 +222,14 @@ app.post('/api/backup/run', (req, res) => {
   res.json(backup.performBackup());
 });
 
+app.post('/api/backup/eject', (req, res) => {
+  try {
+    res.json(backup.ejectDevice());
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 app.delete('/api/backup/:name', (req, res) => {
   try {
     res.json(backup.deleteBackup(req.params.name));
