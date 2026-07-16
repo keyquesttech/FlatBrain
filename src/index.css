@@ -1233,8 +1233,10 @@ input[type="checkbox"]:focus-visible {
   color: var(--text);
 }
 
-.backup-actions {
-  margin: 0.25rem 0 0.5rem;
+.backup-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .backup-message {

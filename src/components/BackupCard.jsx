@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { HardDrive, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowUpFromLine, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import SelectMenu from './SelectMenu';
-import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, deleteBackup } from '../api';
+import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, ejectBackupDevice, deleteBackup } from '../api';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Monday' },
@@ -121,6 +121,20 @@ export default function BackupCard() {
     }
   };
 
+  const eject = async () => {
+    setBusy('eject');
+    setMessage('Ejecting…');
+    try {
+      const res = await ejectBackupDevice();
+      setMessage(res.success ? res.message : `Eject failed: ${res.error}`);
+      await refresh();
+    } catch {
+      setMessage('Eject failed — check the server.');
+    } finally {
+      setBusy('');
+    }
+  };
+
   if (!cfg) return null;
 
   // The dropdown lists scanned drives, always including the saved one.
@@ -151,9 +165,22 @@ export default function BackupCard() {
     <div className="glass-panel backup-card">
       <div className="extras-section-header">
         <h3 className="invoice-section-title">Backup</h3>
-        <button className="btn btn-primary btn-sm" onClick={scan} disabled={!!busy}>
-          <RefreshCw size={16} /> {busy === 'scan' ? 'Scanning…' : 'Scan USB drives'}
-        </button>
+        <div className="backup-header-actions">
+          <button className="btn btn-primary btn-sm" onClick={backupNow} disabled={!!busy || !cfg.device}>
+            <HardDrive size={16} /> {busy === 'run' ? 'Backing up…' : 'Back up now'}
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={scan} disabled={!!busy}>
+            <RefreshCw size={16} /> {busy === 'scan' ? 'Scanning…' : 'Scan USB drives'}
+          </button>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={eject}
+            disabled={!!busy || !status.mounted}
+            title={status.mounted ? 'Unmount the stick so it is safe to unplug' : 'Drive is not mounted'}
+          >
+            <ArrowUpFromLine size={16} /> {busy === 'eject' ? 'Ejecting…' : 'Eject'}
+          </button>
+        </div>
       </div>
       <p className="section-desc">
         Copies the app's data to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
@@ -216,12 +243,6 @@ export default function BackupCard() {
           />
           <span>Automatic backups</span>
         </label>
-      </div>
-
-      <div className="backup-actions">
-        <button className="btn btn-secondary" onClick={backupNow} disabled={!!busy || !cfg.device}>
-          <HardDrive size={16} /> {busy === 'run' ? 'Backing up…' : 'Back up now'}
-        </button>
       </div>
 
       {message && <p className="backup-message">{message}</p>}
