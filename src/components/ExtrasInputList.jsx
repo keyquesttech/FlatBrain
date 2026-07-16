@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
+import { limitDecimals } from '../utils/calculations';
 
 export default function ExtrasInputList({
   title,
@@ -69,7 +70,7 @@ export default function ExtrasInputList({
                 step="1"
                 inputMode="decimal"
                 value={extra.percent ?? 50}
-                onChange={(e) => onUpdate(extra.id, 'percent', e.target.value)}
+                onChange={(e) => onUpdate(extra.id, 'percent', limitDecimals(e.target.value))}
                 aria-label={`Percent charged to ${percentTo}`}
               />
               <span className="currency-input-prefix split-suffix" aria-hidden="true">%</span>

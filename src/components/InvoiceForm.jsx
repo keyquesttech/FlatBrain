@@ -7,7 +7,7 @@ import CurrencyInput from './CurrencyInput';
 import SelectMenu from './SelectMenu';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra, newId } from '../utils/id';
-import { billDiscountPercent, clampSplitPercent } from '../utils/calculations';
+import { billDiscountPercent, clampSplitPercent, limitDecimals } from '../utils/calculations';
 
 export default function InvoiceForm({ data, onChange }) {
   const names = { ...DEFAULT_NAMES, ...(data.names || {}) };
@@ -81,7 +81,8 @@ export default function InvoiceForm({ data, onChange }) {
   const [splitPerson, setSplitPerson] = useState('matias');
   const splitFieldValue = splitPerson === 'matias' ? (data.splitPercent ?? 50) : otherPct;
 
-  const handleSplitChange = (value) => {
+  const handleSplitChange = (raw) => {
+    const value = limitDecimals(raw);
     if (splitPerson === 'matias') {
       updateField('splitPercent', value);
     } else {
@@ -123,7 +124,7 @@ export default function InvoiceForm({ data, onChange }) {
               step="0.01"
               inputMode="decimal"
               value={discount.value}
-              onChange={(e) => updateExtra(key, discount.id, 'value', e.target.value)}
+              onChange={(e) => updateExtra(key, discount.id, 'value', limitDecimals(e.target.value))}
               placeholder={discount.type === 'percent' ? '%' : '£'}
               aria-label="Discount value"
             />
@@ -288,7 +289,7 @@ export default function InvoiceForm({ data, onChange }) {
                 step="1"
                 inputMode="decimal"
                 value={bill.discountPercent ?? ''}
-                onChange={(e) => updateBill(bill.id, 'discountPercent', e.target.value)}
+                onChange={(e) => updateBill(bill.id, 'discountPercent', limitDecimals(e.target.value))}
                 placeholder="0"
                 aria-label={`Percent of ${bill.thing || 'this bill'} to discount`}
               />

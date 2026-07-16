@@ -1,4 +1,5 @@
 import React from 'react';
+import { limitDecimals } from '../utils/calculations';
 
 export default function CurrencyInput({ value, onChange, placeholder = '0.00', className = '', style, ...props }) {
   return (
@@ -7,7 +8,11 @@ export default function CurrencyInput({ value, onChange, placeholder = '0.00', c
       <input
         type="number"
         value={value}
-        onChange={onChange}
+        onChange={(e) => {
+          // Pennies are the smallest unit — a third decimal can't be typed.
+          e.target.value = limitDecimals(e.target.value);
+          onChange(e);
+        }}
         placeholder={placeholder}
         min="0"
         step="0.01"

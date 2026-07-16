@@ -3,10 +3,24 @@ export function parseAmount(val) {
   return isNaN(num) ? 0 : num;
 }
 
-// All computed amounts round to whole pence (0.00) so displayed lines and
-// totals always agree.
+// All computed amounts round to whole pence (2 decimals), and anything
+// beyond the second decimal always rounds UP: 2.333 → 2.34. Sums of clean
+// 2dp values carry float noise (0.1 + 0.2 = 0.30000000000000004), so values
+// within a whisker of an exact penny count as exact instead of being bumped
+// up a penny.
 export function round2(n) {
-  return Math.round(n * 100) / 100;
+  const cents = n * 100;
+  const nearest = Math.round(cents);
+  if (Math.abs(cents - nearest) < 1e-7) return nearest / 100;
+  return Math.ceil(cents) / 100;
+}
+
+// Trims typed input to two decimal places, so a third decimal can never be
+// entered (computed amounts round up instead — see round2).
+export function limitDecimals(value) {
+  const s = String(value ?? '');
+  const i = s.indexOf('.');
+  return i === -1 ? s : s.slice(0, i + 3);
 }
 
 export function packsOf(extra) {
@@ -83,9 +97,10 @@ export function clampSplitPercent(value) {
 
 // A discount is { thing, type: 'amount'|'percent', value }. Percent discounts
 // apply to that person's pre-discount total (bills share + extras share).
+// Rounded per discount so displayed lines sum to the deducted total exactly.
 export function discountAmount(discount, base) {
   const v = parseAmount(discount?.value);
-  return discount?.type === 'percent' ? (base * v) / 100 : v;
+  return round2(discount?.type === 'percent' ? (base * v) / 100 : v);
 }
 
 export function sumDiscounts(discounts, base) {
