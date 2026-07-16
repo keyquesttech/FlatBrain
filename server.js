@@ -222,6 +222,14 @@ app.post('/api/backup/run', (req, res) => {
   res.json(backup.performBackup());
 });
 
+app.delete('/api/backup/:name', (req, res) => {
+  try {
+    res.json(backup.deleteBackup(req.params.name));
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 // Scheduler heartbeat — fires the backup when its scheduled time passes.
 setInterval(() => backup.checkSchedule(), 60 * 1000);
 

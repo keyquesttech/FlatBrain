@@ -30,3 +30,4 @@ export const getBackupDevices = () => request('/backup/devices');
 export const mountBackupDevice = (path) => request('/backup/mount', jsonBody('POST', { path }));
 export const updateBackupConfig = (config) => request('/backup/config', jsonBody('PUT', config));
 export const runBackupNow = () => request('/backup/run', { method: 'POST' });
+export const deleteBackup = (name) => request(`/backup/${encodeURIComponent(name)}`, { method: 'DELETE' });

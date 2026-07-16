@@ -177,6 +177,27 @@ export function createBackupManager(baseDir) {
     }
   }
 
+  // Delete one backup folder from the stick (manual housekeeping from the
+  // Backup card). The name must be a plain "backup-…" folder name — no
+  // separators — so nothing outside BillSplitterBackups can be touched.
+  function deleteBackup(name) {
+    if (
+      typeof name !== 'string' ||
+      !name.startsWith('backup-') ||
+      /[/\\]|\.\./.test(name)
+    ) {
+      throw new Error('Invalid backup name');
+    }
+    const cfg = readConfig();
+    const device = findConfiguredDevice(cfg);
+    if (!device) throw new Error('USB drive is not plugged in');
+    const mountpoint = device.mountpoint || mountDevice(device);
+    const dir = path.join(mountpoint, BACKUP_DIR_NAME, name);
+    if (!fs.existsSync(dir)) throw new Error('Backup not found on the stick');
+    fs.rmSync(dir, { recursive: true, force: true });
+    return { success: true, backups: listBackups(mountpoint) };
+  }
+
   // The most recent moment the schedule says a backup should have happened.
   function lastScheduledOccurrence(cfg, now = new Date()) {
     const [h, m] = String(cfg.time || '06:00').split(':').map(Number);
@@ -232,6 +253,7 @@ export function createBackupManager(baseDir) {
     listUsbCandidates,
     mountDevice,
     performBackup,
+    deleteBackup,
     lastScheduledOccurrence,
     checkSchedule,
     status
