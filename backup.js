@@ -114,23 +114,27 @@ export function createBackupManager(baseDir) {
     return FALLBACK_MOUNTPOINT;
   }
 
+  // Backups are ordered by folder mtime, newest first — the folder names
+  // carry month NAMES (backup_2026_July_16), which don't sort by date.
   function listBackups(mountpoint) {
     const dir = path.join(mountpoint, BACKUP_DIR_NAME);
     if (!fs.existsSync(dir)) return [];
     return fs
       .readdirSync(dir)
-      .filter((name) => name.startsWith('backup-'))
-      .sort()
-      .reverse()
+      .filter((name) => name.startsWith('backup'))
       .map((name) => {
         let files = 0;
+        let mtime = 0;
         try {
-          files = fs.readdirSync(path.join(dir, name)).length;
+          const full = path.join(dir, name);
+          mtime = fs.statSync(full).mtimeMs;
+          files = fs.readdirSync(full).length;
         } catch {
           /* unreadable entry — show it anyway */
         }
-        return { name, files };
-      });
+        return { name, files, mtime };
+      })
+      .sort((a, b) => b.mtime - a.mtime);
   }
 
   function performBackup() {
@@ -144,11 +148,12 @@ export function createBackupManager(baseDir) {
       const dir = path.join(mountpoint, BACKUP_DIR_NAME);
       fs.mkdirSync(dir, { recursive: true });
 
-      // backup-YYYY-MM-DD_HH-MM sorts chronologically by name
+      // backup_{Year}_{MonthName}_{Day}; a second backup on the same day
+      // refreshes the same folder
       const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
-      const target = path.join(dir, `backup-${stamp}`);
+      const monthName = now.toLocaleDateString('en-GB', { month: 'long' });
+      const day = String(now.getDate()).padStart(2, '0');
+      const target = path.join(dir, `backup_${now.getFullYear()}_${monthName}_${day}`);
       fs.mkdirSync(target, { recursive: true });
       let copied = 0;
       for (const file of DATA_FILES) {
@@ -159,11 +164,15 @@ export function createBackupManager(baseDir) {
         }
       }
 
-      // Prune to the newest `keep` (never below 2: current + previous)
+      // Prune to the newest `keep` by mtime (never below 2: current + previous)
       const keep = Math.max(2, Number(cfg.keep) || 2);
-      const all = fs.readdirSync(dir).filter((n) => n.startsWith('backup-')).sort();
-      for (const old of all.slice(0, Math.max(0, all.length - keep))) {
-        fs.rmSync(path.join(dir, old), { recursive: true, force: true });
+      const all = fs
+        .readdirSync(dir)
+        .filter((n) => n.startsWith('backup'))
+        .map((n) => ({ n, mtime: fs.statSync(path.join(dir, n)).mtimeMs }))
+        .sort((a, b) => a.mtime - b.mtime);
+      for (const { n } of all.slice(0, Math.max(0, all.length - keep))) {
+        fs.rmSync(path.join(dir, n), { recursive: true, force: true });
       }
 
       cfg.lastSuccess = Date.now();
@@ -178,12 +187,12 @@ export function createBackupManager(baseDir) {
   }
 
   // Delete one backup folder from the stick (manual housekeeping from the
-  // Backup card). The name must be a plain "backup-…" folder name — no
+  // Backup card). The name must be a plain "backup…" folder name — no
   // separators — so nothing outside BillSplitterBackups can be touched.
   function deleteBackup(name) {
     if (
       typeof name !== 'string' ||
-      !name.startsWith('backup-') ||
+      !name.startsWith('backup') ||
       /[/\\]|\.\./.test(name)
     ) {
       throw new Error('Invalid backup name');

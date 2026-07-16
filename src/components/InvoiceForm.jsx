@@ -157,7 +157,7 @@ export default function InvoiceForm({ data, onChange }) {
       <div className="glass-panel">
         <ExtrasInputList
           title={`${name}'s Extras`}
-          description={`Things ${name} bought for the flat (packs × price per pack). The % is the slice ${name} pays of each item; the rest is charged to ${other} — 50% splits it evenly, 0% charges it fully to ${other}.`}
+          description={`Packs × price per pack. % = the share ${name} pays — e.g. 10% means ${name} pays 10%, ${other} 90%.`}
           extras={data[extrasKey]}
           onAdd={() => addExtra(extrasKey)}
           onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
@@ -174,10 +174,7 @@ export default function InvoiceForm({ data, onChange }) {
     <div className="form-card-stack">
       <div className="glass-panel">
         <h3 className="invoice-section-title">Invoice Details</h3>
-        <p className="section-desc">
-          The month this invoice covers and the payment deadline shown in its footer.
-          Picking a period sets the due date to the 7th of the next month — you can still change it.
-        </p>
+        <p className="section-desc">Due date auto-fills to the 7th of the next month.</p>
 
         <div className="form-group">
           <label>Period</label>
@@ -198,9 +195,6 @@ export default function InvoiceForm({ data, onChange }) {
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Names</h3>
-        <p className="section-desc">
-          The two flatmates as they appear on the invoice and across the app.
-        </p>
         <div className="input-row">
           <input
             type="text"
@@ -247,8 +241,7 @@ export default function InvoiceForm({ data, onChange }) {
             </div>
           </div>
           <p className="section-desc split-desc">
-            {names.matias.trim() || 'Flatmate 1'} pays {splitPct}% of every bill, {names.reka.trim() || 'Flatmate 2'} pays {otherPct}%.
-            This only splits the bills — extras have their own per-item %.
+            {names.matias.trim() || 'Flatmate 1'} pays {splitPct}%, {names.reka.trim() || 'Flatmate 2'} pays {otherPct}% of every bill.
           </p>
         </div>
       </div>
@@ -261,10 +254,7 @@ export default function InvoiceForm({ data, onChange }) {
           </button>
         </div>
         <p className="section-desc">
-          The month's shared bills — each one is split at the Bills split ratio.
-          To discount part of a bill, set the % to discount and pick who it's discounted for:
-          that flatmate pays none of the discounted part and the other covers it in full.
-          Pick All and nobody pays it. The rest of the bill splits as normal.
+          Discount: set a % and who it's for — the other flatmate covers that part. All = nobody pays it.
         </p>
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
@@ -322,20 +312,14 @@ export default function InvoiceForm({ data, onChange }) {
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Discounts</h3>
-        <p className="section-desc">
-          Money off a flatmate's final total, taken at the end — after their share of bills and extras.
-          £ takes a fixed amount off; % takes that percent of their pre-discount total.
-        </p>
+        <p className="section-desc">Off a flatmate's final total — £ fixed, or % of the total.</p>
         {renderPersonDiscounts('matias', 'Flatmate 1')}
         {renderPersonDiscounts('reka', 'Flatmate 2')}
       </div>
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Notes</h3>
-        <p className="section-desc">
-          Optional message from each flatmate, shown on the invoice in its own card below the totals.
-          Flatmates can also edit their note from their own page.
-        </p>
+        <p className="section-desc">Optional — shown on the invoice.</p>
         <div className="form-group">
           <label>{names.matias.trim() || 'Flatmate 1'}</label>
           <textarea
@@ -360,9 +344,7 @@ export default function InvoiceForm({ data, onChange }) {
 
       <div className="glass-panel">
         <h3 className="invoice-section-title">Bank Details</h3>
-        <p className="section-desc">
-          The account both flatmates send their total due to, shown at the bottom of the invoice.
-        </p>
+        <p className="section-desc">Shown at the bottom of the invoice.</p>
         <div className="form-group">
           <label>Name</label>
           <input

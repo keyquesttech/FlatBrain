@@ -317,9 +317,7 @@ export default function MainPage() {
           </div>
 
           <p className="section-desc">
-            Every saved invoice. Tap a card to load it back into the generator, or use its icons to
-            re-download the PNG or delete it. Export CSV backs up the whole history to a file;
-            Import CSV restores or merges one.
+            Tap an invoice to load it into the generator. CSV exports or restores the whole history.
           </p>
 
           <InvoiceHistory
@@ -348,7 +346,7 @@ export default function MainPage() {
                   />
                 </label>
               </div>
-              <p className="section-desc">What the bills came to each month, stacked by bill. Only charged amounts count — waived (All-discounted) portions are excluded.</p>
+              <p className="section-desc">Monthly bills, stacked by bill — waived amounts excluded.</p>
               <BillsBreakdownChart history={invoices} months={chartMonths} />
             </div>
           )}
