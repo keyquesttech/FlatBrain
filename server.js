@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,6 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.disable('x-powered-by');
+// Gzip responses (JS/CSS/HTML/JSON) — cuts transfer to phones on slow
+// Wi-Fi to roughly a third; negligible CPU for a Pi 4 serving two users.
+app.use(compression());
 app.use(express.json({ limit: '512kb' }));
 
 // A plain-object body check: rejects null, arrays and primitives so a bad
