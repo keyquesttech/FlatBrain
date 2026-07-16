@@ -224,6 +224,15 @@ app.post('/api/backup/run', (req, res) => {
   res.json(backup.performBackup());
 });
 
+app.post('/api/backup/restore', (req, res) => {
+  const { name } = req.body || {};
+  try {
+    res.json(backup.restoreBackup(name));
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 app.post('/api/backup/eject', (req, res) => {
   try {
     res.json(backup.ejectDevice());

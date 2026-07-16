@@ -6,6 +6,7 @@
 import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { historyToCSV } from './src/utils/historyCsv.js';
 
 const DATA_FILES = ['draft.json', 'history.json', 'password.txt'];
 const BACKUP_DIR_NAME = 'BillSplitterBackups';
@@ -164,6 +165,17 @@ export function createBackupManager(baseDir) {
           copied++;
         }
       }
+      // Also write the history as CSV — the same format the app exports,
+      // readable in a spreadsheet without the app.
+      try {
+        const history = JSON.parse(fs.readFileSync(path.join(baseDir, 'history.json'), 'utf8'));
+        if (Array.isArray(history) && history.length > 0) {
+          fs.writeFileSync(path.join(target, 'billsplitter-history.csv'), historyToCSV(history));
+          copied++;
+        }
+      } catch {
+        /* no or invalid history — skip the CSV */
+      }
 
       // Prune to the newest `keep` by mtime (never below 2: current + previous)
       const keep = Math.max(2, Number(cfg.keep) || 2);
@@ -185,6 +197,56 @@ export function createBackupManager(baseDir) {
       writeConfig(cfg);
       return { success: false, error: err.message };
     }
+  }
+
+  // Restore the app's data files from one backup folder on the stick.
+  // Both JSON files are validated before anything is touched, and each
+  // file is swapped in atomically (tmp + rename), so a bad or half-copied
+  // backup can never corrupt the live data.
+  function restoreBackup(name) {
+    if (
+      typeof name !== 'string' ||
+      !name.startsWith('backup') ||
+      /[/\\]|\.\./.test(name)
+    ) {
+      throw new Error('Invalid backup name');
+    }
+    const cfg = readConfig();
+    if (!cfg.device) throw new Error('No USB drive selected');
+    const device = findConfiguredDevice(cfg);
+    if (!device) throw new Error(`USB drive "${cfg.device.label}" is not plugged in`);
+    const mountpoint = device.mountpoint || mountDevice(device);
+    const dir = path.join(mountpoint, BACKUP_DIR_NAME, name);
+    if (!fs.existsSync(dir)) throw new Error('Backup not found on the stick');
+
+    const staged = [];
+    for (const file of DATA_FILES) {
+      const src = path.join(dir, file);
+      if (!fs.existsSync(src)) continue;
+      const content = fs.readFileSync(src);
+      if (file === 'draft.json' || file === 'history.json') {
+        let parsed;
+        try {
+          parsed = JSON.parse(content.toString('utf8'));
+        } catch {
+          throw new Error(`${file} in this backup is corrupted — not restoring anything`);
+        }
+        const ok = file === 'history.json'
+          ? Array.isArray(parsed)
+          : parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
+        if (!ok) throw new Error(`${file} in this backup has the wrong shape — not restoring anything`);
+      }
+      staged.push([file, content]);
+    }
+    if (staged.length === 0) throw new Error('This backup contains no data files');
+
+    for (const [file, content] of staged) {
+      const dest = path.join(baseDir, file);
+      const tmp = `${dest}.tmp`;
+      fs.writeFileSync(tmp, content);
+      fs.renameSync(tmp, dest);
+    }
+    return { success: true, restored: staged.map(([f]) => f) };
   }
 
   // Unmount the configured stick so it's safe to unplug. udisksctl flushes
@@ -303,6 +365,7 @@ export function createBackupManager(baseDir) {
     listUsbCandidates,
     mountDevice,
     performBackup,
+    restoreBackup,
     deleteBackup,
     ejectDevice,
     lastScheduledOccurrence,
