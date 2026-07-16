@@ -221,7 +221,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
       <div className="invoice-footer">
         <p>Thank you for settling the bills promptly!</p>
-        <p>Send your Total due to the account above.</p>
+        <p>Send your total due to the account above.</p>
         {data.dueDate && (
           <p className="invoice-due-date">
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
