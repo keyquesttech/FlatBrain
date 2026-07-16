@@ -1220,6 +1220,41 @@ input[type="checkbox"]:focus-visible {
   min-width: max-content;
 }
 
+/* Back up / Restore tab switch on the backup card */
+.backup-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pill-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.backup-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.backup-tab:hover {
+  color: var(--text);
+}
+
+.backup-tab.active {
+  background: linear-gradient(135deg, var(--lime), #c8ff6f);
+  color: var(--bg);
+}
+
 /* Capacity bar for the selected USB stick */
 .usb-meter {
   margin-top: 2px;

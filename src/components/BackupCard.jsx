@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowUpFromLine, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
+import { ArchiveRestore, ArrowUpFromLine, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import SelectMenu from './SelectMenu';
-import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, ejectBackupDevice, deleteBackup } from '../api';
+import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, ejectBackupDevice, restoreBackup, deleteBackup } from '../api';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Monday' },
@@ -43,6 +43,7 @@ export default function BackupCard() {
   const [devices, setDevices] = useState([]);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
+  const [tab, setTab] = useState('backup');
 
   const refresh = () => getBackupStatus().then(setStatus).catch(() => {});
   useEffect(() => {
@@ -92,6 +93,25 @@ export default function BackupCard() {
     } catch {
       setMessage(devicePath ? 'Failed to mount that drive. Is it formatted?' : 'Failed to update the settings.');
     } finally {
+      setBusy('');
+    }
+  };
+
+  const restore = async (name) => {
+    if (!window.confirm(`Restore ${name}? This replaces the app's current draft, history and password with the backup.`)) return;
+    setBusy('restore');
+    setMessage('Restoring…');
+    try {
+      const res = await restoreBackup(name);
+      if (res.success) {
+        alert(`Restored ${res.restored.join(', ')} from ${name}. The app will now reload.`);
+        window.location.reload();
+      } else {
+        setMessage(`Restore failed: ${res.error}`);
+        setBusy('');
+      }
+    } catch {
+      setMessage('Restore failed — check the server and the USB drive.');
       setBusy('');
     }
   };
@@ -188,8 +208,27 @@ export default function BackupCard() {
         </div>
       </div>
       <p className="section-desc">
-        Copies the app's data to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
+        Copies the app's data and a history CSV to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
       </p>
+
+      <div className="backup-tabs" role="tablist">
+        <button
+          className={`backup-tab${tab === 'backup' ? ' active' : ''}`}
+          onClick={() => setTab('backup')}
+          role="tab"
+          aria-selected={tab === 'backup'}
+        >
+          Back up
+        </button>
+        <button
+          className={`backup-tab${tab === 'restore' ? ' active' : ''}`}
+          onClick={() => setTab('restore')}
+          role="tab"
+          aria-selected={tab === 'restore'}
+        >
+          Restore
+        </button>
+      </div>
 
       <div className="form-group">
         <label>USB drive</label>
@@ -215,6 +254,7 @@ export default function BackupCard() {
         )}
       </div>
 
+      {tab === 'backup' && (
       <div className="form-group">
         <label>Schedule</label>
         <div className="backup-schedule-controls">
@@ -254,37 +294,57 @@ export default function BackupCard() {
           />
         </div>
       </div>
+      )}
+
+      {tab === 'restore' && (
+        <>
+          <p className="section-desc">
+            Restoring replaces the app's current draft, history and password with the backup's files, then reloads the app.
+          </p>
+          {status.backups?.length > 0 ? (
+            <div className="backup-list">
+              {status.backups.map((b) => (
+                <div className="backup-item" key={b.name}>
+                  <span>{b.name}</span>
+                  <span className="backup-item-meta">
+                    {b.files} file{b.files === 1 ? '' : 's'}
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => restore(b.name)}
+                      disabled={!!busy}
+                      title="Replace the app's data with this backup"
+                    >
+                      <ArchiveRestore size={14} /> {busy === 'restore' ? 'Restoring…' : 'Restore'}
+                    </button>
+                    <button
+                      className="btn-icon btn-icon-danger"
+                      onClick={() => removeBackup(b.name)}
+                      disabled={!!busy}
+                      title="Delete this backup from the stick"
+                      aria-label={`Delete ${b.name}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="section-desc">
+              No backups found on the stick{status.mounted ? '.' : ' — it may not be mounted yet; Back up now mounts it.'}
+            </p>
+          )}
+        </>
+      )}
 
       {message && <p className="backup-message">{message}</p>}
-      {cfg.lastResult && (
+      {tab === 'backup' && cfg.lastResult && (
         <p className="section-desc backup-last">
           {/* lastAttempt is stamped with every result, success or failure,
               so the date always belongs to the message shown */}
           Last: {cfg.lastResult}
           {cfg.lastAttempt ? ` — ${new Date(cfg.lastAttempt).toLocaleString('en-GB')}` : ''}
         </p>
-      )}
-
-      {status.backups?.length > 0 && (
-        <div className="backup-list">
-          {status.backups.map((b) => (
-            <div className="backup-item" key={b.name}>
-              <span>{b.name}</span>
-              <span className="backup-item-meta">
-                {b.files} file{b.files === 1 ? '' : 's'}
-                <button
-                  className="btn-icon btn-icon-danger"
-                  onClick={() => removeBackup(b.name)}
-                  disabled={!!busy}
-                  title="Delete this backup from the stick"
-                  aria-label={`Delete ${b.name}`}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </span>
-            </div>
-          ))}
-        </div>
       )}
     </div>
   );
