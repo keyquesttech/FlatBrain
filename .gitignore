@@ -23,6 +23,9 @@ history.json
 password.txt
 backup-config.json
 
+# Local Claude Code worktrees/session data — never part of the app
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
