@@ -149,9 +149,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>{formatCurrency(person.sharedShare)}</span>
             </div>
             {person.discountBills.map((line) => (
-              <div className="due-line" key={line.id}>
-                <span>{line.thing} · discounted for {names[line.from]}</span>
-                <span>{formatCurrency(line.amount)}</span>
+              <div className="due-item" key={line.id}>
+                <div className="due-line">
+                  <span>{line.thing}</span>
+                  <span>{formatCurrency(line.amount)}</span>
+                </div>
+                <div className="due-item-sub">
+                  Discounted for {names[line.from]}
+                </div>
               </div>
             ))}
             {person.extraLines.map(({ item, pct, total, amount, otherAmount, addedBy }) => (
