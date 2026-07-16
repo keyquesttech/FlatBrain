@@ -1646,6 +1646,33 @@ input[type="checkbox"]:focus-visible {
     padding: 12px;
   }
 
+  /* Invoice preview: every item stays on ONE line — the label shrinks a
+     touch and ellipsizes instead of wrapping. Screen only; the PNG
+     capture renders desktop-width and keeps full labels. */
+  .due-line {
+    font-size: 0.78rem;
+  }
+
+  .due-line,
+  .due-card-total,
+  .grand-total-line {
+    flex-wrap: nowrap;
+  }
+
+  .due-line > span:first-child,
+  .due-card-total > span:first-child,
+  .grand-total-line > span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .due-item-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .invoice-meta {
     flex-direction: column;
     gap: 0.15rem;
