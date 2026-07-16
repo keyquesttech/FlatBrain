@@ -217,6 +217,7 @@ p {
   font-size: 0.8rem;
   margin: 0 0 1rem 0;
   color: var(--text-faint);
+  text-wrap: pretty;
 }
 
 /* Live explainer under the Bills split control */
@@ -962,6 +963,7 @@ input[type="checkbox"]:focus-visible {
   color: var(--text-faint);
   margin-top: 2px;
   overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /* Bills — lime */
@@ -1088,13 +1090,14 @@ input[type="checkbox"]:focus-visible {
   font-weight: 700;
 }
 
-/* Label/value collision guards for invoice + flatmate rows */
+/* Label/value collision guards for invoice + flatmate rows. Labels wrap at
+   word boundaries only (words and £-amounts stay whole); overflow-wrap is
+   the emergency escape for a single over-long token. */
 .due-line > span:first-child,
 .due-card-total > span:first-child,
 .preview-item-main > span:first-child {
   min-width: 0;
   overflow-wrap: break-word;
-  word-break: break-word;
 }
 
 .due-line > span:last-child,
@@ -1126,6 +1129,7 @@ input[type="checkbox"]:focus-visible {
   color: var(--text-faint);
   margin-top: 0.25rem;
   overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /* ---------- History ---------- */
@@ -1540,7 +1544,7 @@ input[type="checkbox"]:focus-visible {
   }
 
   .input-row {
-    gap: 0.5rem;
+    gap: 6px;
   }
 
   /* 16px inputs stop iOS Safari from auto-zooming on focus */
@@ -1550,54 +1554,96 @@ input[type="checkbox"]:focus-visible {
     font-size: 16px;
   }
 
-  /* Item rows rearrange into two lines:
-     line 1: name + remove button; line 2: the numeric fields */
+  /* Item rows keep every field of one thing on ONE line: the name input
+     shrinks while the numeric fields take compact fixed widths. Inputs
+     stay 16px (no iOS zoom) — the room comes out of their padding. */
   .extras-row {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 6px;
   }
 
   .extras-row > input[type="text"] {
-    order: 1;
-    flex: 1 1 calc(100% - 52px);
+    flex: 1 1 72px;
+    min-width: 0;
+    padding: 10px 8px;
   }
 
   .extras-row .action-btn {
-    order: 2;
-    min-width: 42px;
+    flex: 0 0 38px;
+    min-width: 38px;
     min-height: 42px;
+    padding: 0;
     justify-content: center;
   }
 
-  .extras-row .packs-input {
-    order: 3;
-    flex: 1 1 24%;
+  .extras-row .currency-input {
+    flex: 0 0 88px;
   }
 
-  .extras-row .currency-input {
-    order: 4;
-    flex: 2 1 32%;
+  .extras-row .packs-input {
+    flex: 0 0 46px;
+    padding: 10px 6px;
   }
 
   .extras-row .percent-input {
-    order: 5;
-    flex: 1 1 24%;
+    flex: 0 0 58px;
   }
 
   .extras-row .discount-value {
-    order: 3;
-    flex: 1 1 36%;
+    flex: 0 0 72px;
+    padding: 10px 6px;
   }
 
   .extras-row .discount-type-select {
-    order: 4;
-    flex: 1 1 36%;
+    flex: 0 0 62px;
   }
 
-  /* Bill rows: name + remove on line 1; amount + discount % (and the
-     discounted-for selector when shown) below */
   .extras-row .bill-discount-select {
-    order: 6;
-    flex: 1 1 40%;
+    flex: 0 0 84px;
+  }
+
+  .extras-row .currency-input-prefix {
+    padding-left: 8px;
+  }
+
+  .extras-row .currency-input input {
+    padding: 10px 6px 10px 4px;
+  }
+
+  .extras-row .percent-input input {
+    padding: 10px 4px 10px 6px;
+  }
+
+  .extras-row .picker-trigger {
+    padding: 10px 8px;
+    gap: 0.25rem;
+  }
+
+  /* A bill row showing the discounted-for selector is the tightest fit —
+     shave the numeric fields a little further so the name keeps room */
+  .bill-row:has(.bill-discount-select) .currency-input {
+    flex-basis: 76px;
+  }
+
+  .bill-row:has(.bill-discount-select) .percent-input {
+    flex-basis: 50px;
+  }
+
+  /* More width for invoice text lines: slimmer frame/card/cards padding
+     on screen only — the PNG capture renders at desktop width and keeps
+     the full padding */
+  .invoice-frame {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .invoice-card {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+
+  .due-card {
+    padding: 12px;
   }
 
   .invoice-meta {

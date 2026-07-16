@@ -214,6 +214,7 @@ export function formatCurrency(amount) {
 }
 
 // Always shows the pack count and per-pack price, e.g. "Bulbs (2 × £7.50)".
+// Non-breaking spaces keep the parenthetical on one line when text wraps.
 export function formatExtraLabel(extra) {
-  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
+  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
 }

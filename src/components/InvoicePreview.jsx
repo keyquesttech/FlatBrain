@@ -118,7 +118,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           {data.bills.map((bill) => {
             const from = billDiscountFrom(bill);
             const percent = billDiscountPercent(bill);
-            const pctLabel = percent === 100 ? 'discounted' : `${percent}% discounted`;
+            const pctLabel = percent === 100 ? 'discounted' : `${percent}% discounted`;
             return (
               <div className={`due-line${from === 'na' && percent === 100 ? ' due-line-discounted' : ''}`} key={bill.id}>
                 <span>
@@ -155,7 +155,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             {person.discountBills.map((line) => (
               <div className="due-item" key={line.id}>
                 <div className="due-line">
-                  <span>{line.thing}{line.percent === 100 ? '' : <> · {line.percent}% of {formatCurrency(line.amount)}</>}</span>
+                  <span>{line.thing}{line.percent === 100 ? '' : ` · ${line.percent}% of ${formatCurrency(line.amount)}`}</span>
                   <span>{formatCurrency(line.portion)}</span>
                 </div>
                 <div className="due-item-sub">
@@ -166,11 +166,11 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             {person.extraLines.map(({ item, pct, total, amount, otherAmount, addedBy }) => (
               <div className="due-item" key={item.id}>
                 <div className="due-line">
-                  <span>{formatExtraLabel(item)} · {pct}% of {formatCurrency(total)}</span>
+                  <span>{formatExtraLabel(item)} · {`${pct}% of ${formatCurrency(total)}`}</span>
                   <span>{formatCurrency(amount)}</span>
                 </div>
                 <div className="due-item-sub">
-                  Added by {addedBy} — {person.otherName} pays {formatCurrency(otherAmount)}
+                  Added by {addedBy} — {person.otherName} {`pays ${formatCurrency(otherAmount)}`}
                 </div>
               </div>
             ))}

@@ -179,7 +179,7 @@ export default function UserExtrasPage({ personKey }) {
                   <span>{formatCurrency(extra.share)}</span>
                 </div>
                 <div className="preview-item-sub">
-                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {extra.pct}% of {formatCurrency(total)}
+                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {`${extra.pct}% of ${formatCurrency(total)}`}
                 </div>
               </div>
             );
@@ -201,7 +201,7 @@ export default function UserExtrasPage({ personKey }) {
                   <span>{formatCurrency(extra.share)}</span>
                 </div>
                 <div className="preview-item-sub">
-                  Added by {otherDisplayName} — you pay {extra.pct}% of {formatCurrency(total)}
+                  Added by {otherDisplayName} — you pay {`${extra.pct}% of ${formatCurrency(total)}`}
                 </div>
               </div>
             );
