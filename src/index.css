@@ -619,6 +619,9 @@ input[type="checkbox"]:focus-visible {
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem;
+  /* Long lists (e.g. the 24 backup times) scroll instead of towering */
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .picker-nav {
@@ -1175,40 +1178,6 @@ input[type="checkbox"]:focus-visible {
   margin-top: 1.25rem;
 }
 
-.backup-device-state {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
-}
-
-.backup-device-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  margin-bottom: 6px;
-  background-color: var(--pill-bg);
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.backup-device-option:hover {
-  border-color: var(--lime);
-}
-
-.backup-schedule {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin: 0.75rem 0;
-}
-
 .backup-schedule-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1216,22 +1185,8 @@ input[type="checkbox"]:focus-visible {
   gap: 8px;
 }
 
-.backup-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.backup-field input {
-  width: 84px;
-}
-
-.backup-field input[type="time"] {
-  width: 116px;
+.backup-enabled {
+  margin: 0.6rem 0 0;
 }
 
 .backup-actions {

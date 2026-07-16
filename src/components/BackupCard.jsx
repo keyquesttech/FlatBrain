@@ -19,6 +19,16 @@ const FREQUENCY_OPTIONS = [
   { value: 'monthly', label: 'Monthly' }
 ];
 
+// Day of the month for monthly backups (1–28 so it exists in every month)
+const MONTH_DAY_OPTIONS = Array.from({ length: 28 }, (_, i) => ({ value: i + 1, label: `Day ${i + 1}` }));
+
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
+  const v = `${String(h).padStart(2, '0')}:00`;
+  return { value: v, label: v };
+});
+
+const KEEP_OPTIONS = [2, 3, 4, 6, 8, 12].map((n) => ({ value: n, label: `${n} backups` }));
+
 function formatSize(bytes) {
   if (!bytes) return '';
   const gb = bytes / (1024 * 1024 * 1024);
@@ -30,7 +40,7 @@ function formatSize(bytes) {
 // the stick. Every control saves immediately, like the rest of the app.
 export default function BackupCard() {
   const [status, setStatus] = useState(null);
-  const [devices, setDevices] = useState(null); // null until a scan is run
+  const [devices, setDevices] = useState([]);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
 
@@ -46,7 +56,7 @@ export default function BackupCard() {
       const res = await updateBackupConfig({ ...cfg, ...changes });
       setStatus((s) => ({ ...s, config: res.config }));
     } catch {
-      setMessage('Failed to save the backup settings. Check the server.');
+      setMessage('Failed to save the backup settings.');
     }
   };
 
@@ -65,12 +75,12 @@ export default function BackupCard() {
   };
 
   const pickDevice = async (devicePath) => {
+    if (!devicePath || devicePath === cfg?.device?.path) return;
     setBusy('mount');
     setMessage('Mounting…');
     try {
       const res = await mountBackupDevice(devicePath);
-      setMessage(`Backups will go to ${res.device.label} (mounted at ${res.mountpoint}).`);
-      setDevices(null);
+      setMessage(`Backups will go to ${res.device.label}.`);
       await refresh();
     } catch {
       setMessage('Failed to mount that drive. Is it formatted?');
@@ -113,56 +123,55 @@ export default function BackupCard() {
 
   if (!cfg) return null;
 
+  // The dropdown lists scanned drives, always including the saved one.
+  const driveOptions = [];
+  if (!cfg.device && devices.length === 0) {
+    driveOptions.push({ value: '', label: 'Scan for USB drives…' });
+  }
+  if (cfg.device && !devices.some((d) => d.path === cfg.device.path)) {
+    driveOptions.push({ value: cfg.device.path, label: cfg.device.label });
+  }
+  for (const d of devices) {
+    driveOptions.push({ value: d.path, label: `${d.label} · ${formatSize(d.sizeBytes)} · ${d.fstype}` });
+  }
+  // A time set before the dropdown existed (e.g. 06:30) stays selectable
+  const timeOptions = TIME_OPTIONS.some((t) => t.value === cfg.time)
+    ? TIME_OPTIONS
+    : [{ value: cfg.time, label: cfg.time }, ...TIME_OPTIONS];
+
+  const driveState = cfg.device
+    ? status.mounted
+      ? `Mounted at ${status.mounted}.`
+      : status.devicePresent
+        ? 'Plugged in — mounts when backing up.'
+        : 'Not plugged in right now.'
+    : 'No drive selected yet.';
+
   return (
     <div className="glass-panel backup-card">
-      <div className="section-header">
+      <div className="extras-section-header">
         <h3 className="invoice-section-title">Backup</h3>
-        <button className="btn btn-secondary btn-sm" onClick={scan} disabled={!!busy}>
-          <RefreshCw size={16} /> {devices === null ? 'Scan USB drives' : 'Rescan'}
+        <button className="btn btn-primary btn-sm" onClick={scan} disabled={!!busy}>
+          <RefreshCw size={16} /> {busy === 'scan' ? 'Scanning…' : 'Scan USB drives'}
         </button>
       </div>
       <p className="section-desc">
         Copies the app's data to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
       </p>
 
-      <p className="backup-device-state">
-        {cfg.device ? (
-          <>
-            Drive: <strong>{cfg.device.label}</strong>
-            {status.mounted
-              ? ` — mounted at ${status.mounted}`
-              : status.devicePresent
-                ? ' — plugged in, will mount when backing up'
-                : ' — not plugged in right now'}
-          </>
-        ) : (
-          'No USB drive selected yet — scan and pick one below.'
-        )}
-      </p>
+      <div className="form-group">
+        <label>USB drive</label>
+        <SelectMenu
+          value={cfg.device?.path || ''}
+          onChange={pickDevice}
+          options={driveOptions}
+          width="100%"
+        />
+        <p className="section-desc split-desc">{driveState}</p>
+      </div>
 
-      {devices?.map((d) => (
-        <button
-          key={d.path}
-          className="backup-device-option"
-          onClick={() => pickDevice(d.path)}
-          disabled={!!busy}
-        >
-          <HardDrive size={16} />
-          {d.label} · {formatSize(d.sizeBytes)} · {d.fstype}
-          {d.mountpoint ? ' · mounted' : ''}
-        </button>
-      ))}
-
-      <div className="backup-schedule">
-        <label className="remember-checkbox backup-enabled">
-          <input
-            type="checkbox"
-            checked={!!cfg.enabled}
-            onChange={(e) => saveConfig({ enabled: e.target.checked })}
-          />
-          <span>Automatic backups</span>
-        </label>
-
+      <div className="form-group">
+        <label>Schedule</label>
         <div className="backup-schedule-controls">
           <SelectMenu
             value={cfg.frequency}
@@ -175,47 +184,42 @@ export default function BackupCard() {
               value={cfg.dayOfWeek}
               onChange={(v) => saveConfig({ dayOfWeek: v })}
               options={DAY_OPTIONS}
-              width="130px"
+              width="132px"
             />
           )}
           {cfg.frequency === 'monthly' && (
-            <label className="backup-field">
-              Day
-              <input
-                type="number"
-                min="1"
-                max="28"
-                value={cfg.dayOfMonth}
-                onChange={(e) => saveConfig({ dayOfMonth: Math.min(28, Math.max(1, parseInt(e.target.value, 10) || 1)) })}
-                aria-label="Day of the month to back up"
-              />
-            </label>
+            <SelectMenu
+              value={cfg.dayOfMonth}
+              onChange={(v) => saveConfig({ dayOfMonth: v })}
+              options={MONTH_DAY_OPTIONS}
+              width="104px"
+            />
           )}
-          <label className="backup-field">
-            At
-            <input
-              type="time"
-              value={cfg.time}
-              onChange={(e) => e.target.value && saveConfig({ time: e.target.value })}
-              aria-label="Time of day to back up"
-            />
-          </label>
-          <label className="backup-field">
-            Keep
-            <input
-              type="number"
-              min="2"
-              max="12"
-              value={cfg.keep}
-              onChange={(e) => saveConfig({ keep: Math.min(12, Math.max(2, parseInt(e.target.value, 10) || 2)) })}
-              aria-label="How many backups to keep"
-            />
-          </label>
+          <SelectMenu
+            value={cfg.time}
+            onChange={(v) => saveConfig({ time: v })}
+            options={timeOptions}
+            width="96px"
+          />
+          <SelectMenu
+            value={cfg.keep}
+            onChange={(v) => saveConfig({ keep: v })}
+            options={KEEP_OPTIONS}
+            width="124px"
+          />
         </div>
+        <label className="remember-checkbox backup-enabled">
+          <input
+            type="checkbox"
+            checked={!!cfg.enabled}
+            onChange={(e) => saveConfig({ enabled: e.target.checked })}
+          />
+          <span>Automatic backups</span>
+        </label>
       </div>
 
       <div className="backup-actions">
-        <button className="btn btn-primary btn-sm" onClick={backupNow} disabled={!!busy || !cfg.device}>
+        <button className="btn btn-secondary" onClick={backupNow} disabled={!!busy || !cfg.device}>
           <HardDrive size={16} /> {busy === 'run' ? 'Backing up…' : 'Back up now'}
         </button>
       </div>
