@@ -177,14 +177,14 @@ export default function BackupCard() {
             value={cfg.frequency}
             onChange={(v) => saveConfig({ frequency: v })}
             options={FREQUENCY_OPTIONS}
-            width="110px"
+            width="auto"
           />
           {cfg.frequency === 'weekly' && (
             <SelectMenu
               value={cfg.dayOfWeek}
               onChange={(v) => saveConfig({ dayOfWeek: v })}
               options={DAY_OPTIONS}
-              width="132px"
+              width="auto"
             />
           )}
           {cfg.frequency === 'monthly' && (
@@ -192,20 +192,20 @@ export default function BackupCard() {
               value={cfg.dayOfMonth}
               onChange={(v) => saveConfig({ dayOfMonth: v })}
               options={MONTH_DAY_OPTIONS}
-              width="104px"
+              width="auto"
             />
           )}
           <SelectMenu
             value={cfg.time}
             onChange={(v) => saveConfig({ time: v })}
             options={timeOptions}
-            width="96px"
+            width="auto"
           />
           <SelectMenu
             value={cfg.keep}
             onChange={(v) => saveConfig({ keep: v })}
             options={KEEP_OPTIONS}
-            width="104px"
+            width="auto"
           />
         </div>
         <label className="remember-checkbox backup-enabled">

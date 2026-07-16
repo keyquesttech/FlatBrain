@@ -1210,6 +1210,16 @@ input[type="checkbox"]:focus-visible {
   gap: 8px;
 }
 
+/* Schedule pickers size themselves to their content so the selected value
+   is always fully visible; their dropdowns never clip longer options. */
+.backup-schedule-controls .picker-trigger {
+  min-width: 96px;
+}
+
+.backup-schedule-controls .picker-dropdown {
+  min-width: max-content;
+}
+
 /* The toggle is a label inside a form-group, so undo the uppercase block
    field-label treatment and restore the checkbox row's flex alignment */
 .form-group .backup-enabled {
