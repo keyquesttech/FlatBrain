@@ -7,6 +7,7 @@ import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import InvoiceHistory from '../components/InvoiceHistory';
 import BillsBreakdownChart from '../components/BillsBreakdownChart';
+import BackupCard from '../components/BackupCard';
 import SelectMenu from '../components/SelectMenu';
 import { getDraft, updateDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
 import { calculateInvoice } from '../utils/calculations';
@@ -351,6 +352,8 @@ export default function MainPage() {
               <BillsBreakdownChart history={invoices} months={chartMonths} />
             </div>
           )}
+
+          <BackupCard />
         </>
       )}
 

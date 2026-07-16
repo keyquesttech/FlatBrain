@@ -21,6 +21,7 @@ dist-ssr
 draft.json
 history.json
 password.txt
+backup-config.json
 
 # Editor directories and files
 .vscode/*

@@ -3,6 +3,7 @@ import compression from 'compression';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createBackupManager } from './backup.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,6 +157,73 @@ app.delete('/api/history/:id', (req, res) => {
   writeJSON(HISTORY_FILE, updated);
   res.json({ success: true, history: updated });
 });
+
+// ---- USB backups (see backup.js) ----
+const backup = createBackupManager(__dirname);
+
+app.get('/api/backup/status', (req, res) => {
+  try {
+    res.json(backup.status());
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/backup/devices', (req, res) => {
+  try {
+    res.json({ devices: backup.listUsbCandidates() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Mount a USB partition and remember it as the backup target. Only paths
+// that lsblk reports as removable/USB are accepted.
+app.post('/api/backup/mount', (req, res) => {
+  const { path: devPath } = req.body || {};
+  try {
+    const device = backup.listUsbCandidates().find((d) => d.path === devPath);
+    if (!device) {
+      return res.status(400).json({ success: false, error: 'Not a removable USB partition' });
+    }
+    const mountpoint = backup.mountDevice(device);
+    const cfg = backup.readConfig();
+    cfg.device = { uuid: device.uuid, label: device.label, path: device.path, fstype: device.fstype };
+    cfg.enabled = true; // picking a drive turns the schedule on
+    backup.writeConfig(cfg);
+    res.json({ success: true, mountpoint, device: cfg.device });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/backup/config', (req, res) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    return res.status(400).json({ success: false, error: 'Config must be an object' });
+  }
+  const cfg = backup.readConfig();
+  const updated = {
+    ...cfg,
+    enabled: typeof body.enabled === 'boolean' ? body.enabled : cfg.enabled,
+    frequency: ['daily', 'weekly', 'monthly'].includes(body.frequency) ? body.frequency : cfg.frequency,
+    dayOfWeek: Number.isInteger(body.dayOfWeek) && body.dayOfWeek >= 0 && body.dayOfWeek <= 6 ? body.dayOfWeek : cfg.dayOfWeek,
+    dayOfMonth: Number.isInteger(body.dayOfMonth) && body.dayOfMonth >= 1 && body.dayOfMonth <= 28 ? body.dayOfMonth : cfg.dayOfMonth,
+    time: /^\d{1,2}:\d{2}$/.test(body.time || '') ? body.time : cfg.time,
+    keep: Number.isInteger(body.keep) && body.keep >= 2 && body.keep <= 12 ? body.keep : cfg.keep
+  };
+  backup.writeConfig(updated);
+  res.json({ success: true, config: updated });
+});
+
+app.post('/api/backup/run', (req, res) => {
+  // Always 200: the success flag carries the outcome so the card can show
+  // "drive not plugged in" instead of a generic HTTP failure.
+  res.json(backup.performBackup());
+});
+
+// Scheduler heartbeat — fires the backup when its scheduled time passes.
+setInterval(() => backup.checkSchedule(), 60 * 1000);
 
 // Serve the built React app. Vite fingerprints everything under /assets, so
 // those files can be cached forever; everything else revalidates.
