@@ -601,6 +601,13 @@ input[type="checkbox"]:focus-visible {
   flex: 0 0 auto;
 }
 
+/* Trigger text never wraps or collides with the chevron */
+.picker-trigger > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .picker-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -1185,8 +1192,17 @@ input[type="checkbox"]:focus-visible {
   gap: 8px;
 }
 
-.backup-enabled {
-  margin: 0.6rem 0 0;
+/* The toggle is a label inside a form-group, so undo the uppercase block
+   field-label treatment and restore the checkbox row's flex alignment */
+.form-group .backup-enabled {
+  display: flex;
+  margin: 0.75rem 0 0;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
 }
 
 .backup-actions {

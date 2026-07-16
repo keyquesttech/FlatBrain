@@ -27,7 +27,7 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
   return { value: v, label: v };
 });
 
-const KEEP_OPTIONS = [2, 3, 4, 6, 8, 12].map((n) => ({ value: n, label: `${n} backups` }));
+const KEEP_OPTIONS = [2, 3, 4, 6, 8, 12].map((n) => ({ value: n, label: `Keep ${n}` }));
 
 function formatSize(bytes) {
   if (!bytes) return '';
@@ -205,7 +205,7 @@ export default function BackupCard() {
             value={cfg.keep}
             onChange={(v) => saveConfig({ keep: v })}
             options={KEEP_OPTIONS}
-            width="124px"
+            width="104px"
           />
         </div>
         <label className="remember-checkbox backup-enabled">
