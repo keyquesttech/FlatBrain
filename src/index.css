@@ -1009,7 +1009,7 @@ input[type="checkbox"]:focus-visible {
 
 /* Bills — lime */
 .due-card-bills {
-  --halo: rgba(212, 255, 63, 0.27);
+  --halo: rgba(212, 255, 63, 0.216);
   --halo-edge: rgba(212, 255, 63, 0.4);
 }
 .due-card-bills .due-card-name,
@@ -1022,7 +1022,7 @@ input[type="checkbox"]:focus-visible {
 
 /* Per-person totals — flatmate 1 blue, flatmate 2 violet */
 .due-card-summary-matias {
-  --halo: rgba(120, 190, 255, 0.29);
+  --halo: rgba(120, 190, 255, 0.232);
   --halo-edge: rgba(120, 190, 255, 0.45);
 }
 .due-card-summary-matias .due-card-name,
@@ -1034,7 +1034,7 @@ input[type="checkbox"]:focus-visible {
 }
 
 .due-card-summary-reka {
-  --halo: rgba(167, 139, 250, 0.31);
+  --halo: rgba(167, 139, 250, 0.248);
   --halo-edge: rgba(167, 139, 250, 0.5);
 }
 .due-card-summary-reka .due-card-name,
@@ -1047,7 +1047,7 @@ input[type="checkbox"]:focus-visible {
 
 /* Flatmate notes — flatmate 1 teal, flatmate 2 orange */
 .due-card-note-matias {
-  --halo: rgba(75, 214, 182, 0.27);
+  --halo: rgba(75, 214, 182, 0.216);
   --halo-edge: rgba(75, 214, 182, 0.44);
 }
 .due-card-note-matias .due-card-name {
@@ -1055,7 +1055,7 @@ input[type="checkbox"]:focus-visible {
 }
 
 .due-card-note-reka {
-  --halo: rgba(255, 138, 95, 0.27);
+  --halo: rgba(255, 138, 95, 0.216);
   --halo-edge: rgba(255, 138, 95, 0.44);
 }
 .due-card-note-reka .due-card-name {
@@ -1071,7 +1071,7 @@ input[type="checkbox"]:focus-visible {
 
 /* Bank details — amber */
 .due-card-bank {
-  --halo: rgba(255, 200, 80, 0.27);
+  --halo: rgba(255, 200, 80, 0.216);
   --halo-edge: rgba(255, 200, 80, 0.42);
 }
 .due-card-bank .due-card-name {
@@ -1080,7 +1080,7 @@ input[type="checkbox"]:focus-visible {
 
 /* Grand total — dual-tone gradient tint + gradient figure, pink halo */
 .due-card-total-grand {
-  --halo: rgba(255, 95, 212, 0.36);
+  --halo: rgba(255, 95, 212, 0.288);
   --halo-edge: rgba(255, 95, 212, 0.55);
   background:
     linear-gradient(135deg, rgba(255, 95, 212, 0.24), rgba(212, 255, 63, 0.16));
