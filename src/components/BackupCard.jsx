@@ -74,16 +74,23 @@ export default function BackupCard() {
     }
   };
 
+  // Selecting a drive turns automatic backups on; picking "No backups"
+  // clears the drive and turns them off.
   const pickDevice = async (devicePath) => {
-    if (!devicePath || devicePath === cfg?.device?.path) return;
+    if (devicePath === (cfg?.device?.path || '')) return;
     setBusy('mount');
-    setMessage('Mounting…');
+    setMessage(devicePath ? 'Mounting…' : 'Turning backups off…');
     try {
-      const res = await mountBackupDevice(devicePath);
-      setMessage(`Backups will go to ${res.device.label}.`);
+      if (devicePath) {
+        const res = await mountBackupDevice(devicePath);
+        setMessage(`Automatic backups on — backing up to ${res.device.label}.`);
+      } else {
+        await updateBackupConfig({ ...cfg, device: null });
+        setMessage('Automatic backups off.');
+      }
       await refresh();
     } catch {
-      setMessage('Failed to mount that drive. Is it formatted?');
+      setMessage(devicePath ? 'Failed to mount that drive. Is it formatted?' : 'Failed to update the settings.');
     } finally {
       setBusy('');
     }
@@ -137,11 +144,9 @@ export default function BackupCard() {
 
   if (!cfg) return null;
 
-  // The dropdown lists scanned drives, always including the saved one.
-  const driveOptions = [];
-  if (!cfg.device && devices.length === 0) {
-    driveOptions.push({ value: '', label: 'Scan for USB drives…' });
-  }
+  // The dropdown lists scanned drives plus the saved one; "No backups"
+  // clears the selection, which is what disables the schedule.
+  const driveOptions = [{ value: '', label: 'No backups' }];
   if (cfg.device && !devices.some((d) => d.path === cfg.device.path)) {
     driveOptions.push({ value: cfg.device.path, label: cfg.device.label });
   }
@@ -155,11 +160,11 @@ export default function BackupCard() {
 
   const driveState = cfg.device
     ? status.mounted
-      ? `Mounted at ${status.mounted}.`
+      ? `Automatic backups on — mounted at ${status.mounted}.`
       : status.devicePresent
-        ? 'Plugged in — mounts when backing up.'
-        : 'Not plugged in right now.'
-    : 'No drive selected yet.';
+        ? 'Automatic backups on — mounts when backing up.'
+        : 'Automatic backups on — not plugged in right now, retries every 30 min.'
+    : 'Automatic backups off — pick a drive to turn them on.';
 
   return (
     <div className="glass-panel backup-card">
@@ -195,6 +200,19 @@ export default function BackupCard() {
           width="100%"
         />
         <p className="section-desc split-desc">{driveState}</p>
+        {status.usage && (
+          <div className="usb-meter" title="Space on the selected drive">
+            <div className="usb-meter-track">
+              <div
+                className="usb-meter-fill"
+                style={{ width: `${Math.min(100, Math.max(2, Math.round((status.usage.used / status.usage.total) * 100)))}%` }}
+              />
+            </div>
+            <div className="usb-meter-label">
+              {formatSize(status.usage.used)} used · {formatSize(status.usage.free)} free of {formatSize(status.usage.total)}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-group">
@@ -235,14 +253,6 @@ export default function BackupCard() {
             width="auto"
           />
         </div>
-        <label className="remember-checkbox backup-enabled">
-          <input
-            type="checkbox"
-            checked={!!cfg.enabled}
-            onChange={(e) => saveConfig({ enabled: e.target.checked })}
-          />
-          <span>Automatic backups</span>
-        </label>
       </div>
 
       {message && <p className="backup-message">{message}</p>}

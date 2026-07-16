@@ -12,8 +12,9 @@ const BACKUP_DIR_NAME = 'BillSplitterBackups';
 const FALLBACK_MOUNTPOINT = '/media/billsplitter-backup';
 const RETRY_MS = 30 * 60 * 1000; // a failed scheduled backup retries every 30 min
 
+// Automatic backups are enabled by selecting a drive: device set = on,
+// device null = off. There is no separate enabled flag.
 export const DEFAULT_CONFIG = {
-  enabled: false, // switched on automatically when a drive is selected
   frequency: 'weekly', // 'daily' | 'weekly' | 'monthly'
   dayOfWeek: 6, // 0 = Sunday … 6 = Saturday (weekly)
   dayOfMonth: 1, // 1–28 (monthly)
@@ -251,10 +252,11 @@ export function createBackupManager(baseDir) {
   }
 
   // Called every minute by the server: runs a backup once per scheduled
-  // occurrence, with throttled retries when the drive is missing.
+  // occurrence, with throttled retries when the drive is missing. Having a
+  // drive selected is what turns the schedule on.
   function checkSchedule() {
     const cfg = readConfig();
-    if (!cfg.enabled || !cfg.device) return;
+    if (!cfg.device) return;
     const due = lastScheduledOccurrence(cfg).getTime();
     if (cfg.lastSuccess >= due) return;
     if (Date.now() - cfg.lastAttempt < RETRY_MS) return;
@@ -262,20 +264,37 @@ export function createBackupManager(baseDir) {
     console.log(result.success ? `Scheduled backup: ${result.target}` : `Scheduled backup failed: ${result.error}`);
   }
 
+  // Capacity of the mounted stick for the card's status bar.
+  function diskUsage(mountpoint) {
+    try {
+      const s = fs.statfsSync(mountpoint);
+      const total = s.blocks * s.bsize;
+      const free = s.bavail * s.bsize;
+      if (!total) return null;
+      return { total, free, used: total - free };
+    } catch {
+      return null;
+    }
+  }
+
   function status() {
     const cfg = readConfig();
     let mounted = null;
     let backups = [];
     let devicePresent = false;
+    let usage = null;
     try {
       const device = findConfiguredDevice(cfg);
       devicePresent = !!device;
       mounted = device?.mountpoint || null;
-      if (mounted) backups = listBackups(mounted);
+      if (mounted) {
+        backups = listBackups(mounted);
+        usage = diskUsage(mounted);
+      }
     } catch (err) {
       console.error('Error reading backup status:', err);
     }
-    return { config: cfg, devicePresent, mounted, backups };
+    return { config: cfg, devicePresent, mounted, usage, backups };
   }
 
   return {

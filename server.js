@@ -188,8 +188,8 @@ app.post('/api/backup/mount', (req, res) => {
     }
     const mountpoint = backup.mountDevice(device);
     const cfg = backup.readConfig();
+    // Selecting a drive is what turns automatic backups on
     cfg.device = { uuid: device.uuid, label: device.label, path: device.path, fstype: device.fstype };
-    cfg.enabled = true; // picking a drive turns the schedule on
     backup.writeConfig(cfg);
     res.json({ success: true, mountpoint, device: cfg.device });
   } catch (err) {
@@ -205,7 +205,9 @@ app.put('/api/backup/config', (req, res) => {
   const cfg = backup.readConfig();
   const updated = {
     ...cfg,
-    enabled: typeof body.enabled === 'boolean' ? body.enabled : cfg.enabled,
+    // device is only ever SET via /api/backup/mount; an explicit null here
+    // clears it, which switches automatic backups off
+    device: body.device === null ? null : cfg.device,
     frequency: ['daily', 'weekly', 'monthly'].includes(body.frequency) ? body.frequency : cfg.frequency,
     dayOfWeek: Number.isInteger(body.dayOfWeek) && body.dayOfWeek >= 0 && body.dayOfWeek <= 6 ? body.dayOfWeek : cfg.dayOfWeek,
     dayOfMonth: Number.isInteger(body.dayOfMonth) && body.dayOfMonth >= 1 && body.dayOfMonth <= 28 ? body.dayOfMonth : cfg.dayOfMonth,
