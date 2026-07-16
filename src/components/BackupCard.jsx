@@ -248,8 +248,10 @@ export default function BackupCard() {
       {message && <p className="backup-message">{message}</p>}
       {cfg.lastResult && (
         <p className="section-desc backup-last">
+          {/* lastAttempt is stamped with every result, success or failure,
+              so the date always belongs to the message shown */}
           Last: {cfg.lastResult}
-          {cfg.lastSuccess ? ` — ${new Date(cfg.lastSuccess).toLocaleString('en-GB')}` : ''}
+          {cfg.lastAttempt ? ` — ${new Date(cfg.lastAttempt).toLocaleString('en-GB')}` : ''}
         </p>
       )}
 
