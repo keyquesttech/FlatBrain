@@ -114,10 +114,19 @@ export default function MainPage() {
     const res = await saveInvoice(newInvoice);
     setInvoices(res.history);
 
-    // Reset draft for the next month
+    // Reset the draft for next month, but keep the standing settings —
+    // bank details, names and the bills split — so they never have to be
+    // re-entered. Only bills, extras, notes and discounts start fresh.
     cancelPendingSave();
     const reset = await resetDraft();
-    applyDraft(reset.draft);
+    const nextDraft = {
+      ...reset.draft,
+      bankDetails: data.bankDetails,
+      names: data.names,
+      splitPercent: data.splitPercent ?? 50
+    };
+    applyDraft(nextDraft);
+    await updateDraft(nextDraft);
     alert('Invoice downloaded, saved to history, and draft reset!');
   };
 
@@ -236,11 +245,20 @@ export default function MainPage() {
 
   const clearForm = async () => {
     if (busy) return;
-    if (!window.confirm('Reset the whole form? All bills and extras in the current draft will be cleared.')) return;
+    if (!window.confirm('Reset the whole form? All bills and extras in the current draft will be cleared. Names, bills split and bank details are kept.')) return;
     cancelPendingSave();
     try {
+      const current = formDataRef.current;
       const res = await resetDraft();
-      applyDraft(res.draft);
+      // Same as after a save: standing settings survive the reset.
+      const nextDraft = {
+        ...res.draft,
+        bankDetails: current?.bankDetails ?? res.draft.bankDetails,
+        names: current?.names ?? res.draft.names,
+        splitPercent: current?.splitPercent ?? 50
+      };
+      applyDraft(nextDraft);
+      await updateDraft(nextDraft);
     } catch (err) {
       console.error('Error resetting draft', err);
       alert('Failed to reset the form. Check the server and try again.');
