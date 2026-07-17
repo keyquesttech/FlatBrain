@@ -78,8 +78,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extraLines: extraLinesFor('matias'),
       before: calc.matiasBeforeDiscounts,
       discounts: data.matiasDiscounts || [],
+      extrasShare: calc.matiasShareExtras,
       total: calc.matiasTotalDue,
-      toPay: calc.matiasToPay,
       note: data.matiasNote
     },
     {
@@ -92,15 +92,11 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extraLines: extraLinesFor('reka'),
       before: calc.rekaBeforeDiscounts,
       discounts: data.rekaDiscounts || [],
+      extrasShare: calc.rekaShareExtras,
       total: calc.rekaTotalDue,
-      toPay: calc.rekaToPay,
       note: data.rekaNote
     }
   ];
-
-  // Direction of the settling bank transfer (see netTransfer in calculations).
-  const transferFrom = calc.netTransfer >= 0 ? names.reka : names.matias;
-  const transferTo = calc.netTransfer >= 0 ? names.matias : names.reka;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -188,28 +184,28 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               </div>
             ))}
             <div className="due-card-total due-card-total-secondary due-card-total-first">
+              <span>Extras total</span>
+              <span>{formatCurrency(person.extrasShare)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
               <span>Net total</span>
               <span>{formatCurrency(person.total)}</span>
-            </div>
-            <div className="due-card-total">
-              <span>To pay</span>
-              <span>{formatCurrency(person.toPay)}</span>
             </div>
           </div>
         ))}
 
         <div className="due-card due-card-total-grand">
           <div className="due-card-total grand-total-line">
-            <span>Total extras</span>
-            <span className="grand-total-amount">{formatCurrency(calc.extrasTotal)}</span>
-          </div>
-          <div className="due-card-total grand-total-line">
             <span>Grand total (bills + all extras)</span>
             <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
           </div>
           <div className="due-card-total grand-total-line">
-            <span>{transferFrom} → {transferTo}</span>
-            <span className="grand-total-amount">{formatCurrency(Math.abs(calc.netTransfer))}</span>
+            <span>{names.reka} total due</span>
+            <span className="grand-total-amount">{formatCurrency(calc.rekaToPay)}</span>
+          </div>
+          <div className="due-card-total grand-total-line">
+            <span>{names.matias} total due</span>
+            <span className="grand-total-amount">{formatCurrency(calc.matiasToPay)}</span>
           </div>
         </div>
 
@@ -245,7 +241,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
       <div className="invoice-footer">
         <p>Thank you for settling the bills promptly!</p>
-        <p>Please send the transfer above to the account details.</p>
+        <p>Please send your total due to the account above.</p>
         {data.dueDate && (
           <p className="invoice-due-date">
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
