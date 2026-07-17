@@ -99,23 +99,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   ];
 
   // Flatmate2's total-due line is the actual transfer amount (everything netted);
-  // Flatmate1's shows his due, settled by fronting the bills. Each explainer
-  // shows the formula with this month's numbers, zero terms left out.
+  // Flatmate1's shows his due, settled by fronting the bills. Each group
+  // itemizes its make-up as rows, like the flatmate cards do.
   const flatmate2Pays = calc.netTransfer >= 0;
   const owedBack = calc.flatmate1ShareOfFlatmate2Extras;
-  let flatmate2TransferSub;
-  if (flatmate2Pays) {
-    flatmate2TransferSub = `${formatCurrency(flatmate2BillsShare)} share of bills`;
-    if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
-    if (calc.flatmate2DiscountTotal > 0) flatmate2TransferSub += ` − ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
-    if (owedBack > 0) flatmate2TransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.flatmate2}'s extras`;
-  } else {
-    flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
-  }
-  let flatmate1DueSub = `${formatCurrency(flatmate1BillsShare)} share of bills`;
-  if (calc.flatmate1ShareOfFlatmate2Extras > 0) flatmate1DueSub += ` + ${formatCurrency(calc.flatmate1ShareOfFlatmate2Extras)} of ${names.flatmate2}'s extras`;
-  if (calc.flatmate1DiscountTotal > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate1DiscountTotal)} discounts`;
-  flatmate1DueSub += ' — settled by fronting the bills';
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -215,30 +202,69 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
         <div className="due-card due-card-total-grand">
           <div className="grand-total-group">
+            <div className="due-line">
+              <span>Bills</span>
+              <span>{formatCurrency(billsTotal)}</span>
+            </div>
+            <div className="due-line">
+              <span>All extras</span>
+              <span>{formatCurrency(calc.extrasTotal)}</span>
+            </div>
             <div className="due-card-total grand-total-line">
               <span>Grand total (bills + all extras)</span>
               <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
             </div>
-            <div className="due-item-sub">
-              Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
-            </div>
           </div>
           <div className="grand-total-group">
+            {flatmate2Pays ? (
+              <>
+                <div className="due-line">
+                  <span>Share of bills</span>
+                  <span>{formatCurrency(flatmate2BillsShare)}</span>
+                </div>
+                <div className="due-line">
+                  <span>Share of {names.flatmate1}'s extras</span>
+                  <span>{formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)}</span>
+                </div>
+                {calc.flatmate2DiscountTotal > 0 && (
+                  <div className="due-line">
+                    <span>Discounts</span>
+                    <span>−{formatCurrency(calc.flatmate2DiscountTotal)}</span>
+                  </div>
+                )}
+                {owedBack > 0 && (
+                  <div className="due-line">
+                    <span>Owed back for {names.flatmate2}'s extras</span>
+                    <span>−{formatCurrency(owedBack)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="due-item-sub">Nothing to send — {names.flatmate1} covers the difference</div>
+            )}
             <div className="due-card-total grand-total-line">
               <span>{names.flatmate2} total due</span>
               <span className="grand-total-amount">{formatCurrency(calc.flatmate2TransferDue)}</span>
             </div>
-            <div className="due-item-sub">
-              {flatmate2TransferSub}
-            </div>
           </div>
           <div className="grand-total-group">
+            <div className="due-line">
+              <span>Share of bills</span>
+              <span>{formatCurrency(flatmate1BillsShare)}</span>
+            </div>
+            <div className="due-line">
+              <span>Share of {names.flatmate2}'s extras</span>
+              <span>{formatCurrency(calc.flatmate1ShareOfFlatmate2Extras)}</span>
+            </div>
+            {calc.flatmate1DiscountTotal > 0 && (
+              <div className="due-line">
+                <span>Discounts</span>
+                <span>−{formatCurrency(calc.flatmate1DiscountTotal)}</span>
+              </div>
+            )}
             <div className="due-card-total grand-total-line">
               <span>{names.flatmate1} total due</span>
               <span className="grand-total-amount">{formatCurrency(calc.flatmate1ToPay)}</span>
-            </div>
-            <div className="due-item-sub">
-              {flatmate1DueSub}
             </div>
           </div>
           <p className="grand-total-note">
