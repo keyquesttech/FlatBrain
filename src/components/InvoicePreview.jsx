@@ -108,17 +108,20 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     rekaTransferSub = `${formatCurrency(rekaBillsShare)} share of bills`;
     if (calc.rekaShareOfMatiasExtras > 0) rekaTransferSub += ` + ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
     if (calc.rekaDiscountTotal > 0) rekaTransferSub += ` − ${formatCurrency(calc.rekaDiscountTotal)} discounts`;
+    if (calc.matiasDiscountTotal > 0) rekaTransferSub += ` + ${formatCurrency(calc.matiasDiscountTotal)} ${names.matias}'s discounts`;
     if (owedBack > 0) rekaTransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.reka}'s extras`;
   } else {
     rekaTransferSub = `Nothing to send — ${names.matias} covers the difference`;
   }
   // Matias's description mirrors Réka's terms from his side: her share of
   // his extras comes OFF his cost (she reimburses it), his share of her
-  // extras and her discounts go ON it. It sums to his effective due.
+  // extras and her discounts go ON it, his own discounts come off (Réka
+  // covers them). It sums to his effective due.
   let matiasDueSub = `${formatCurrency(matiasBillsShare)} share of bills`;
   if (calc.rekaShareOfMatiasExtras > 0) matiasDueSub += ` − ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
   if (owedBack > 0) matiasDueSub += ` + ${formatCurrency(owedBack)} of ${names.reka}'s extras`;
-  if (calc.rekaDiscountTotal > 0) matiasDueSub += ` + ${formatCurrency(calc.rekaDiscountTotal)} discounts`;
+  if (calc.rekaDiscountTotal > 0) matiasDueSub += ` + ${formatCurrency(calc.rekaDiscountTotal)} ${names.reka}'s discounts`;
+  if (calc.matiasDiscountTotal > 0) matiasDueSub += ` − ${formatCurrency(calc.matiasDiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
