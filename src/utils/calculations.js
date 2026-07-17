@@ -227,6 +227,13 @@ export function calculateInvoice(data) {
   const matiasOwnExtrasPaid = round2(matiasOwnKept + rekaFromMatias);
   const rekaOwnExtrasPaid = round2(rekaOwnKept + matiasFromReka);
 
+  // The card's "Discounts total" row: personal discounts plus the extras
+  // the person already paid for at the shop — every deduction between the
+  // pre-discount Net total and the total due, so on each flatmate card
+  // Net total − Discounts total = total due, always.
+  const matiasDeductionsTotal = round2(matiasDiscountTotal + matiasOwnExtrasPaid);
+  const rekaDeductionsTotal = round2(rekaDiscountTotal + rekaOwnExtrasPaid);
+
   return {
     splitPercent,
     billsTotal,
@@ -252,6 +259,8 @@ export function calculateInvoice(data) {
     matiasEffectiveDue,
     matiasOwnExtrasPaid,
     rekaOwnExtrasPaid,
+    matiasDeductionsTotal,
+    rekaDeductionsTotal,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     matiasShareOfRekaExtras: matiasFromReka,
