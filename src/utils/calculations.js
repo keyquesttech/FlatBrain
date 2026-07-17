@@ -219,6 +219,14 @@ export function calculateInvoice(data) {
   // outside the invoice, so the other side doesn't absorb them.
   const flatmate1EffectiveDue = round2(billsTotal - netTransfer - flatmate2DiscountTotal - flatmate1DiscountTotal);
 
+  // The full price each person already paid the shop for their own items.
+  // Subtracting it from their Net total gives their total due directly:
+  // netTransfer = flatmate2TotalDue − flatmate2OwnExtrasPaid, and
+  // flatmate1EffectiveDue = flatmate1TotalDue − flatmate1OwnExtrasPaid — which is
+  // exactly how the invoice cards itemize the maths.
+  const flatmate1OwnExtrasPaid = round2(flatmate1OwnKept + flatmate2FromFlatmate1);
+  const flatmate2OwnExtrasPaid = round2(flatmate2OwnKept + flatmate1FromFlatmate2);
+
   return {
     splitPercent,
     billsTotal,
@@ -242,6 +250,8 @@ export function calculateInvoice(data) {
     flatmate1TransferDue,
     flatmate2TransferDue,
     flatmate1EffectiveDue,
+    flatmate1OwnExtrasPaid,
+    flatmate2OwnExtrasPaid,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     flatmate1ShareOfFlatmate2Extras: flatmate1FromFlatmate2,

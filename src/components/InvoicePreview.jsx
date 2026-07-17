@@ -81,6 +81,9 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extrasShare: calc.flatmate1ShareExtras,
       discountTotal: calc.flatmate1DiscountTotal,
       total: calc.flatmate1TotalDue,
+      ownExtrasPaid: calc.flatmate1OwnExtrasPaid,
+      dueTotal: calc.flatmate1EffectiveDue,
+      dueSub: 'Settled by fronting the bills — nothing to transfer',
       note: data.flatmate1Note
     },
     {
@@ -96,32 +99,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extrasShare: calc.flatmate2ShareExtras,
       discountTotal: calc.flatmate2DiscountTotal,
       total: calc.flatmate2TotalDue,
+      ownExtrasPaid: calc.flatmate2OwnExtrasPaid,
+      dueTotal: calc.netTransfer,
+      dueSub: calc.netTransfer >= 0
+        ? 'The amount to transfer'
+        : `Negative — ${names.flatmate1} pays ${names.flatmate2} the difference`,
       note: data.flatmate2Note
     }
   ];
-
-  // Flatmate2's total-due line is the actual transfer amount (everything netted);
-  // Flatmate1's shows his due, settled by fronting the bills. Each explainer
-  // shows the formula with this month's numbers, zero terms left out.
-  const flatmate2Pays = calc.netTransfer >= 0;
-  const owedBack = calc.flatmate1ShareOfFlatmate2Extras;
-  let flatmate2TransferSub;
-  if (flatmate2Pays) {
-    flatmate2TransferSub = `${formatCurrency(flatmate2BillsShare)} share of bills`;
-    if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
-    if (calc.flatmate2DiscountTotal > 0) flatmate2TransferSub += ` − ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
-    if (owedBack > 0) flatmate2TransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.flatmate2}'s extras`;
-  } else {
-    flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
-  }
-  // Flatmate1's description mirrors Flatmate2's terms from his side: her share of
-  // his extras comes OFF his cost (she reimburses it), his share of her
-  // extras goes ON it, and his own discounts come off. Each person's
-  // discounts appear only on their own line. It sums to his effective due.
-  let flatmate1DueSub = `${formatCurrency(flatmate1BillsShare)} share of bills`;
-  if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
-  if (owedBack > 0) flatmate1DueSub += ` + ${formatCurrency(owedBack)} of ${names.flatmate2}'s extras`;
-  if (calc.flatmate1DiscountTotal > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate1DiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -220,6 +205,15 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>Net total</span>
               <span>{formatCurrency(person.total)}</span>
             </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Own extras already paid</span>
+              <span>{person.ownExtrasPaid > 0 ? '−' : ''}{formatCurrency(person.ownExtrasPaid)}</span>
+            </div>
+            <div className="due-card-total">
+              <span>{person.name} total due</span>
+              <span>{formatCurrency(person.dueTotal)}</span>
+            </div>
+            <div className="due-item-sub">{person.dueSub}</div>
           </div>
         ))}
 
@@ -233,30 +227,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
             </div>
           </div>
-          <div className="grand-total-group">
-            <div className="due-card-total grand-total-line">
-              <span>{names.flatmate2} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.flatmate2TransferDue)}</span>
-            </div>
-            <div className="due-item-sub">
-              {flatmate2TransferSub}
-            </div>
-          </div>
-          <div className="grand-total-group">
-            <div className="due-card-total grand-total-line">
-              <span>{names.flatmate1} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.flatmate1EffectiveDue)}</span>
-            </div>
-            <div className="due-item-sub">
-              {flatmate1DueSub}
-            </div>
-          </div>
-          <p className="grand-total-note">
-            Own purchases are paid at the shop so they're never charged to the buyer.
-            {' '}{names.flatmate2} total due is the exact amount to transfer — anything owed
-            back for {names.flatmate2}'s extras is already taken off. {names.flatmate1} total due
-            is settled by fronting the bills.
-          </p>
         </div>
 
         {dueSections.filter((person) => person.note?.trim()).map((person) => (
