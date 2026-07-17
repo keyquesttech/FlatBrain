@@ -1099,11 +1099,21 @@ input[type="checkbox"]:focus-visible {
   color: var(--pink-soft);
 }
 
-/* Dividers between the totals-card lines (none above the first) */
-.grand-total-line + .grand-total-line {
+/* Dividers between the totals-card sections (none above the first); each
+   section is a figure plus its small breakdown line */
+.grand-total-group + .grand-total-group {
   border-top: 1px dashed rgba(255, 95, 212, 0.35);
   margin-top: 8px;
   padding-top: 10px;
+}
+
+.grand-total-note {
+  border-top: 1px dashed rgba(255, 95, 212, 0.35);
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  text-wrap: pretty;
 }
 
 .grand-total-amount {

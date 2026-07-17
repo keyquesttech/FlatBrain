@@ -226,6 +226,10 @@ export function calculateInvoice(data) {
     flatmate1ToPay,
     flatmate2ToPay,
     netTransfer,
+    // Cross shares, for the totals card's breakdown lines:
+    // toPay = own bills share + share of the OTHER's extras − own discounts.
+    flatmate1ShareOfFlatmate2Extras: flatmate1FromFlatmate2,
+    flatmate2ShareOfFlatmate1Extras: flatmate2FromFlatmate1,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues

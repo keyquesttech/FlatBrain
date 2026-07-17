@@ -98,6 +98,15 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     }
   ];
 
+  // Explainer under each totals-card figure: its formula with this month's
+  // numbers. Zero terms are left out so quiet months stay uncluttered.
+  const dueBreakdown = (billsShare, otherExtras, otherName, discountTotal) => {
+    let text = `${formatCurrency(billsShare)} share of bills`;
+    if (otherExtras > 0) text += ` + ${formatCurrency(otherExtras)} of ${otherName}'s extras`;
+    if (discountTotal > 0) text += ` − ${formatCurrency(discountTotal)} discounts`;
+    return text;
+  };
+
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
     ? periodDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', timeZone: 'UTC' })
@@ -195,18 +204,38 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         ))}
 
         <div className="due-card due-card-total-grand">
-          <div className="due-card-total grand-total-line">
-            <span>Grand total (bills + all extras)</span>
-            <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
+          <div className="grand-total-group">
+            <div className="due-card-total grand-total-line">
+              <span>Grand total (bills + all extras)</span>
+              <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
+            </div>
+            <div className="due-item-sub">
+              Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
+            </div>
           </div>
-          <div className="due-card-total grand-total-line">
-            <span>{names.flatmate2} total due</span>
-            <span className="grand-total-amount">{formatCurrency(calc.flatmate2ToPay)}</span>
+          <div className="grand-total-group">
+            <div className="due-card-total grand-total-line">
+              <span>{names.flatmate2} total due</span>
+              <span className="grand-total-amount">{formatCurrency(calc.flatmate2ToPay)}</span>
+            </div>
+            <div className="due-item-sub">
+              {dueBreakdown(flatmate2BillsShare, calc.flatmate2ShareOfFlatmate1Extras, names.flatmate1, calc.flatmate2DiscountTotal)}
+            </div>
           </div>
-          <div className="due-card-total grand-total-line">
-            <span>{names.flatmate1} total due</span>
-            <span className="grand-total-amount">{formatCurrency(calc.flatmate1ToPay)}</span>
+          <div className="grand-total-group">
+            <div className="due-card-total grand-total-line">
+              <span>{names.flatmate1} total due</span>
+              <span className="grand-total-amount">{formatCurrency(calc.flatmate1ToPay)}</span>
+            </div>
+            <div className="due-item-sub">
+              {dueBreakdown(flatmate1BillsShare, calc.flatmate1ShareOfFlatmate2Extras, names.flatmate2, calc.flatmate1DiscountTotal)}
+            </div>
           </div>
+          <p className="grand-total-note">
+            Own purchases are already paid at the shop, so they're never charged back to the buyer —
+            each total due is that person's share of the bills plus their share of the other's extras,
+            minus any discounts.
+          </p>
         </div>
 
         {dueSections.filter((person) => person.note?.trim()).map((person) => (
