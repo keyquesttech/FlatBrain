@@ -185,6 +185,12 @@ export function calculateInvoice(data) {
   const matiasTotalDue = round2(matiasBeforeDiscounts - matiasDiscountTotal);
   const rekaTotalDue = round2(rekaBeforeDiscounts - rekaDiscountTotal);
 
+  // Each person's due with the extras taken back out, derived by subtraction
+  // so the displayed lines always reconcile exactly:
+  // total due without extras + total extras = total due.
+  const matiasTotalDueWithoutExtras = round2(matiasTotalDue - matiasShareExtras);
+  const rekaTotalDueWithoutExtras = round2(rekaTotalDue - rekaShareExtras);
+
   return {
     splitPercent,
     billsTotal,
@@ -202,6 +208,8 @@ export function calculateInvoice(data) {
     rekaDiscountTotal,
     matiasTotalDue,
     rekaTotalDue,
+    matiasTotalDueWithoutExtras,
+    rekaTotalDueWithoutExtras,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues

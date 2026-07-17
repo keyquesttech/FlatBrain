@@ -78,6 +78,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extraLines: extraLinesFor('matias'),
       before: calc.matiasBeforeDiscounts,
       discounts: data.matiasDiscounts || [],
+      extrasShare: calc.matiasShareExtras,
+      totalWithoutExtras: calc.matiasTotalDueWithoutExtras,
       total: calc.matiasTotalDue,
       note: data.matiasNote
     },
@@ -91,6 +93,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extraLines: extraLinesFor('reka'),
       before: calc.rekaBeforeDiscounts,
       discounts: data.rekaDiscounts || [],
+      extrasShare: calc.rekaShareExtras,
+      totalWithoutExtras: calc.rekaTotalDueWithoutExtras,
       total: calc.rekaTotalDue,
       note: data.rekaNote
     }
@@ -181,6 +185,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
                 <span>−{formatCurrency(discountAmount(d, person.before))}</span>
               </div>
             ))}
+            <div className="due-card-total due-card-total-secondary due-card-total-first">
+              <span>Total extras {person.name}</span>
+              <span>{formatCurrency(person.extrasShare)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Total due without extras</span>
+              <span>{formatCurrency(person.totalWithoutExtras)}</span>
+            </div>
             <div className="due-card-total">
               <span>Total due</span>
               <span>{formatCurrency(person.total)}</span>
