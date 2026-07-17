@@ -18,6 +18,9 @@ export const login = (password) => request('/login', jsonBody('POST', { password
 
 export const getDraft = () => request('/draft');
 export const updateDraft = (draft) => request('/draft', jsonBody('PUT', draft));
+// Partial update: only the keys sent are replaced; the server merges them
+// into the current draft atomically.
+export const patchDraft = (changes) => request('/draft', jsonBody('PATCH', changes));
 export const resetDraft = () => request('/draft/reset', { method: 'POST' });
 
 export const getHistory = () => request('/history');

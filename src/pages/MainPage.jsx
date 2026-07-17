@@ -9,7 +9,7 @@ import InvoiceHistory from '../components/InvoiceHistory';
 import BillsBreakdownChart from '../components/BillsBreakdownChart';
 import BackupCard from '../components/BackupCard';
 import SelectMenu from '../components/SelectMenu';
-import { getDraft, updateDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
+import { getDraft, updateDraft, patchDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
 import { calculateInvoice } from '../utils/calculations';
 import { normalizeDraft } from '../utils/defaults';
 import { newId } from '../utils/id';
@@ -40,6 +40,14 @@ export default function MainPage() {
   const lastEditRef = useRef(0);
   const saveTimerRef = useRef(null);
   const savePendingRef = useRef(false);
+  // Which top-level draft keys have unsaved edits: the debounced write sends
+  // only these (via PATCH), so extras added from a flatmate page in the same
+  // window survive instead of being overwritten by a whole-draft write.
+  const pendingKeysRef = useRef(new Set());
+  const editSeqRef = useRef(0);
+  // Set while an invoice loaded from history is in the generator, so saving
+  // can update that invoice instead of duplicating its month.
+  const loadedInvoiceRef = useRef(null);
 
   const applyDraft = (draft) => {
     const normalized = normalizeDraft(draft);
@@ -54,8 +62,13 @@ export default function MainPage() {
     getHistory().then((h) => { if (!cancelled) setInvoices(h); }).catch(() => {});
 
     // Poll for changes made from the flatmate pages, but never clobber the
-    // form while the user is typing here or has a save in flight.
+    // form while the user is typing here or has a save in flight. If a
+    // previous save failed, retry the queued keys instead of polling.
     const intervalId = setInterval(() => {
+      if (savePendingRef.current) {
+        if (!saveTimerRef.current) flushPendingKeys();
+        return;
+      }
       getDraft().then((d) => {
         if (cancelled || savePendingRef.current) return;
         if (Date.now() - lastEditRef.current < POLL_MS) return;
@@ -71,24 +84,61 @@ export default function MainPage() {
       cancelled = true;
       clearInterval(intervalId);
       clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
       // Don't lose the last keystrokes when navigating away mid-debounce.
-      if (savePendingRef.current) updateDraft(formDataRef.current);
+      flushPendingKeys();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update the UI instantly but debounce the network/disk write.
+  // Write the queued keys — and only those — so the server merges them into
+  // the latest draft. On failure everything stays queued; the poller and the
+  // next edit retry.
+  const flushPendingKeys = async () => {
+    const seq = editSeqRef.current;
+    const keys = [...pendingKeysRef.current];
+    if (keys.length === 0) {
+      savePendingRef.current = false;
+      return;
+    }
+    const local = formDataRef.current;
+    const changes = {};
+    keys.forEach((k) => { changes[k] = local[k]; });
+    // Extras keys travel with their legacy full-price companions cleared so
+    // a pre-migration draft on disk can't re-fold old items into the lists.
+    if ('flatmate1Extras' in changes) changes.flatmate1FullPriceExtras = [];
+    if ('flatmate2Extras' in changes) changes.flatmate2FullPriceExtras = [];
+    try {
+      await patchDraft(changes);
+      // Only mark clean if nothing changed while the request was in flight;
+      // newer edits already re-queued keys and scheduled another flush.
+      if (editSeqRef.current === seq) {
+        pendingKeysRef.current.clear();
+        savePendingRef.current = false;
+      }
+    } catch {
+      savePendingRef.current = true;
+    }
+  };
+
+  // Update the UI instantly but debounce the network/disk write, tracking
+  // which draft keys the edit touched.
   const handleFormChange = (newData) => {
+    const prev = formDataRef.current;
+    Object.keys(newData).forEach((key) => {
+      if (!prev || JSON.stringify(newData[key]) !== JSON.stringify(prev[key])) {
+        pendingKeysRef.current.add(key);
+      }
+    });
+    editSeqRef.current++;
     formDataRef.current = newData;
     lastEditRef.current = Date.now();
     setFormData(newData);
     savePendingRef.current = true;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      savePendingRef.current = false;
-      updateDraft(formDataRef.current).catch(() => {
-        // Keep the pending flag so the next edit or unmount retries the write.
-        savePendingRef.current = true;
-      });
+      saveTimerRef.current = null;
+      flushPendingKeys();
     }, SAVE_DEBOUNCE_MS);
   };
 
@@ -96,16 +146,32 @@ export default function MainPage() {
   // resurrect the data we just cleared.
   const cancelPendingSave = () => {
     clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = null;
     savePendingRef.current = false;
+    pendingKeysRef.current.clear();
+    editSeqRef.current++;
+  };
+
+  // After a failed whole-draft write (reset/save flows), queue every key so
+  // the retry path sends the full draft.
+  const markAllPending = () => {
+    Object.keys(formDataRef.current || {}).forEach((k) => pendingKeysRef.current.add(k));
+    savePendingRef.current = true;
   };
 
   const saveToHistory = async () => {
     const data = formDataRef.current;
     const calc = calculateInvoice(data);
+    // If this draft was loaded from a saved invoice and still covers the
+    // same period, offer to update that invoice in place — otherwise a fixed
+    // typo would leave two invoices for the same month.
+    const loaded = loadedInvoiceRef.current;
+    const updating = !!loaded && loaded.period === data.period &&
+      window.confirm('This invoice was loaded from history. OK updates the saved invoice; Cancel saves it as a new one.');
     const newInvoice = {
       ...data,
-      id: newId(),
-      timestamp: Date.now(),
+      id: updating ? loaded.id : newId(),
+      timestamp: updating ? (loaded.timestamp || Date.now()) : Date.now(),
       netTotal: calc.grandTotal,
       eachNetTotal: calc.flatmate1TotalDue,
       flatmate1TotalDue: calc.flatmate1TotalDue,
@@ -114,6 +180,7 @@ export default function MainPage() {
 
     const res = await saveInvoice(newInvoice);
     setInvoices(res.history);
+    loadedInvoiceRef.current = null;
 
     // Reset the draft for next month, but keep the standing settings —
     // bank details, names and the bills split — so they never have to be
@@ -131,11 +198,11 @@ export default function MainPage() {
       await updateDraft(nextDraft);
     } catch {
       // The invoice IS saved — don't surface this as a save failure. Queue
-      // the settings write like any edit; it retries on the next change or
-      // unmount, and the pending flag stops the poller clobbering the form.
-      savePendingRef.current = true;
+      // the whole draft like any edit; it retries on the next change, poll
+      // or unmount, and the pending flag stops the poller clobbering the form.
+      markAllPending();
     }
-    alert('Invoice downloaded, saved to history, and draft reset!');
+    alert(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history, and draft reset!`);
   };
 
   // Single action: download the PNG first (while the invoice is still on
@@ -168,6 +235,7 @@ export default function MainPage() {
 
   const loadInvoice = (invoice) => {
     if (!window.confirm('Load this invoice into the generator? The current draft will be replaced.')) return;
+    loadedInvoiceRef.current = { id: invoice.id, period: invoice.period, timestamp: invoice.timestamp };
     const loadedDraft = normalizeDraft({
       period: invoice.period,
       dueDate: invoice.dueDate,
@@ -255,6 +323,7 @@ export default function MainPage() {
     if (busy) return;
     if (!window.confirm('Reset the whole form? All bills and extras in the current draft will be cleared. Names, bills split and bank details are kept.')) return;
     cancelPendingSave();
+    loadedInvoiceRef.current = null;
     try {
       const current = formDataRef.current;
       const res = await resetDraft();
@@ -270,7 +339,7 @@ export default function MainPage() {
       try {
         await updateDraft(nextDraft);
       } catch {
-        savePendingRef.current = true;
+        markAllPending();
       }
     } catch (err) {
       console.error('Error resetting draft', err);

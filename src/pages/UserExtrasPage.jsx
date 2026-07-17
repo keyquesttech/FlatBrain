@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getDraft, updateDraft, getHistory } from '../api';
+import { getDraft, patchDraft, getHistory } from '../api';
 import { extraPercent, extraShares, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra } from '../utils/id';
@@ -68,18 +68,17 @@ export default function UserExtrasPage({ personKey }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personKey, extrasKey, fullPriceKey, noteKey, otherKey]);
 
-  // Merge queued list changes into the latest server draft, so edits made at
-  // the same time on other pages aren't lost. On failure the changes are
-  // re-queued (newer edits win) and the poller retries them.
+  // Send only the changed keys; the server merges them into the latest
+  // draft atomically, so edits made at the same time on other pages aren't
+  // lost. On failure the changes are re-queued (newer edits win) and the
+  // poller retries them.
   const flushPending = () => {
     const changes = pendingRef.current;
     if (Object.keys(changes).length === 0) return;
     pendingRef.current = {};
-    getDraft()
-      .then((draft) => updateDraft({ ...draft, ...changes }))
-      .catch(() => {
-        pendingRef.current = { ...changes, ...pendingRef.current };
-      });
+    patchDraft(changes).catch(() => {
+      pendingRef.current = { ...changes, ...pendingRef.current };
+    });
   };
 
   // Queue one or more draft-key changes for the next debounced write.

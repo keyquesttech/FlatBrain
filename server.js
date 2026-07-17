@@ -112,6 +112,20 @@ app.put('/api/draft', (req, res) => {
   res.json({ success: true, draft: newData });
 });
 
+// Merge a partial update into the draft: only the keys sent are replaced.
+// The read+merge+write is synchronous, so concurrent editors touching
+// different parts (generator page vs a flatmate page) can't clobber each
+// other's keys the way a full PUT can.
+app.patch('/api/draft', (req, res) => {
+  const changes = req.body;
+  if (!isPlainObject(changes)) {
+    return res.status(400).json({ success: false, error: 'Changes must be an object' });
+  }
+  const merged = { ...readJSON(DRAFT_FILE, defaultDraft), ...changes };
+  writeJSON(DRAFT_FILE, merged);
+  res.json({ success: true, draft: merged });
+});
+
 app.post('/api/draft/reset', (req, res) => {
   writeJSON(DRAFT_FILE, defaultDraft);
   res.json({ success: true, draft: defaultDraft });
@@ -128,8 +142,11 @@ app.post('/api/history', (req, res) => {
   }
   const history = readJSON(HISTORY_FILE, []);
   // Replace rather than duplicate if the same invoice is submitted twice
-  // (e.g. a retried request after a network hiccup).
-  const updated = [invoice, ...history.filter((inv) => inv.id !== invoice.id)];
+  // (e.g. a retried request after a network hiccup). Sorted by timestamp so
+  // an updated old invoice keeps its chronological place instead of jumping
+  // to the top of the history.
+  const updated = [invoice, ...history.filter((inv) => inv.id !== invoice.id)]
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   writeJSON(HISTORY_FILE, updated);
   res.json({ success: true, history: updated });
 });
