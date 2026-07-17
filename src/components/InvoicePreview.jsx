@@ -79,11 +79,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       before: calc.flatmate1BeforeDiscounts,
       discounts: data.flatmate1Discounts || [],
       extrasShare: calc.flatmate1ShareExtras,
-      discountTotal: calc.flatmate1DiscountTotal,
-      total: calc.flatmate1TotalDue,
-      ownExtrasPaid: calc.flatmate1OwnExtrasPaid,
+      deductionsTotal: calc.flatmate1DeductionsTotal,
       dueTotal: calc.flatmate1EffectiveDue,
-      dueSub: 'Settled by fronting the bills — nothing to transfer',
       note: data.flatmate1Note
     },
     {
@@ -97,13 +94,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       before: calc.flatmate2BeforeDiscounts,
       discounts: data.flatmate2Discounts || [],
       extrasShare: calc.flatmate2ShareExtras,
-      discountTotal: calc.flatmate2DiscountTotal,
-      total: calc.flatmate2TotalDue,
-      ownExtrasPaid: calc.flatmate2OwnExtrasPaid,
+      deductionsTotal: calc.flatmate2DeductionsTotal,
       dueTotal: calc.netTransfer,
-      dueSub: calc.netTransfer >= 0
-        ? 'The amount to transfer'
-        : `Negative — ${names.flatmate1} pays ${names.flatmate2} the difference`,
       note: data.flatmate2Note
     }
   ];
@@ -199,21 +191,17 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             </div>
             <div className="due-card-total due-card-total-secondary">
               <span>Discounts total</span>
-              <span>{person.discountTotal > 0 ? '−' : ''}{formatCurrency(person.discountTotal)}</span>
+              <span>{person.deductionsTotal > 0 ? '−' : ''}{formatCurrency(person.deductionsTotal)}</span>
             </div>
             <div className="due-card-total due-card-total-secondary">
               <span>Net total</span>
-              <span>{formatCurrency(person.total)}</span>
-            </div>
-            <div className="due-card-total due-card-total-secondary">
-              <span>Own extras already paid</span>
-              <span>{person.ownExtrasPaid > 0 ? '−' : ''}{formatCurrency(person.ownExtrasPaid)}</span>
+              <span>{formatCurrency(person.before)}</span>
             </div>
             <div className="due-card-total">
               <span>{person.name} total due</span>
               <span>{formatCurrency(person.dueTotal)}</span>
             </div>
-            <div className="due-item-sub">{person.dueSub}</div>
+            <div className="due-item-sub">The total amount to transfer</div>
           </div>
         ))}
 
