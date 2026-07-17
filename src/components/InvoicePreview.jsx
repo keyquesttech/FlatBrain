@@ -190,12 +190,12 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>{formatCurrency(person.extrasShare)}</span>
             </div>
             <div className="due-card-total due-card-total-secondary">
-              <span>Discounts total</span>
-              <span>{person.deductionsTotal > 0 ? '−' : ''}{formatCurrency(person.deductionsTotal)}</span>
-            </div>
-            <div className="due-card-total due-card-total-secondary">
               <span>Net total</span>
               <span>{formatCurrency(person.before)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Discounts total</span>
+              <span>{person.deductionsTotal > 0 ? '−' : ''}{formatCurrency(person.deductionsTotal)}</span>
             </div>
             <div className="due-card-total">
               <span>{person.name} total due</span>
