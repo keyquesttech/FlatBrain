@@ -105,8 +105,9 @@ export function clampSplitPercent(value) {
 // A discount is { thing, type: 'amount'|'percent', value }. Percent discounts
 // apply to that person's pre-discount total (bills share + extras share).
 // Rounded per discount so displayed lines sum to the deducted total exactly.
+// Negative values clamp to 0 — a "discount" can never increase a due.
 export function discountAmount(discount, base) {
-  const v = parseAmount(discount?.value);
+  const v = Math.max(0, parseAmount(discount?.value));
   return round2(discount?.type === 'percent' ? (base * v) / 100 : v);
 }
 
@@ -192,25 +193,12 @@ export function calculateInvoice(data) {
   const flatmate1TotalDue = round2(flatmate1BeforeDiscounts - flatmate1DiscountTotal);
   const flatmate2TotalDue = round2(flatmate2BeforeDiscounts - flatmate2DiscountTotal);
 
-  // What each person actually hands over this month. Whoever added an extra
-  // already paid the shop for it in full, so their kept share of their OWN
-  // items is money already spent and comes off their payment. What remains is
-  // their bills share plus their share of the OTHER person's purchases, minus
-  // their personal discounts. Only the adder's own kept share is deducted —
-  // the share of the other person's items is still genuinely owed.
-  const flatmate1ToPay = round2(flatmate1TotalDue - flatmate1OwnKept);
-  const flatmate2ToPay = round2(flatmate2TotalDue - flatmate2OwnKept);
-
   // The single bank transfer that settles the month, given that Flatmate1
-  // fronts all the bills: Flatmate2's payment minus what Flatmate1 owes her for her
-  // purchases. Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
-  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2);
-
-  // The same transfer split by direction for the invoice's total-due lines:
-  // each person's line IS the amount they send, no further math. At most one
-  // is non-zero — normally Flatmate2's; a big Flatmate2 purchase can flip it.
-  const flatmate2TransferDue = netTransfer > 0 ? netTransfer : 0;
-  const flatmate1TransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
+  // fronts all the bills. Whoever added an extra already paid the shop for
+  // it in full, so Flatmate2's transfer is her net total minus everything she
+  // spent on her own items (her kept share + the part Flatmate1 owes her).
+  // Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
+  const netTransfer = round2(flatmate2TotalDue - flatmate2OwnKept - flatmate1FromFlatmate2);
 
   // What the month effectively costs Flatmate1, mirroring Flatmate2's terms from
   // his side: his bills share, minus what she reimburses for his extras,
@@ -251,20 +239,12 @@ export function calculateInvoice(data) {
     flatmate2DiscountTotal,
     flatmate1TotalDue,
     flatmate2TotalDue,
-    flatmate1ToPay,
-    flatmate2ToPay,
     netTransfer,
-    flatmate1TransferDue,
-    flatmate2TransferDue,
     flatmate1EffectiveDue,
     flatmate1OwnExtrasPaid,
     flatmate2OwnExtrasPaid,
     flatmate1DeductionsTotal,
     flatmate2DeductionsTotal,
-    // Cross shares, for the totals card's breakdown lines:
-    // toPay = own bills share + share of the OTHER's extras − own discounts.
-    flatmate1ShareOfFlatmate2Extras: flatmate1FromFlatmate2,
-    flatmate2ShareOfFlatmate1Extras: flatmate2FromFlatmate1,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues

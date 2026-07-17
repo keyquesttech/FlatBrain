@@ -20,15 +20,19 @@ and shared purchases, then generate and download a polished invoice image.
 - Personal **extras** for each flatmate, added from their own page:
   - `/flatmate1` and `/flatmate2` — shareable links so each person can add
     what they bought. Changes sync live to the invoice (no refresh needed).
-  - each item has its own **split percentage** — the share charged to the
-    other flatmate (default 50%, or e.g. 100% for "I picked up your parcel
-    postage").
+  - each item has its own **split percentage** — the share the buyer pays
+    themselves (default 50%, or e.g. 0% for "I picked up your parcel
+    postage" — the other flatmate covers it all).
   - Prices are per pack: an item with 3 packs at £2.50 bills £7.50 and shows
     as "Item (3 × £2.50)" on the invoice.
 - Per-flatmate **notes** that appear on the invoice.
 - Per-flatmate **discounts** — a fixed £ amount or a % of their total, shown
   as deduction lines on the invoice (e.g. a bill credit or something they
-  already paid for).
+  already paid for). A discount only ever reduces its own flatmate's total.
+- **Settle-up totals**: each flatmate card ends with Extras share, Net total,
+  Discounts total (personal discounts plus the extras that person already
+  paid for at the shop) and a final **total due** — the exact amount to
+  transfer, with reimbursements for own purchases already netted off.
 - Live **invoice preview** that downloads as a fixed-size PNG — identical
   output whether generated from a phone, tablet or desktop.
 - **History** of saved invoices with:

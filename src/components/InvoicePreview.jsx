@@ -206,14 +206,12 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
         ))}
 
         <div className="due-card due-card-total-grand">
-          <div className="grand-total-group">
-            <div className="due-card-total grand-total-line">
-              <span>Grand total (bills + all extras)</span>
-              <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
-            </div>
-            <div className="due-item-sub">
-              Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
-            </div>
+          <div className="due-card-total grand-total-line">
+            <span>Grand total (bills + all extras)</span>
+            <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
+          </div>
+          <div className="due-item-sub">
+            Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
           </div>
         </div>
 
