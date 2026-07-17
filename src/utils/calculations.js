@@ -203,8 +203,11 @@ export function calculateInvoice(data) {
 
   // The single bank transfer that settles the month, given that Flatmate1
   // fronts all the bills: Flatmate2's payment minus what Flatmate1 owes her for her
-  // purchases. Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
-  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2);
+  // purchases, plus Flatmate1's personal discounts — like every other "for X"
+  // mechanic here, a discount granted to one flatmate is covered by the
+  // other (Flatmate2's discounts reduce her transfer; Flatmate1's increase it).
+  // Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
+  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2 + flatmate1DiscountTotal);
 
   // The same transfer split by direction for the invoice's total-due lines:
   // each person's line IS the amount they send, no further math. At most one

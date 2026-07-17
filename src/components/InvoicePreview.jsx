@@ -108,17 +108,20 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     flatmate2TransferSub = `${formatCurrency(flatmate2BillsShare)} share of bills`;
     if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
     if (calc.flatmate2DiscountTotal > 0) flatmate2TransferSub += ` − ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
+    if (calc.flatmate1DiscountTotal > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate1DiscountTotal)} ${names.flatmate1}'s discounts`;
     if (owedBack > 0) flatmate2TransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.flatmate2}'s extras`;
   } else {
     flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
   }
   // Flatmate1's description mirrors Flatmate2's terms from his side: her share of
   // his extras comes OFF his cost (she reimburses it), his share of her
-  // extras and her discounts go ON it. It sums to his effective due.
+  // extras and her discounts go ON it, his own discounts come off (Flatmate2
+  // covers them). It sums to his effective due.
   let flatmate1DueSub = `${formatCurrency(flatmate1BillsShare)} share of bills`;
   if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
   if (owedBack > 0) flatmate1DueSub += ` + ${formatCurrency(owedBack)} of ${names.flatmate2}'s extras`;
-  if (calc.flatmate2DiscountTotal > 0) flatmate1DueSub += ` + ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
+  if (calc.flatmate2DiscountTotal > 0) flatmate1DueSub += ` + ${formatCurrency(calc.flatmate2DiscountTotal)} ${names.flatmate2}'s discounts`;
+  if (calc.flatmate1DiscountTotal > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate1DiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
