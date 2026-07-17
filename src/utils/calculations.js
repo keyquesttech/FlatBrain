@@ -170,8 +170,15 @@ export function calculateInvoice(data) {
     0
   );
 
-  const flatmate1ShareExtras = round2(shareOf(flatmate1Items, true) + shareOf(flatmate2Items, false));
-  const flatmate2ShareExtras = round2(shareOf(flatmate2Items, true) + shareOf(flatmate1Items, false));
+  // The four parts of the extras, per person: the share each keeps of their
+  // own items, and the remainder charged to them from the other's items.
+  const flatmate1OwnKept = shareOf(flatmate1Items, true);
+  const flatmate2OwnKept = shareOf(flatmate2Items, true);
+  const flatmate1FromFlatmate2 = shareOf(flatmate2Items, false);
+  const flatmate2FromFlatmate1 = shareOf(flatmate1Items, false);
+
+  const flatmate1ShareExtras = round2(flatmate1OwnKept + flatmate1FromFlatmate2);
+  const flatmate2ShareExtras = round2(flatmate2OwnKept + flatmate2FromFlatmate1);
   // Every item's charged part + remainder equals its total, so this is the
   // exact sum of all item totals.
   const extrasTotal = round2(flatmate1ShareExtras + flatmate2ShareExtras);
@@ -185,11 +192,19 @@ export function calculateInvoice(data) {
   const flatmate1TotalDue = round2(flatmate1BeforeDiscounts - flatmate1DiscountTotal);
   const flatmate2TotalDue = round2(flatmate2BeforeDiscounts - flatmate2DiscountTotal);
 
-  // Each person's due with the extras taken back out, derived by subtraction
-  // so the displayed lines always reconcile exactly:
-  // total due without extras + total extras = total due.
-  const flatmate1TotalDueWithoutExtras = round2(flatmate1TotalDue - flatmate1ShareExtras);
-  const flatmate2TotalDueWithoutExtras = round2(flatmate2TotalDue - flatmate2ShareExtras);
+  // What each person actually hands over this month. Whoever added an extra
+  // already paid the shop for it in full, so their kept share of their OWN
+  // items is money already spent and comes off their payment. What remains is
+  // their bills share plus their share of the OTHER person's purchases, minus
+  // their personal discounts. Only the adder's own kept share is deducted —
+  // the share of the other person's items is still genuinely owed.
+  const flatmate1ToPay = round2(flatmate1TotalDue - flatmate1OwnKept);
+  const flatmate2ToPay = round2(flatmate2TotalDue - flatmate2OwnKept);
+
+  // The single bank transfer that settles the month, given that Flatmate1
+  // fronts all the bills: Flatmate2's payment minus what Flatmate1 owes her for her
+  // purchases. Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
+  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2);
 
   return {
     splitPercent,
@@ -208,8 +223,9 @@ export function calculateInvoice(data) {
     flatmate2DiscountTotal,
     flatmate1TotalDue,
     flatmate2TotalDue,
-    flatmate1TotalDueWithoutExtras,
-    flatmate2TotalDueWithoutExtras,
+    flatmate1ToPay,
+    flatmate2ToPay,
+    netTransfer,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues
