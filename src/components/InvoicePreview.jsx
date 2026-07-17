@@ -99,23 +99,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   ];
 
   // Réka's total-due line is the actual transfer amount (everything netted);
-  // Matias's shows his due, settled by fronting the bills. Each explainer
-  // shows the formula with this month's numbers, zero terms left out.
+  // Matias's shows his due, settled by fronting the bills. Each group
+  // itemizes its make-up as rows, like the flatmate cards do.
   const rekaPays = calc.netTransfer >= 0;
   const owedBack = calc.matiasShareOfRekaExtras;
-  let rekaTransferSub;
-  if (rekaPays) {
-    rekaTransferSub = `${formatCurrency(rekaBillsShare)} share of bills`;
-    if (calc.rekaShareOfMatiasExtras > 0) rekaTransferSub += ` + ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
-    if (calc.rekaDiscountTotal > 0) rekaTransferSub += ` − ${formatCurrency(calc.rekaDiscountTotal)} discounts`;
-    if (owedBack > 0) rekaTransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.reka}'s extras`;
-  } else {
-    rekaTransferSub = `Nothing to send — ${names.matias} covers the difference`;
-  }
-  let matiasDueSub = `${formatCurrency(matiasBillsShare)} share of bills`;
-  if (calc.matiasShareOfRekaExtras > 0) matiasDueSub += ` + ${formatCurrency(calc.matiasShareOfRekaExtras)} of ${names.reka}'s extras`;
-  if (calc.matiasDiscountTotal > 0) matiasDueSub += ` − ${formatCurrency(calc.matiasDiscountTotal)} discounts`;
-  matiasDueSub += ' — settled by fronting the bills';
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -215,30 +202,69 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
 
         <div className="due-card due-card-total-grand">
           <div className="grand-total-group">
+            <div className="due-line">
+              <span>Bills</span>
+              <span>{formatCurrency(billsTotal)}</span>
+            </div>
+            <div className="due-line">
+              <span>All extras</span>
+              <span>{formatCurrency(calc.extrasTotal)}</span>
+            </div>
             <div className="due-card-total grand-total-line">
               <span>Grand total (bills + all extras)</span>
               <span className="grand-total-amount">{formatCurrency(calc.grandTotal)}</span>
             </div>
-            <div className="due-item-sub">
-              Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
-            </div>
           </div>
           <div className="grand-total-group">
+            {rekaPays ? (
+              <>
+                <div className="due-line">
+                  <span>Share of bills</span>
+                  <span>{formatCurrency(rekaBillsShare)}</span>
+                </div>
+                <div className="due-line">
+                  <span>Share of {names.matias}'s extras</span>
+                  <span>{formatCurrency(calc.rekaShareOfMatiasExtras)}</span>
+                </div>
+                {calc.rekaDiscountTotal > 0 && (
+                  <div className="due-line">
+                    <span>Discounts</span>
+                    <span>−{formatCurrency(calc.rekaDiscountTotal)}</span>
+                  </div>
+                )}
+                {owedBack > 0 && (
+                  <div className="due-line">
+                    <span>Owed back for {names.reka}'s extras</span>
+                    <span>−{formatCurrency(owedBack)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="due-item-sub">Nothing to send — {names.matias} covers the difference</div>
+            )}
             <div className="due-card-total grand-total-line">
               <span>{names.reka} total due</span>
               <span className="grand-total-amount">{formatCurrency(calc.rekaTransferDue)}</span>
             </div>
-            <div className="due-item-sub">
-              {rekaTransferSub}
-            </div>
           </div>
           <div className="grand-total-group">
+            <div className="due-line">
+              <span>Share of bills</span>
+              <span>{formatCurrency(matiasBillsShare)}</span>
+            </div>
+            <div className="due-line">
+              <span>Share of {names.reka}'s extras</span>
+              <span>{formatCurrency(calc.matiasShareOfRekaExtras)}</span>
+            </div>
+            {calc.matiasDiscountTotal > 0 && (
+              <div className="due-line">
+                <span>Discounts</span>
+                <span>−{formatCurrency(calc.matiasDiscountTotal)}</span>
+              </div>
+            )}
             <div className="due-card-total grand-total-line">
               <span>{names.matias} total due</span>
               <span className="grand-total-amount">{formatCurrency(calc.matiasToPay)}</span>
-            </div>
-            <div className="due-item-sub">
-              {matiasDueSub}
             </div>
           </div>
           <p className="grand-total-note">
