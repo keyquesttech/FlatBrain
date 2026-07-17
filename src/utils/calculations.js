@@ -212,6 +212,14 @@ export function calculateInvoice(data) {
   const flatmate2TransferDue = netTransfer > 0 ? netTransfer : 0;
   const flatmate1TransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
 
+  // What the month effectively costs Flatmate1 out of pocket, given he fronts
+  // all the bills: the bills total minus Flatmate2's settling transfer. Mirrors
+  // her transfer's terms from his side — his bills share, minus what she
+  // reimburses for his extras, plus what he owes for hers, plus discounts
+  // granted to her (the collector absorbs them). The two total-due lines
+  // therefore always sum to the bills total.
+  const flatmate1EffectiveDue = round2(billsTotal - netTransfer);
+
   return {
     splitPercent,
     billsTotal,
@@ -234,6 +242,7 @@ export function calculateInvoice(data) {
     netTransfer,
     flatmate1TransferDue,
     flatmate2TransferDue,
+    flatmate1EffectiveDue,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     flatmate1ShareOfFlatmate2Extras: flatmate1FromFlatmate2,
