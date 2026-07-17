@@ -81,6 +81,9 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extrasShare: calc.matiasShareExtras,
       discountTotal: calc.matiasDiscountTotal,
       total: calc.matiasTotalDue,
+      ownExtrasPaid: calc.matiasOwnExtrasPaid,
+      dueTotal: calc.matiasEffectiveDue,
+      dueSub: 'Settled by fronting the bills — nothing to transfer',
       note: data.matiasNote
     },
     {
@@ -96,32 +99,14 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       extrasShare: calc.rekaShareExtras,
       discountTotal: calc.rekaDiscountTotal,
       total: calc.rekaTotalDue,
+      ownExtrasPaid: calc.rekaOwnExtrasPaid,
+      dueTotal: calc.netTransfer,
+      dueSub: calc.netTransfer >= 0
+        ? 'The amount to transfer'
+        : `Negative — ${names.matias} pays ${names.reka} the difference`,
       note: data.rekaNote
     }
   ];
-
-  // Réka's total-due line is the actual transfer amount (everything netted);
-  // Matias's shows his due, settled by fronting the bills. Each explainer
-  // shows the formula with this month's numbers, zero terms left out.
-  const rekaPays = calc.netTransfer >= 0;
-  const owedBack = calc.matiasShareOfRekaExtras;
-  let rekaTransferSub;
-  if (rekaPays) {
-    rekaTransferSub = `${formatCurrency(rekaBillsShare)} share of bills`;
-    if (calc.rekaShareOfMatiasExtras > 0) rekaTransferSub += ` + ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
-    if (calc.rekaDiscountTotal > 0) rekaTransferSub += ` − ${formatCurrency(calc.rekaDiscountTotal)} discounts`;
-    if (owedBack > 0) rekaTransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.reka}'s extras`;
-  } else {
-    rekaTransferSub = `Nothing to send — ${names.matias} covers the difference`;
-  }
-  // Matias's description mirrors Réka's terms from his side: her share of
-  // his extras comes OFF his cost (she reimburses it), his share of her
-  // extras goes ON it, and his own discounts come off. Each person's
-  // discounts appear only on their own line. It sums to his effective due.
-  let matiasDueSub = `${formatCurrency(matiasBillsShare)} share of bills`;
-  if (calc.rekaShareOfMatiasExtras > 0) matiasDueSub += ` − ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
-  if (owedBack > 0) matiasDueSub += ` + ${formatCurrency(owedBack)} of ${names.reka}'s extras`;
-  if (calc.matiasDiscountTotal > 0) matiasDueSub += ` − ${formatCurrency(calc.matiasDiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -220,6 +205,15 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               <span>Net total</span>
               <span>{formatCurrency(person.total)}</span>
             </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Own extras already paid</span>
+              <span>{person.ownExtrasPaid > 0 ? '−' : ''}{formatCurrency(person.ownExtrasPaid)}</span>
+            </div>
+            <div className="due-card-total">
+              <span>{person.name} total due</span>
+              <span>{formatCurrency(person.dueTotal)}</span>
+            </div>
+            <div className="due-item-sub">{person.dueSub}</div>
           </div>
         ))}
 
@@ -233,30 +227,6 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
               Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
             </div>
           </div>
-          <div className="grand-total-group">
-            <div className="due-card-total grand-total-line">
-              <span>{names.reka} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.rekaTransferDue)}</span>
-            </div>
-            <div className="due-item-sub">
-              {rekaTransferSub}
-            </div>
-          </div>
-          <div className="grand-total-group">
-            <div className="due-card-total grand-total-line">
-              <span>{names.matias} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.matiasEffectiveDue)}</span>
-            </div>
-            <div className="due-item-sub">
-              {matiasDueSub}
-            </div>
-          </div>
-          <p className="grand-total-note">
-            Own purchases are paid at the shop so they're never charged to the buyer.
-            {' '}{names.reka} total due is the exact amount to transfer — anything owed
-            back for {names.reka}'s extras is already taken off. {names.matias} total due
-            is settled by fronting the bills.
-          </p>
         </div>
 
         {dueSections.filter((person) => person.note?.trim()).map((person) => (

@@ -219,6 +219,14 @@ export function calculateInvoice(data) {
   // outside the invoice, so the other side doesn't absorb them.
   const matiasEffectiveDue = round2(billsTotal - netTransfer - rekaDiscountTotal - matiasDiscountTotal);
 
+  // The full price each person already paid the shop for their own items.
+  // Subtracting it from their Net total gives their total due directly:
+  // netTransfer = rekaTotalDue − rekaOwnExtrasPaid, and
+  // matiasEffectiveDue = matiasTotalDue − matiasOwnExtrasPaid — which is
+  // exactly how the invoice cards itemize the maths.
+  const matiasOwnExtrasPaid = round2(matiasOwnKept + rekaFromMatias);
+  const rekaOwnExtrasPaid = round2(rekaOwnKept + matiasFromReka);
+
   return {
     splitPercent,
     billsTotal,
@@ -242,6 +250,8 @@ export function calculateInvoice(data) {
     matiasTransferDue,
     rekaTransferDue,
     matiasEffectiveDue,
+    matiasOwnExtrasPaid,
+    rekaOwnExtrasPaid,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     matiasShareOfRekaExtras: matiasFromReka,
