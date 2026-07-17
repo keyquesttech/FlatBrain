@@ -1099,6 +1099,13 @@ input[type="checkbox"]:focus-visible {
   color: var(--pink-soft);
 }
 
+/* Dividers between the totals-card lines (none above the first) */
+.grand-total-line + .grand-total-line {
+  border-top: 1px dashed rgba(255, 95, 212, 0.35);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
 .grand-total-amount {
   font-weight: 800;
   font-size: clamp(1.15rem, 4.5vw, 1.35rem);
