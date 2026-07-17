@@ -170,8 +170,15 @@ export function calculateInvoice(data) {
     0
   );
 
-  const matiasShareExtras = round2(shareOf(matiasItems, true) + shareOf(rekaItems, false));
-  const rekaShareExtras = round2(shareOf(rekaItems, true) + shareOf(matiasItems, false));
+  // The four parts of the extras, per person: the share each keeps of their
+  // own items, and the remainder charged to them from the other's items.
+  const matiasOwnKept = shareOf(matiasItems, true);
+  const rekaOwnKept = shareOf(rekaItems, true);
+  const matiasFromReka = shareOf(rekaItems, false);
+  const rekaFromMatias = shareOf(matiasItems, false);
+
+  const matiasShareExtras = round2(matiasOwnKept + matiasFromReka);
+  const rekaShareExtras = round2(rekaOwnKept + rekaFromMatias);
   // Every item's charged part + remainder equals its total, so this is the
   // exact sum of all item totals.
   const extrasTotal = round2(matiasShareExtras + rekaShareExtras);
@@ -185,11 +192,19 @@ export function calculateInvoice(data) {
   const matiasTotalDue = round2(matiasBeforeDiscounts - matiasDiscountTotal);
   const rekaTotalDue = round2(rekaBeforeDiscounts - rekaDiscountTotal);
 
-  // Each person's due with the extras taken back out, derived by subtraction
-  // so the displayed lines always reconcile exactly:
-  // total due without extras + total extras = total due.
-  const matiasTotalDueWithoutExtras = round2(matiasTotalDue - matiasShareExtras);
-  const rekaTotalDueWithoutExtras = round2(rekaTotalDue - rekaShareExtras);
+  // What each person actually hands over this month. Whoever added an extra
+  // already paid the shop for it in full, so their kept share of their OWN
+  // items is money already spent and comes off their payment. What remains is
+  // their bills share plus their share of the OTHER person's purchases, minus
+  // their personal discounts. Only the adder's own kept share is deducted —
+  // the share of the other person's items is still genuinely owed.
+  const matiasToPay = round2(matiasTotalDue - matiasOwnKept);
+  const rekaToPay = round2(rekaTotalDue - rekaOwnKept);
+
+  // The single bank transfer that settles the month, given that Matias
+  // fronts all the bills: Réka's payment minus what Matias owes her for her
+  // purchases. Positive = Réka pays Matias; negative = Matias pays Réka.
+  const netTransfer = round2(rekaToPay - matiasFromReka);
 
   return {
     splitPercent,
@@ -208,8 +223,9 @@ export function calculateInvoice(data) {
     rekaDiscountTotal,
     matiasTotalDue,
     rekaTotalDue,
-    matiasTotalDueWithoutExtras,
-    rekaTotalDueWithoutExtras,
+    matiasToPay,
+    rekaToPay,
+    netTransfer,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues
