@@ -98,9 +98,9 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     }
   ];
 
-  // The total-due lines are the actual transfer amounts: at most one person
-  // sends money, and their explainer shows the formula with this month's
-  // numbers (zero terms left out). The other line reads £0.00 with the reason.
+  // Flatmate2's total-due line is the actual transfer amount (everything netted);
+  // Flatmate1's shows his due, settled by fronting the bills. Each explainer
+  // shows the formula with this month's numbers, zero terms left out.
   const flatmate2Pays = calc.netTransfer >= 0;
   const owedBack = calc.flatmate1ShareOfFlatmate2Extras;
   let flatmate2TransferSub;
@@ -112,9 +112,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   } else {
     flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
   }
-  const flatmate1TransferSub = flatmate2Pays
-    ? 'Nothing to send — settled by fronting the bills'
-    : `${formatCurrency(owedBack)} owed for ${names.flatmate2}'s extras − ${formatCurrency(calc.flatmate2ToPay)} due from ${names.flatmate2}`;
+  let flatmate1DueSub = `${formatCurrency(flatmate1BillsShare)} share of bills`;
+  if (calc.flatmate1ShareOfFlatmate2Extras > 0) flatmate1DueSub += ` + ${formatCurrency(calc.flatmate1ShareOfFlatmate2Extras)} of ${names.flatmate2}'s extras`;
+  if (calc.flatmate1DiscountTotal > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate1DiscountTotal)} discounts`;
+  flatmate1DueSub += ' — settled by fronting the bills';
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -234,16 +235,17 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className="grand-total-group">
             <div className="due-card-total grand-total-line">
               <span>{names.flatmate1} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.flatmate1TransferDue)}</span>
+              <span className="grand-total-amount">{formatCurrency(calc.flatmate1ToPay)}</span>
             </div>
             <div className="due-item-sub">
-              {flatmate1TransferSub}
+              {flatmate1DueSub}
             </div>
           </div>
           <p className="grand-total-note">
-            Own purchases are paid at the shop so they're never charged to the buyer —
-            each total due is the exact amount to transfer, with anything owed back for
-            that person's own extras already taken off. £0.00 means nothing to send.
+            Own purchases are paid at the shop so they're never charged to the buyer.
+            {' '}{names.flatmate2} total due is the exact amount to transfer — anything owed
+            back for {names.flatmate2}'s extras is already taken off. {names.flatmate1} total due
+            is settled by fronting the bills.
           </p>
         </div>
 
