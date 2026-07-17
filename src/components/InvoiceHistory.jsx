@@ -1,7 +1,7 @@
 import React from 'react';
-import { formatCurrency } from '../utils/calculations';
+import { calculateInvoice, formatCurrency } from '../utils/calculations';
 import { Trash2, Download } from 'lucide-react';
-import { DEFAULT_NAMES } from '../utils/defaults';
+import { DEFAULT_NAMES, normalizeDraft } from '../utils/defaults';
 
 function formatPeriod(period) {
   if (!period) return 'No period';
@@ -23,6 +23,10 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
     <div className="history-grid">
       {invoices.map((invoice) => {
         const names = { ...DEFAULT_NAMES, ...(invoice.names || {}) };
+        // Recomputed from the invoice's own data (like PNG re-downloads),
+        // so every card shows the current settlement semantics — the dues
+        // stored on old invoices predate the transfer-amount model.
+        const calc = calculateInvoice(normalizeDraft(invoice));
         return (
           <div key={invoice.id} className="glass-panel history-card" onClick={() => onLoad(invoice)}>
             <div className="history-card-head">
@@ -56,25 +60,16 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
             <div className="history-card-totals">
               <div className="history-total-row">
                 <span className="text-muted">Grand total</span>
-                <span className="history-total-value">{formatCurrency(invoice.netTotal)}</span>
+                <span className="history-total-value">{formatCurrency(calc.grandTotal)}</span>
               </div>
-              {invoice.matiasTotalDue != null && invoice.rekaTotalDue != null ? (
-                <>
-                  <div className="history-total-row">
-                    <span className="text-muted">{names.matias} due</span>
-                    <span className="history-total-due">{formatCurrency(invoice.matiasTotalDue)}</span>
-                  </div>
-                  <div className="history-total-row">
-                    <span className="text-muted">{names.reka} due</span>
-                    <span className="history-total-due">{formatCurrency(invoice.rekaTotalDue)}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="history-total-row">
-                  <span className="text-muted">Each due</span>
-                  <span className="history-total-due">{formatCurrency(invoice.eachNetTotal)}</span>
-                </div>
-              )}
+              <div className="history-total-row">
+                <span className="text-muted">{names.matias} due</span>
+                <span className="history-total-due">{formatCurrency(calc.matiasEffectiveDue)}</span>
+              </div>
+              <div className="history-total-row">
+                <span className="text-muted">{names.reka} due</span>
+                <span className="history-total-due">{formatCurrency(calc.netTransfer)}</span>
+              </div>
             </div>
 
             <div className="history-card-hint text-muted">Tap to load into the generator</div>

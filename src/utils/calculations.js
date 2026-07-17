@@ -105,8 +105,9 @@ export function clampSplitPercent(value) {
 // A discount is { thing, type: 'amount'|'percent', value }. Percent discounts
 // apply to that person's pre-discount total (bills share + extras share).
 // Rounded per discount so displayed lines sum to the deducted total exactly.
+// Negative values clamp to 0 — a "discount" can never increase a due.
 export function discountAmount(discount, base) {
-  const v = parseAmount(discount?.value);
+  const v = Math.max(0, parseAmount(discount?.value));
   return round2(discount?.type === 'percent' ? (base * v) / 100 : v);
 }
 
@@ -192,25 +193,12 @@ export function calculateInvoice(data) {
   const matiasTotalDue = round2(matiasBeforeDiscounts - matiasDiscountTotal);
   const rekaTotalDue = round2(rekaBeforeDiscounts - rekaDiscountTotal);
 
-  // What each person actually hands over this month. Whoever added an extra
-  // already paid the shop for it in full, so their kept share of their OWN
-  // items is money already spent and comes off their payment. What remains is
-  // their bills share plus their share of the OTHER person's purchases, minus
-  // their personal discounts. Only the adder's own kept share is deducted —
-  // the share of the other person's items is still genuinely owed.
-  const matiasToPay = round2(matiasTotalDue - matiasOwnKept);
-  const rekaToPay = round2(rekaTotalDue - rekaOwnKept);
-
   // The single bank transfer that settles the month, given that Matias
-  // fronts all the bills: Réka's payment minus what Matias owes her for her
-  // purchases. Positive = Réka pays Matias; negative = Matias pays Réka.
-  const netTransfer = round2(rekaToPay - matiasFromReka);
-
-  // The same transfer split by direction for the invoice's total-due lines:
-  // each person's line IS the amount they send, no further math. At most one
-  // is non-zero — normally Réka's; a big Réka purchase can flip it.
-  const rekaTransferDue = netTransfer > 0 ? netTransfer : 0;
-  const matiasTransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
+  // fronts all the bills. Whoever added an extra already paid the shop for
+  // it in full, so Réka's transfer is her net total minus everything she
+  // spent on her own items (her kept share + the part Matias owes her).
+  // Positive = Réka pays Matias; negative = Matias pays Réka.
+  const netTransfer = round2(rekaTotalDue - rekaOwnKept - matiasFromReka);
 
   // What the month effectively costs Matias, mirroring Réka's terms from
   // his side: his bills share, minus what she reimburses for his extras,
@@ -251,20 +239,12 @@ export function calculateInvoice(data) {
     rekaDiscountTotal,
     matiasTotalDue,
     rekaTotalDue,
-    matiasToPay,
-    rekaToPay,
     netTransfer,
-    matiasTransferDue,
-    rekaTransferDue,
     matiasEffectiveDue,
     matiasOwnExtrasPaid,
     rekaOwnExtrasPaid,
     matiasDeductionsTotal,
     rekaDeductionsTotal,
-    // Cross shares, for the totals card's breakdown lines:
-    // toPay = own bills share + share of the OTHER's extras − own discounts.
-    matiasShareOfRekaExtras: matiasFromReka,
-    rekaShareOfMatiasExtras: rekaFromMatias,
     extrasTotal,
     // Grand total = charged bills + all extras, so it always equals the
     // Bills card total plus the Total extras line (and the flatmates' dues
