@@ -232,7 +232,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             </div>
           </div>
           <p className="grand-total-note">
-            Own purchases are already paid at the shop, so they're never charged back to the buyer —
+            Own purchases are paid at the shop so they're never charged to the buyer —
             each total due is that person's share of the bills plus their share of the other's extras,
             minus any discounts.
           </p>
