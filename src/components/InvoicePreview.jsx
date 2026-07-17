@@ -98,14 +98,23 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     }
   ];
 
-  // Explainer under each totals-card figure: its formula with this month's
-  // numbers. Zero terms are left out so quiet months stay uncluttered.
-  const dueBreakdown = (billsShare, otherExtras, otherName, discountTotal) => {
-    let text = `${formatCurrency(billsShare)} share of bills`;
-    if (otherExtras > 0) text += ` + ${formatCurrency(otherExtras)} of ${otherName}'s extras`;
-    if (discountTotal > 0) text += ` − ${formatCurrency(discountTotal)} discounts`;
-    return text;
-  };
+  // The total-due lines are the actual transfer amounts: at most one person
+  // sends money, and their explainer shows the formula with this month's
+  // numbers (zero terms left out). The other line reads £0.00 with the reason.
+  const flatmate2Pays = calc.netTransfer >= 0;
+  const owedBack = calc.flatmate1ShareOfFlatmate2Extras;
+  let flatmate2TransferSub;
+  if (flatmate2Pays) {
+    flatmate2TransferSub = `${formatCurrency(flatmate2BillsShare)} share of bills`;
+    if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
+    if (calc.flatmate2DiscountTotal > 0) flatmate2TransferSub += ` − ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
+    if (owedBack > 0) flatmate2TransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.flatmate2}'s extras`;
+  } else {
+    flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
+  }
+  const flatmate1TransferSub = flatmate2Pays
+    ? 'Nothing to send — settled by fronting the bills'
+    : `${formatCurrency(owedBack)} owed for ${names.flatmate2}'s extras − ${formatCurrency(calc.flatmate2ToPay)} due from ${names.flatmate2}`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -216,25 +225,25 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className="grand-total-group">
             <div className="due-card-total grand-total-line">
               <span>{names.flatmate2} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.flatmate2ToPay)}</span>
+              <span className="grand-total-amount">{formatCurrency(calc.flatmate2TransferDue)}</span>
             </div>
             <div className="due-item-sub">
-              {dueBreakdown(flatmate2BillsShare, calc.flatmate2ShareOfFlatmate1Extras, names.flatmate1, calc.flatmate2DiscountTotal)}
+              {flatmate2TransferSub}
             </div>
           </div>
           <div className="grand-total-group">
             <div className="due-card-total grand-total-line">
               <span>{names.flatmate1} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.flatmate1ToPay)}</span>
+              <span className="grand-total-amount">{formatCurrency(calc.flatmate1TransferDue)}</span>
             </div>
             <div className="due-item-sub">
-              {dueBreakdown(flatmate1BillsShare, calc.flatmate1ShareOfFlatmate2Extras, names.flatmate2, calc.flatmate1DiscountTotal)}
+              {flatmate1TransferSub}
             </div>
           </div>
           <p className="grand-total-note">
             Own purchases are paid at the shop so they're never charged to the buyer —
-            each total due is that person's share of the bills plus their share of the other's extras,
-            minus any discounts.
+            each total due is the exact amount to transfer, with anything owed back for
+            that person's own extras already taken off. £0.00 means nothing to send.
           </p>
         </div>
 

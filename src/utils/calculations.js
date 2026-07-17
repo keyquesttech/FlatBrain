@@ -206,6 +206,12 @@ export function calculateInvoice(data) {
   // purchases. Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
   const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2);
 
+  // The same transfer split by direction for the invoice's total-due lines:
+  // each person's line IS the amount they send, no further math. At most one
+  // is non-zero — normally Flatmate2's; a big Flatmate2 purchase can flip it.
+  const flatmate2TransferDue = netTransfer > 0 ? netTransfer : 0;
+  const flatmate1TransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
+
   return {
     splitPercent,
     billsTotal,
@@ -226,6 +232,8 @@ export function calculateInvoice(data) {
     flatmate1ToPay,
     flatmate2ToPay,
     netTransfer,
+    flatmate1TransferDue,
+    flatmate2TransferDue,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     flatmate1ShareOfFlatmate2Extras: flatmate1FromFlatmate2,
