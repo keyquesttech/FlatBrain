@@ -203,11 +203,8 @@ export function calculateInvoice(data) {
 
   // The single bank transfer that settles the month, given that Flatmate1
   // fronts all the bills: Flatmate2's payment minus what Flatmate1 owes her for her
-  // purchases, plus Flatmate1's personal discounts — like every other "for X"
-  // mechanic here, a discount granted to one flatmate is covered by the
-  // other (Flatmate2's discounts reduce her transfer; Flatmate1's increase it).
-  // Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
-  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2 + flatmate1DiscountTotal);
+  // purchases. Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
+  const netTransfer = round2(flatmate2ToPay - flatmate1FromFlatmate2);
 
   // The same transfer split by direction for the invoice's total-due lines:
   // each person's line IS the amount they send, no further math. At most one
@@ -215,13 +212,12 @@ export function calculateInvoice(data) {
   const flatmate2TransferDue = netTransfer > 0 ? netTransfer : 0;
   const flatmate1TransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
 
-  // What the month effectively costs Flatmate1 out of pocket, given he fronts
-  // all the bills: the bills total minus Flatmate2's settling transfer. Mirrors
-  // her transfer's terms from his side — his bills share, minus what she
-  // reimburses for his extras, plus what he owes for hers, plus discounts
-  // granted to her (the collector absorbs them). The two total-due lines
-  // therefore always sum to the bills total.
-  const flatmate1EffectiveDue = round2(billsTotal - netTransfer);
+  // What the month effectively costs Flatmate1, mirroring Flatmate2's terms from
+  // his side: his bills share, minus what she reimburses for his extras,
+  // plus what he owes for hers, minus his own discounts. Discounts only
+  // ever reduce their OWN flatmate's line — they represent money settled
+  // outside the invoice, so the other side doesn't absorb them.
+  const flatmate1EffectiveDue = round2(billsTotal - netTransfer - flatmate2DiscountTotal - flatmate1DiscountTotal);
 
   return {
     splitPercent,

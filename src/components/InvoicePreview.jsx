@@ -79,6 +79,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       before: calc.flatmate1BeforeDiscounts,
       discounts: data.flatmate1Discounts || [],
       extrasShare: calc.flatmate1ShareExtras,
+      discountTotal: calc.flatmate1DiscountTotal,
       total: calc.flatmate1TotalDue,
       note: data.flatmate1Note
     },
@@ -93,6 +94,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
       before: calc.flatmate2BeforeDiscounts,
       discounts: data.flatmate2Discounts || [],
       extrasShare: calc.flatmate2ShareExtras,
+      discountTotal: calc.flatmate2DiscountTotal,
       total: calc.flatmate2TotalDue,
       note: data.flatmate2Note
     }
@@ -108,19 +110,17 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
     flatmate2TransferSub = `${formatCurrency(flatmate2BillsShare)} share of bills`;
     if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
     if (calc.flatmate2DiscountTotal > 0) flatmate2TransferSub += ` − ${formatCurrency(calc.flatmate2DiscountTotal)} discounts`;
-    if (calc.flatmate1DiscountTotal > 0) flatmate2TransferSub += ` + ${formatCurrency(calc.flatmate1DiscountTotal)} ${names.flatmate1}'s discounts`;
     if (owedBack > 0) flatmate2TransferSub += ` − ${formatCurrency(owedBack)} owed back for ${names.flatmate2}'s extras`;
   } else {
     flatmate2TransferSub = `Nothing to send — ${names.flatmate1} covers the difference`;
   }
   // Flatmate1's description mirrors Flatmate2's terms from his side: her share of
   // his extras comes OFF his cost (she reimburses it), his share of her
-  // extras and her discounts go ON it, his own discounts come off (Flatmate2
-  // covers them). It sums to his effective due.
+  // extras goes ON it, and his own discounts come off. Each person's
+  // discounts appear only on their own line. It sums to his effective due.
   let flatmate1DueSub = `${formatCurrency(flatmate1BillsShare)} share of bills`;
   if (calc.flatmate2ShareOfFlatmate1Extras > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate2ShareOfFlatmate1Extras)} of ${names.flatmate1}'s extras`;
   if (owedBack > 0) flatmate1DueSub += ` + ${formatCurrency(owedBack)} of ${names.flatmate2}'s extras`;
-  if (calc.flatmate2DiscountTotal > 0) flatmate1DueSub += ` + ${formatCurrency(calc.flatmate2DiscountTotal)} ${names.flatmate2}'s discounts`;
   if (calc.flatmate1DiscountTotal > 0) flatmate1DueSub += ` − ${formatCurrency(calc.flatmate1DiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
@@ -211,6 +211,10 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             <div className="due-card-total due-card-total-secondary due-card-total-first">
               <span>Extras total</span>
               <span>{formatCurrency(person.extrasShare)}</span>
+            </div>
+            <div className="due-card-total due-card-total-secondary">
+              <span>Discounts total</span>
+              <span>{person.discountTotal > 0 ? '−' : ''}{formatCurrency(person.discountTotal)}</span>
             </div>
             <div className="due-card-total due-card-total-secondary">
               <span>Net total</span>
