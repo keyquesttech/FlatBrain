@@ -112,10 +112,13 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
   } else {
     rekaTransferSub = `Nothing to send — ${names.matias} covers the difference`;
   }
+  // Matias's description mirrors Réka's terms from his side: her share of
+  // his extras comes OFF his cost (she reimburses it), his share of her
+  // extras and her discounts go ON it. It sums to his effective due.
   let matiasDueSub = `${formatCurrency(matiasBillsShare)} share of bills`;
-  if (calc.matiasShareOfRekaExtras > 0) matiasDueSub += ` + ${formatCurrency(calc.matiasShareOfRekaExtras)} of ${names.reka}'s extras`;
-  if (calc.matiasDiscountTotal > 0) matiasDueSub += ` − ${formatCurrency(calc.matiasDiscountTotal)} discounts`;
-  matiasDueSub += ' — settled by fronting the bills';
+  if (calc.rekaShareOfMatiasExtras > 0) matiasDueSub += ` − ${formatCurrency(calc.rekaShareOfMatiasExtras)} of ${names.matias}'s extras`;
+  if (owedBack > 0) matiasDueSub += ` + ${formatCurrency(owedBack)} of ${names.reka}'s extras`;
+  if (calc.rekaDiscountTotal > 0) matiasDueSub += ` + ${formatCurrency(calc.rekaDiscountTotal)} discounts`;
 
   const periodDate = data.period ? new Date(data.period + '-01T00:00:00Z') : null;
   const periodLabel = periodDate && !isNaN(periodDate)
@@ -235,7 +238,7 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
           <div className="grand-total-group">
             <div className="due-card-total grand-total-line">
               <span>{names.matias} total due</span>
-              <span className="grand-total-amount">{formatCurrency(calc.matiasToPay)}</span>
+              <span className="grand-total-amount">{formatCurrency(calc.matiasEffectiveDue)}</span>
             </div>
             <div className="due-item-sub">
               {matiasDueSub}

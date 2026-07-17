@@ -212,6 +212,14 @@ export function calculateInvoice(data) {
   const rekaTransferDue = netTransfer > 0 ? netTransfer : 0;
   const matiasTransferDue = netTransfer < 0 ? round2(-netTransfer) : 0;
 
+  // What the month effectively costs Matias out of pocket, given he fronts
+  // all the bills: the bills total minus Réka's settling transfer. Mirrors
+  // her transfer's terms from his side — his bills share, minus what she
+  // reimburses for his extras, plus what he owes for hers, plus discounts
+  // granted to her (the collector absorbs them). The two total-due lines
+  // therefore always sum to the bills total.
+  const matiasEffectiveDue = round2(billsTotal - netTransfer);
+
   return {
     splitPercent,
     billsTotal,
@@ -234,6 +242,7 @@ export function calculateInvoice(data) {
     netTransfer,
     matiasTransferDue,
     rekaTransferDue,
+    matiasEffectiveDue,
     // Cross shares, for the totals card's breakdown lines:
     // toPay = own bills share + share of the OTHER's extras − own discounts.
     matiasShareOfRekaExtras: matiasFromReka,
