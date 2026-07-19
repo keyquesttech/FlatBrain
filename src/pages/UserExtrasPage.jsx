@@ -142,7 +142,7 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <ExtrasInputList
             title={`${displayName}'s Extras`}
-            description={`Packs × price per pack. % = the share you pay — e.g. 10% means you pay 10%, ${otherDisplayName} 90%.`}
+            description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share you pay — e.g. 10% means you pay 10%, ${otherDisplayName} 90%.`}
             extras={extras}
             onAdd={() => saveExtras([...extras, newExtra()])}
             onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}

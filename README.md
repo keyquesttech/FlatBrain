@@ -23,8 +23,9 @@ and shared purchases, then generate and download a polished invoice image.
   - each item has its own **split percentage** — the share the buyer pays
     themselves (default 50%, or e.g. 0% for "I picked up your parcel
     postage" — the other flatmate covers it all).
-  - Prices are per pack: an item with 3 packs at £2.50 bills £7.50 and shows
-    as "Item (3 × £2.50)" on the invoice.
+  - You enter the **units in the pack and the total price paid**; the
+    per-unit price is calculated automatically — a 9-roll pack for £4.50
+    shows as "Item (9 × £0.50)" on the invoice.
 - Per-flatmate **notes** that appear on the invoice.
 - Per-flatmate **discounts** — a fixed £ amount or a % of their total, shown
   as deduction lines on the invoice (e.g. a bill credit or something they
@@ -33,6 +34,10 @@ and shared purchases, then generate and download a polished invoice image.
   Discounts total (personal discounts plus the extras that person already
   paid for at the shop) and a final **total due** — the exact amount to
   transfer, with reimbursements for own purchases already netted off.
+- A **Spending Trend card on the invoice** comparing this month's bills and
+  extras against the previous three saved months — stacked bars plus an
+  up/down line vs the 3-month average, so every invoice shows at a glance
+  whether household spending is rising or falling.
 - Live **invoice preview** that downloads as a fixed-size PNG — identical
   output whether generated from a phone, tablet or desktop.
 - **History** of saved invoices with:

@@ -157,7 +157,7 @@ export default function InvoiceForm({ data, onChange }) {
       <div className="glass-panel">
         <ExtrasInputList
           title={`${name}'s Extras`}
-          description={`Packs × price per pack. % = the share ${name} pays — e.g. 10% means ${name} pays 10%, ${other} 90%.`}
+          description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share ${name} pays — e.g. 10% means ${name} pays 10%, ${other} 90%.`}
           extras={data[extrasKey]}
           onAdd={() => addExtra(extrasKey)}
           onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}

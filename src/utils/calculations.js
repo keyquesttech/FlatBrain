@@ -29,9 +29,18 @@ export function packsOf(extra) {
   return isNaN(n) || n < 1 ? 1 : n;
 }
 
-// An extra's price field is the price per pack; the charged amount is packs × price.
+// Current extras store the TOTAL price paid with `packs` = units in the pack
+// (marked unitPriced: true); the per-unit price is derived, never entered.
+// Legacy items stored the price per pack instead, so their charged amount is
+// packs × price.
 export function extraTotal(extra) {
-  return packsOf(extra) * parseAmount(extra?.price);
+  return extra?.unitPriced ? parseAmount(extra?.price) : packsOf(extra) * parseAmount(extra?.price);
+}
+
+// The auto-calculated price of one unit, for display only — the charged
+// amount is always the total, so unit-price rounding can't lose pennies.
+export function extraUnitPrice(extra) {
+  return extraTotal(extra) / packsOf(extra);
 }
 
 // An extra's percent is the share of it its ADDER pays; the rest is charged
@@ -52,18 +61,23 @@ export function extraShares(extra) {
   return { total, own, other: round2(total - own) };
 }
 
-// A person's extras as one list with a normalized percent on every item,
-// where percent = the share the ADDER pays (marked percentOwn: true).
-// Items saved before this flip stored the share charged to the OTHER
-// flatmate — those (no marker) are inverted once here, so old drafts and
-// history keep charging the same person. Legacy full-price lists fold in
-// as 0% items (the adder pays nothing; the other flatmate pays it all).
+// A person's extras as one list normalized to the current shape: percent =
+// the share the ADDER pays (marked percentOwn: true) and price = the TOTAL
+// paid with packs = units in the pack (marked unitPriced: true).
+// Items saved before those flips stored the share charged to the OTHER
+// flatmate and/or the price per pack — each marker-less item is converted
+// once here (total = packs × per-pack price, so nothing changes what anyone
+// is charged). Legacy full-price lists fold in as 0% items (the adder pays
+// nothing; the other flatmate pays it all).
 export function mergedExtras(data, personKey) {
-  const normalizeExtra = (e) => e.percentOwn
+  const toUnitPriced = (e) => e.unitPriced
+    ? e
+    : { ...e, price: round2(extraTotal(e)), unitPriced: true };
+  const normalizePercent = (e) => e.percentOwn
     ? { ...e, percent: extraPercent(e) }
     : { ...e, percent: Math.round((100 - extraPercent(e)) * 100) / 100, percentOwn: true };
-  const own = (data[`${personKey}Extras`] || []).map(normalizeExtra);
-  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => ({ ...e, percent: 0, percentOwn: true }));
+  const own = (data[`${personKey}Extras`] || []).map((e) => toUnitPriced(normalizePercent(e)));
+  const legacyFull = (data[`${personKey}FullPriceExtras`] || []).map((e) => toUnitPriced({ ...e, percent: 0, percentOwn: true }));
   return [...own, ...legacyFull];
 }
 
@@ -263,8 +277,10 @@ export function formatCurrency(amount) {
   return GBP.format(parseAmount(amount));
 }
 
-// Always shows the pack count and per-pack price, e.g. "Bulbs (2 × £7.50)".
+// Always shows the unit count and the auto-calculated per-unit price, e.g.
+// "Bulbs (2 × £7.50)" — legacy per-pack items read the same, since their
+// per-pack price IS their unit price.
 // Non-breaking spaces keep the parenthetical on one line when text wraps.
 export function formatExtraLabel(extra) {
-  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extra.price)})`;
+  return `${extra.thing || 'Unnamed item'} (${packsOf(extra)} × ${formatCurrency(extraUnitPrice(extra))})`;
 }

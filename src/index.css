@@ -429,6 +429,14 @@ input[type="number"] {
   flex: 0 0 4.5rem;
 }
 
+/* Auto-calculated per-unit price shown under a multi-unit extras row */
+.extras-unit-price {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  margin: -6px 0 10px 4px;
+}
+
 .currency-input {
   display: flex;
   align-items: center;
@@ -1107,6 +1115,65 @@ input[type="checkbox"]:focus-visible {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   white-space: nowrap;
+}
+
+/* Spending trend — blue halo; fixed px sizing so the PNG capture renders
+   the same bars on every device */
+.due-card-trend {
+  --halo: rgba(95, 178, 255, 0.24);
+  --halo-edge: rgba(95, 178, 255, 0.5);
+}
+.due-card-trend .due-card-name {
+  color: #8ec8ff;
+}
+
+.trend-chart {
+  gap: 14px;
+  margin-top: 4px;
+}
+.trend-chart .spend-bar-track {
+  height: 92px;
+  border-radius: 8px;
+}
+.trend-chart .spend-bar-stack {
+  border-radius: 8px 8px 0 0;
+}
+.trend-chart .spend-bar-value {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.trend-chart .spend-bar-label {
+  font-size: 0.68rem;
+}
+.trend-col-current .spend-bar-value,
+.trend-col-current .spend-bar-label {
+  color: var(--lime-soft);
+  font-weight: 700;
+}
+.trend-col-current .spend-bar-track {
+  background: rgba(212, 255, 63, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(212, 255, 63, 0.28);
+}
+
+.trend-legend {
+  margin-top: 8px;
+}
+
+.trend-headline {
+  border-top: 1px dashed rgba(95, 178, 255, 0.35);
+  margin-top: 10px;
+  padding-top: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.trend-up {
+  color: #ffab8a;
+}
+.trend-down {
+  color: var(--lime-soft);
+}
+.trend-level {
+  color: var(--text-muted);
 }
 
 /* Long free-text bank values may wrap onto the right */

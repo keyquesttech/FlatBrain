@@ -12,8 +12,9 @@ import {
   parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
+import SpendingTrendCard from './SpendingTrendCard';
 
-const InvoicePreview = forwardRef(({ data }, ref) => {
+const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
   const names = { ...DEFAULT_NAMES, ...(data.names || {}) };
   const bank = { ...DEFAULT_BANK, ...(data.bankDetails || {}) };
 
@@ -214,6 +215,8 @@ const InvoicePreview = forwardRef(({ data }, ref) => {
             Everything spent this month: {formatCurrency(billsTotal)} bills{calc.extrasTotal > 0 ? ` + ${formatCurrency(calc.extrasTotal)} extras` : ''}
           </div>
         </div>
+
+        <SpendingTrendCard history={history} currentCalc={calc} currentPeriod={data.period} />
 
         {dueSections.filter((person) => person.note?.trim()).map((person) => (
           <div className={`due-card due-card-note due-card-note-${person.key}`} key={`${person.key}-note`}>

@@ -10,7 +10,9 @@ export function newId() {
 }
 
 export function newExtra() {
-  // percentOwn marks the percent as "share the adder pays" (current
-  // semantics) — items without it are legacy and get inverted on read.
-  return { id: newId(), thing: '', packs: 1, price: '', percent: 50, percentOwn: true };
+  // percentOwn marks the percent as "share the adder pays" and unitPriced
+  // marks price as "total paid" with packs = units in the pack (current
+  // semantics) — items without the markers are legacy and get converted
+  // on read (see mergedExtras).
+  return { id: newId(), thing: '', packs: 1, price: '', percent: 50, percentOwn: true, unitPriced: true };
 }

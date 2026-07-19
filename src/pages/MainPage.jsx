@@ -371,7 +371,7 @@ export default function MainPage() {
           <div className="main-content">
             <InvoiceForm data={formData} onChange={handleFormChange} />
             <div className="preview-column">
-              <InvoicePreview data={formData} ref={previewRef} />
+              <InvoicePreview data={formData} history={invoices} ref={previewRef} />
             </div>
           </div>
         </>
@@ -440,6 +440,7 @@ export default function MainPage() {
         <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '720px' }} aria-hidden="true">
           <InvoicePreview
             data={{ ...normalizeDraft(historyDownload), timestamp: historyDownload.timestamp }}
+            history={invoices}
             ref={historyPreviewRef}
           />
         </div>
