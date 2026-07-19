@@ -36,3 +36,7 @@ backup-config.json
 *.njsproj
 *.sln
 *.sw?
+
+# Throwaway test bundles Claude Code writes into the repo during checks
+*.tmp.jsx
+*.tmp.js
