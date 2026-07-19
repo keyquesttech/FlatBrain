@@ -34,6 +34,19 @@ export default function ExtrasInputList({
 
       {description && <p className="section-desc">{description}</p>}
 
+      {extras.length > 0 && (
+        // Column labels: same sizing classes as the inputs below, so they
+        // always track the columns. aria-hidden — every input carries its
+        // own aria-label already.
+        <div className="input-row extras-row row-labels" aria-hidden="true">
+          <span>Item</span>
+          <span className="packs-input">Units</span>
+          <span className="currency-input">Total £</span>
+          {percentPayer != null && <span className="percent-input">Split %</span>}
+          <span className="row-labels-action" />
+        </div>
+      )}
+
       {extras.map((extra) => (
         <React.Fragment key={extra.id}>
           <div className="input-row extras-row">
