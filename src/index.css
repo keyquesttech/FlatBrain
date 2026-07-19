@@ -521,13 +521,15 @@ input[type="number"] {
   user-select: none;
 }
 
+/* Same font, size, weight and colour as every other input — amounts used
+   to render pink/bold, which made the fields look mismatched */
 .currency-input input {
   border: none;
   background: transparent;
   box-shadow: none;
   padding: 12px 16px 12px 6px;
-  color: var(--pink-soft);
-  font-weight: 700;
+  color: var(--text);
+  font-weight: 400;
 }
 
 .currency-input input:focus {
@@ -890,12 +892,14 @@ input[type="checkbox"]:focus-visible {
   display: block;
   background: none;
   border: none;
-  padding: 0 0 0 6px;
+  padding: 0;
   min-width: 0;
   min-height: 0;
   font-family: var(--font-mono);
   font-size: 0.66rem;
   font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-faint);
@@ -922,10 +926,11 @@ input[type="checkbox"]:focus-visible {
   font-family: var(--font-mono);
   font-size: 0.66rem;
   font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-faint);
-  padding-left: 6px;
 }
 
 /* ===================================================================
@@ -1832,9 +1837,20 @@ input[type="checkbox"]:focus-visible {
   }
 }
 
+/* fill-mode backwards, NOT both/forwards: a filled transform/opacity
+   animation leaves the card in a permanent stacking context, which trapped
+   picker dropdowns underneath the next card */
 .form-card-stack > *,
 .history-grid > * {
-  animation: cardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: cardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* While a picker/select is open, its card must beat the sibling cards
+   (each one is its own stacking context via backdrop-filter) and the
+   mobile sticky toolbar (z 30) */
+.glass-panel:has(.picker-trigger.open) {
+  position: relative;
+  z-index: 35;
 }
 
 .form-card-stack > *:nth-child(2), .history-grid > *:nth-child(2) { animation-delay: 0.05s; }
@@ -1958,11 +1974,14 @@ input[type="checkbox"]:focus-visible {
     gap: 6px;
   }
 
-  /* 16px inputs stop iOS Safari from auto-zooming on focus */
+  /* 16px inputs stop iOS Safari from auto-zooming on focus; picker
+     triggers match so every field in a row shares one size */
   input[type="text"],
   input[type="number"],
   input[type="time"],
-  textarea {
+  textarea,
+  .picker-trigger,
+  .currency-input-prefix {
     font-size: 16px;
   }
 
@@ -2044,7 +2063,6 @@ input[type="checkbox"]:focus-visible {
 
   .row-labels > * {
     font-size: 0.6rem;
-    padding-left: 3px;
   }
 
   .extras-row .row-labels-action {
