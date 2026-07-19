@@ -155,14 +155,17 @@ export default function UserExtrasPage({ personKey }) {
         <div className="glass-panel">
           <h3 className="invoice-section-title">Your notes</h3>
           <p className="section-desc">Optional — shown on the invoice.</p>
-          <textarea
-            value={note}
-            onChange={(e) => saveNote(e.target.value)}
-            placeholder="Optional note shown on the invoice"
-            rows={2}
-            maxLength={300}
-            aria-label="Your note"
-          />
+          <div className="form-group">
+            <label htmlFor="flatmate-note">Note</label>
+            <textarea
+              id="flatmate-note"
+              value={note}
+              onChange={(e) => saveNote(e.target.value)}
+              placeholder="Optional note shown on the invoice"
+              rows={2}
+              maxLength={300}
+            />
+          </div>
         </div>
 
         <div className="glass-panel">

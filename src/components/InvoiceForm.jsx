@@ -107,6 +107,14 @@ export default function InvoiceForm({ data, onChange }) {
             <Plus size={16} /> Add Discount
           </button>
         </div>
+        {list.length > 0 && (
+          <div className="input-row extras-row row-labels" aria-hidden="true">
+            <span>Reason</span>
+            <span className="packs-input discount-value">Value</span>
+            <span className="discount-type-select">£ / %</span>
+            <span className="row-labels-action" />
+          </div>
+        )}
         {list.map((discount) => (
           <div key={discount.id} className="input-row extras-row">
             <input
@@ -196,20 +204,24 @@ export default function InvoiceForm({ data, onChange }) {
       <div className="glass-panel">
         <h3 className="invoice-section-title">Names</h3>
         <div className="input-row">
-          <input
-            type="text"
-            value={names.matias}
-            onChange={(e) => updateName('matias', e.target.value)}
-            placeholder="Flatmate 1"
-            aria-label="Flatmate 1 name"
-          />
-          <input
-            type="text"
-            value={names.reka}
-            onChange={(e) => updateName('reka', e.target.value)}
-            placeholder="Flatmate 2"
-            aria-label="Flatmate 2 name"
-          />
+          <label className="fld">
+            <span className="fld-label">Flatmate 1</span>
+            <input
+              type="text"
+              value={names.matias}
+              onChange={(e) => updateName('matias', e.target.value)}
+              placeholder="Flatmate 1"
+            />
+          </label>
+          <label className="fld">
+            <span className="fld-label">Flatmate 2</span>
+            <input
+              type="text"
+              value={names.reka}
+              onChange={(e) => updateName('reka', e.target.value)}
+              placeholder="Flatmate 2"
+            />
+          </label>
         </div>
 
         <div className="form-group split-group">
@@ -256,6 +268,15 @@ export default function InvoiceForm({ data, onChange }) {
         <p className="section-desc">
           Discount: set a % and who it's for — the other flatmate covers that part. All = nobody pays it.
         </p>
+        {data.bills.length > 0 && (
+          <div className="input-row extras-row bill-row row-labels" aria-hidden="true">
+            <span>Bill</span>
+            <span className="currency-input">Amount £</span>
+            <span className="percent-input">Disc %</span>
+            {billDiscountPercent(data.bills[0]) > 0 && <span className="bill-discount-select">Disc for</span>}
+            <span className="row-labels-action" />
+          </div>
+        )}
         {data.bills.map((bill) => (
           <div key={bill.id} className="input-row extras-row bill-row">
             <input

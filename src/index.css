@@ -79,31 +79,70 @@ body {
   min-height: 100vh;
 }
 
-/* Ambient glow orbs behind the whole page */
-body::before,
-body::after {
-  content: '';
+/* Ambient underlay behind the whole app — rendered by App as .app-underlay:
+   slow-drifting neon orbs plus a faint grain wash. Fixed, non-interactive,
+   under #root (z-index 1). Long durations keep the GPU work negligible and
+   prefers-reduced-motion freezes the drift entirely. */
+.app-underlay {
   position: fixed;
-  border-radius: 50%;
-  filter: blur(20px);
-  pointer-events: none;
+  inset: 0;
+  overflow: hidden;
   z-index: 0;
+  pointer-events: none;
 }
 
-body::before {
+.underlay-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(22px);
+  will-change: transform;
+}
+
+.underlay-orb-lime {
   top: -160px;
   right: -120px;
   width: 420px;
   height: 420px;
   background: radial-gradient(circle, rgba(212, 255, 63, 0.22), transparent 70%);
+  animation: orbDrift 52s ease-in-out infinite alternate;
 }
 
-body::after {
+.underlay-orb-pink {
   bottom: -180px;
   left: -120px;
   width: 400px;
   height: 400px;
   background: radial-gradient(circle, rgba(255, 95, 212, 0.18), transparent 70%);
+  animation: orbDrift 64s ease-in-out infinite alternate-reverse;
+}
+
+.underlay-orb-blue {
+  top: 38%;
+  left: 55%;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(95, 178, 255, 0.1), transparent 70%);
+  animation: orbDriftWide 75s ease-in-out infinite alternate;
+}
+
+@keyframes orbDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-60px, 50px, 0) scale(1.12); }
+}
+
+@keyframes orbDriftWide {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-140px, -70px, 0) scale(1.18); }
+}
+
+/* Film-grain overlay: inline SVG turbulence, tiled — breaks up the flat
+   dark background without any network request */
+.underlay-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
 #root {
@@ -278,11 +317,26 @@ p {
   margin-bottom: 1.6rem;
 }
 
+.nav-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
 .nav-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
+}
+
+.sound-toggle {
+  color: var(--text-faint);
+}
+
+.sound-toggle:hover {
+  color: var(--text);
 }
 
 .brand-icon {
@@ -404,6 +458,11 @@ textarea {
 input::placeholder,
 textarea::placeholder {
   color: #6a6a6a;
+}
+
+input,
+textarea {
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input:focus,
@@ -817,16 +876,78 @@ input[type="checkbox"]:focus-visible {
   text-align: right;
 }
 
+/* ---------- Column labels above item rows ---------- */
+/* The label spans carry the SAME sizing classes as the inputs they sit
+   over (packs-input, currency-input, …) so the columns always line up at
+   every width; the pill visuals those classes bring are reset here. These
+   rules must stay AFTER the input styles — they win the tie by order. */
+.row-labels {
+  margin-bottom: 2px;
+  align-items: flex-end;
+}
+
+.row-labels > * {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0 0 0 6px;
+  min-width: 0;
+  min-height: 0;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Spacer over the remove-button column */
+.row-labels .row-labels-action {
+  flex: 0 0 44px;
+  padding: 0;
+}
+
+/* Small stacked label + input (Names card etc.) — same type token */
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fld-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  padding-left: 6px;
+}
+
 /* ===================================================================
    Invoice preview — dark "neon blob" document (also exported as PNG)
    =================================================================== */
 .invoice-frame {
   position: relative;
-  overflow: hidden;
   background: var(--bg);
   border-radius: 28px;
   padding: clamp(20px, 4vw, 30px);
   box-shadow: 0 20px 60px rgba(212, 255, 63, 0.15), 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* The orbs clip inside this layer instead of overflow:hidden on the frame
+   itself, so the due-cards' soft glows can bleed past the frame edge like
+   every other panel's instead of being cut off at the rounded corners */
+.invoice-orb-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .invoice-orb {
@@ -1150,9 +1271,19 @@ input[type="checkbox"]:focus-visible {
   color: var(--lime-soft);
   font-weight: 700;
 }
+/* Border rather than an inset shadow: html2canvas drops inset shadows, so
+   the current-month ring must be a real border to survive the PNG export */
 .trend-col-current .spend-bar-track {
   background: rgba(212, 255, 63, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(212, 255, 63, 0.28);
+  border: 1px solid rgba(212, 255, 63, 0.3);
+}
+
+/* The stacked segments' fills — bills blue, extras pink (match the legend) */
+.trend-seg-bills {
+  background: linear-gradient(180deg, #7fc1ff, #4d9fe8);
+}
+.trend-seg-extras {
+  background: linear-gradient(180deg, #ff8ade, #ef4fc4);
 }
 
 .trend-legend {
@@ -1693,6 +1824,51 @@ input[type="checkbox"]:focus-visible {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Cards rise in with a slight stagger when a view mounts */
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.form-card-stack > *,
+.history-grid > * {
+  animation: cardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.form-card-stack > *:nth-child(2), .history-grid > *:nth-child(2) { animation-delay: 0.05s; }
+.form-card-stack > *:nth-child(3), .history-grid > *:nth-child(3) { animation-delay: 0.09s; }
+.form-card-stack > *:nth-child(4), .history-grid > *:nth-child(4) { animation-delay: 0.13s; }
+.form-card-stack > *:nth-child(5), .history-grid > *:nth-child(5) { animation-delay: 0.17s; }
+.form-card-stack > *:nth-child(6), .history-grid > *:nth-child(6) { animation-delay: 0.2s; }
+.form-card-stack > *:nth-child(7), .history-grid > *:nth-child(7) { animation-delay: 0.23s; }
+.form-card-stack > *:nth-child(n + 8), .history-grid > *:nth-child(n + 8) { animation-delay: 0.26s; }
+
+/* Chart bars grow up from the baseline on mount (the PNG capture clone
+   suppresses this, so exports always show the finished state) */
+@keyframes barGrow {
+  from { transform: scaleY(0.001); }
+}
+
+.spend-bar-fill,
+.spend-bar-stack {
+  transform-origin: bottom;
+  animation: barGrow 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Gentle lift for panels — pointer devices only, so nothing "sticks" on
+   touch screens */
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel {
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .glass-panel:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1714,7 +1890,7 @@ input[type="checkbox"]:focus-visible {
     gap: 0.75rem;
   }
 
-  .nav-brand {
+  .nav-brand-row {
     justify-content: center;
   }
 
@@ -1856,13 +2032,24 @@ input[type="checkbox"]:focus-visible {
   }
 
   /* A bill row showing the discounted-for selector is the tightest fit —
-     shave the numeric fields a little further so the name keeps room */
+     shave the numeric fields a little further so the name keeps room.
+     (Also matches the labels row, which carries the same classes.) */
   .bill-row:has(.bill-discount-select) .currency-input {
     flex-basis: 76px;
   }
 
   .bill-row:has(.bill-discount-select) .percent-input {
     flex-basis: 50px;
+  }
+
+  .row-labels > * {
+    font-size: 0.6rem;
+    padding-left: 3px;
+  }
+
+  .extras-row .row-labels-action {
+    flex: 0 0 38px;
+    min-width: 38px;
   }
 
   /* More width for invoice text lines: slimmer frame/card/cards padding

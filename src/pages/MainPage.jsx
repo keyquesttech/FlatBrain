@@ -15,6 +15,7 @@ import { normalizeDraft } from '../utils/defaults';
 import { newId } from '../utils/id';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { historyToCSV, csvToHistory } from '../utils/historyCsv';
+import { playSuccess, playError } from '../utils/sound';
 
 const POLL_MS = 3000;
 const SAVE_DEBOUNCE_MS = 600;
@@ -213,9 +214,13 @@ export default function MainPage() {
     setBusy(true);
     try {
       const downloaded = await generateImage();
-      if (downloaded) await saveToHistory();
+      if (downloaded) {
+        await saveToHistory();
+        playSuccess();
+      }
     } catch (err) {
       console.error('Error saving invoice', err);
+      playError();
       alert('The image was downloaded, but saving to history failed. Check the server and try again.');
     } finally {
       setBusy(false);

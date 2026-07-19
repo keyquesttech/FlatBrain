@@ -21,13 +21,9 @@ export async function captureInvoicePng(sourceEl, filename) {
   // Square off the frame for the export: rounded corners + box-shadow leave
   // artifacts around the edges of the captured canvas.
   clone.style.borderRadius = '0';
-  clone.style.boxShadow = 'none';
   // Drop the glow orbs: html2canvas ignores their blur() filter and paints
   // them as hard-edged colour patches behind the card corners.
-  clone.querySelectorAll('.invoice-orb').forEach((el) => el.remove());
-  // The inset highlight shadow also renders unevenly — flatten the card.
-  const cardEl = clone.querySelector('.invoice-card');
-  if (cardEl) cardEl.style.boxShadow = 'none';
+  clone.querySelectorAll('.invoice-orb-layer, .invoice-orb').forEach((el) => el.remove());
   // html2canvas can't render background-clip:text (it paints the gradient as
   // a solid box behind the text), so swap gradient text for solid accents.
   clone.querySelectorAll('.invoice-header h2, .grand-total-amount').forEach((el) => {
@@ -35,6 +31,15 @@ export async function captureInvoicePng(sourceEl, filename) {
     el.style.webkitTextFillColor = 'initial';
     el.style.color = '#d4ff3f';
   });
+  // Freeze animations/transitions at their finished state and strip EVERY
+  // box-shadow: html2canvas paints the cards' soft glow shadows as
+  // hard-edged rectangles behind the rounded corners, which is exactly the
+  // "different background behind the cards" artifact. Borders and gradient
+  // backgrounds carry the design instead.
+  const killFx = document.createElement('style');
+  killFx.textContent = '.png-capture, .png-capture * { animation: none !important; transition: none !important; box-shadow: none !important; }';
+  clone.classList.add('png-capture');
+  holder.appendChild(killFx);
   holder.appendChild(clone);
   document.body.appendChild(holder);
 

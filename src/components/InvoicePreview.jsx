@@ -108,8 +108,10 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
 
   return (
     <div className="invoice-frame" ref={ref} id="invoice-preview">
-      <div className="invoice-orb invoice-orb-lime" aria-hidden="true" />
-      <div className="invoice-orb invoice-orb-pink" aria-hidden="true" />
+      <div className="invoice-orb-layer" aria-hidden="true">
+        <div className="invoice-orb invoice-orb-lime" />
+        <div className="invoice-orb invoice-orb-pink" />
+      </div>
       <div className="invoice-card">
       <div className="invoice-header">
         <h2>{periodLabel} Bills</h2>
