@@ -7,5 +7,9 @@
   </defs>
   <rect width="64" height="64" rx="16" fill="#121212"/>
   <circle cx="32" cy="32" r="24" fill="url(#g)"/>
-  <text x="32" y="40.5" text-anchor="middle" font-family="Archivo, system-ui, -apple-system, sans-serif" font-size="23" font-weight="800" fill="#121212">fb</text>
+  <!-- The brand's house mark (same shape as the header icon) -->
+  <g transform="translate(32 32) scale(1.2) translate(-12 -12)" fill="none" stroke="#121212" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/>
+    <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+  </g>
 </svg>
