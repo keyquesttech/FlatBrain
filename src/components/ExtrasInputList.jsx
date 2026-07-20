@@ -39,9 +39,9 @@ export default function ExtrasInputList({
         // always track the columns. aria-hidden — every input carries its
         // own aria-label already.
         <div className="input-row extras-row row-labels" aria-hidden="true">
-          <span>Item</span>
+          <span className="rl-over-input">Item</span>
           <span className="packs-input">Units</span>
-          <span className="currency-input">Total £</span>
+          <span className="currency-input rl-over-pill">Total £</span>
           {percentPayer != null && <span className="percent-input">Split %</span>}
           <span className="row-labels-action" />
         </div>

@@ -964,6 +964,21 @@ input[type="checkbox"]:focus-visible {
   min-height: 0;
 }
 
+/* Centre correction for the FLEXIBLE columns. Chromium resolves a 0%
+   flex-basis against the content box, so a padded input ends up its own
+   padding+border (34px) wider than an equally-flexed unpadded label span,
+   and the £-pill div ends up +2px for its borders. Symmetric padding
+   gives the label cells the same allowance, so their centres coincide —
+   and in engines that distribute on the border box it changes nothing,
+   because symmetric padding never moves text-align: center. */
+.input-row.row-labels > .rl-over-input {
+  padding: 0 17px;
+}
+
+.input-row.row-labels > .rl-over-pill {
+  padding: 0 1px;
+}
+
 /* Spacer over the remove-button column */
 .row-labels .row-labels-action {
   flex: 0 0 44px;
@@ -1975,6 +1990,118 @@ input[type="checkbox"]:focus-visible {
 
   .glass-panel:hover {
     border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* ---------- In-app dialogs & toasts (replace native alert/confirm) ---------- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(10, 10, 12, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease both;
+}
+
+.dialog-card {
+  width: min(420px, 100%);
+  padding: 1.3rem 1.4rem;
+  background:
+    linear-gradient(160deg, rgba(212, 255, 63, 0.07), transparent 55%),
+    var(--panel);
+  border: 1px solid rgba(212, 255, 63, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px 2px rgba(212, 255, 63, 0.08);
+  animation: dialogPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dialog-error {
+  border-color: rgba(255, 107, 107, 0.45);
+  background:
+    linear-gradient(160deg, rgba(255, 107, 107, 0.1), transparent 55%),
+    var(--panel);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px 2px rgba(255, 107, 107, 0.12);
+}
+
+.dialog-title {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lime);
+  margin-bottom: 0.6rem;
+}
+
+.dialog-error .dialog-title {
+  color: #ff8a8a;
+}
+
+.dialog-message {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  margin: 0 0 1.1rem;
+  text-wrap: pretty;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+@keyframes dialogPop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  width: min(440px, calc(100vw - 2rem));
+}
+
+.toast {
+  padding: 0.7rem 1.1rem;
+  border-radius: 14px;
+  background:
+    linear-gradient(160deg, rgba(212, 255, 63, 0.12), transparent 60%),
+    var(--panel);
+  border: 1px solid rgba(212, 255, 63, 0.35);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--lime-soft);
+  text-align: center;
+  animation: toastRise 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.toast-error {
+  border-color: rgba(255, 107, 107, 0.45);
+  color: #ff9e9e;
+}
+
+@keyframes toastRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
   }
 }
 

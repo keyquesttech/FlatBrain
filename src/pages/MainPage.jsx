@@ -16,6 +16,7 @@ import { newId } from '../utils/id';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { historyToCSV, csvToHistory } from '../utils/historyCsv';
 import { playSuccess, playError } from '../utils/sound';
+import { appAlert, appConfirm, appToast } from '../components/Dialog';
 
 const POLL_MS = 3000;
 const SAVE_DEBOUNCE_MS = 600;
@@ -168,7 +169,11 @@ export default function MainPage() {
     // typo would leave two invoices for the same month.
     const loaded = loadedInvoiceRef.current;
     const updating = !!loaded && loaded.period === data.period &&
-      window.confirm('This invoice was loaded from history. OK updates the saved invoice; Cancel saves it as a new one.');
+      await appConfirm('This invoice was loaded from history. Update the saved invoice, or save it as a new one?', {
+        title: 'Update saved invoice?',
+        okLabel: 'Update',
+        cancelLabel: 'Save as new'
+      });
     const newInvoice = {
       ...data,
       id: updating ? loaded.id : newId(),
@@ -203,7 +208,7 @@ export default function MainPage() {
       // or unmount, and the pending flag stops the poller clobbering the form.
       markAllPending();
     }
-    alert(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history, and draft reset!`);
+    appToast(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history — draft reset for next month.`);
   };
 
   // Single action: download the PNG first (while the invoice is still on
@@ -220,26 +225,26 @@ export default function MainPage() {
       }
     } catch (err) {
       console.error('Error saving invoice', err);
-      playError();
-      alert('The image was downloaded, but saving to history failed. Check the server and try again.');
+      appAlert('The image was downloaded, but saving to history failed. Check the server and try again.', { title: 'Save failed', tone: 'error' });
     } finally {
       setBusy(false);
     }
   };
 
   const handleDeleteInvoice = async (id) => {
-    if (!window.confirm('Delete this invoice from history?')) return;
+    if (!await appConfirm('Delete this invoice from history?', { title: 'Delete invoice', okLabel: 'Delete', danger: true })) return;
     try {
       const res = await deleteInvoice(id);
       setInvoices(res.history);
+      appToast('Invoice deleted.');
     } catch (err) {
       console.error('Error deleting invoice', err);
-      alert('Failed to delete the invoice. Check the server and try again.');
+      appAlert('Failed to delete the invoice. Check the server and try again.', { title: 'Delete failed', tone: 'error' });
     }
   };
 
-  const loadInvoice = (invoice) => {
-    if (!window.confirm('Load this invoice into the generator? The current draft will be replaced.')) return;
+  const loadInvoice = async (invoice) => {
+    if (!await appConfirm('Load this invoice into the generator? The current draft will be replaced.', { title: 'Load invoice', okLabel: 'Load' })) return;
     loadedInvoiceRef.current = { id: invoice.id, period: invoice.period, timestamp: invoice.timestamp };
     const loadedDraft = normalizeDraft({
       period: invoice.period,
@@ -277,13 +282,13 @@ export default function MainPage() {
     if (!file) return;
     try {
       const imported = csvToHistory(await file.text());
-      if (!window.confirm(`Import ${imported.length} invoice${imported.length === 1 ? '' : 's'}? Existing invoices with the same id will be updated; everything else is kept.`)) return;
+      if (!await appConfirm(`Import ${imported.length} invoice${imported.length === 1 ? '' : 's'}? Existing invoices with the same id will be updated; everything else is kept.`, { title: 'Import CSV', okLabel: 'Import' })) return;
       const res = await importHistory(imported);
       setInvoices(res.history);
-      alert(`Imported ${res.imported} invoice${res.imported === 1 ? '' : 's'}.`);
+      appToast(`Imported ${res.imported} invoice${res.imported === 1 ? '' : 's'}.`);
     } catch (err) {
       console.error('Error importing history', err);
-      alert(err.message || 'Failed to import the file.');
+      appAlert(err.message || 'Failed to import the file.', { title: 'Import failed', tone: 'error' });
     }
   };
 
@@ -293,7 +298,7 @@ export default function MainPage() {
       return true;
     } catch (err) {
       console.error('Error generating image', err);
-      alert('Failed to generate image. See console for details.');
+      appAlert('Failed to generate the invoice image. See the browser console for details.', { title: 'Download failed', tone: 'error' });
       return false;
     }
   };
@@ -316,7 +321,7 @@ export default function MainPage() {
         );
       } catch (err) {
         console.error('Error re-generating invoice image', err);
-        if (!cancelled) alert('Failed to generate the invoice image. Please try again.');
+        if (!cancelled) appAlert('Failed to generate the invoice image. Please try again.', { title: 'Download failed', tone: 'error' });
       } finally {
         if (!cancelled) setHistoryDownload(null);
       }
@@ -326,7 +331,7 @@ export default function MainPage() {
 
   const clearForm = async () => {
     if (busy) return;
-    if (!window.confirm('Reset the whole form? All bills and extras in the current draft will be cleared. Names, bills split and bank details are kept.')) return;
+    if (!await appConfirm('Reset the whole form? All bills and extras in the current draft will be cleared. Names, bills split and bank details are kept.', { title: 'Reset form', okLabel: 'Reset', danger: true })) return;
     cancelPendingSave();
     loadedInvoiceRef.current = null;
     try {
@@ -348,7 +353,7 @@ export default function MainPage() {
       }
     } catch (err) {
       console.error('Error resetting draft', err);
-      alert('Failed to reset the form. Check the server and try again.');
+      appAlert('Failed to reset the form. Check the server and try again.', { title: 'Reset failed', tone: 'error' });
     }
   };
 

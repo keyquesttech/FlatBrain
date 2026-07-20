@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
+import DialogHost from './components/Dialog';
 import { playAdd, playRemove, playTick } from './utils/sound';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/flatmate1" element={<PasswordGate><UserExtrasPage personKey="matias" /></PasswordGate>} />
         <Route path="/flatmate2" element={<UserExtrasPage personKey="reka" />} />
       </Routes>
+      <DialogHost />
     </BrowserRouter>
   );
 }
