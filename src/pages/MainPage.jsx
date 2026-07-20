@@ -15,7 +15,7 @@ import { normalizeDraft } from '../utils/defaults';
 import { newId } from '../utils/id';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { historyToCSV, csvToHistory } from '../utils/historyCsv';
-import { playSuccess, playError } from '../utils/sound';
+import { playSuccess } from '../utils/sound';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 
 const POLL_MS = 3000;
