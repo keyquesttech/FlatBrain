@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Volume2, VolumeX } from 'lucide-react';
+import { House, Volume2, VolumeX } from 'lucide-react';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 
@@ -28,7 +28,7 @@ export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs 
     <header className="nav-header">
       <div className="nav-brand-row">
         <Link to="/" className="nav-brand" title="FlatBrain — all apps">
-          <span className="brand-icon" aria-hidden="true">fb</span>
+          <span className="brand-icon" aria-hidden="true"><House size={20} strokeWidth={2.5} /></span>
           <span className="brand-title">FlatBrain</span>
         </Link>
         {appLabel && <span className="brand-app">{appLabel}</span>}

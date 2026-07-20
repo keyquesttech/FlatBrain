@@ -485,9 +485,6 @@ p {
   border-radius: 50%;
   background: linear-gradient(135deg, var(--lime), var(--pink));
   color: var(--bg);
-  font-family: var(--font-mono);
-  font-weight: 800;
-  font-size: 1.15rem;
   box-shadow: 0 0 24px rgba(212, 255, 63, 0.5);
 }
 
@@ -2301,7 +2298,6 @@ input[type="checkbox"]:focus-visible {
   .brand-icon {
     width: 36px;
     height: 36px;
-    font-size: 1rem;
   }
 
   .tabs {
