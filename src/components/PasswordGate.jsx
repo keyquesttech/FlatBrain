@@ -64,9 +64,9 @@ export default function PasswordGate({ children }) {
         <div className="auth-icon">
           <Lock size={28} />
         </div>
-        <h2>Bill Splitter</h2>
+        <h2>FlatBrain</h2>
         <p className="text-muted auth-subtitle">
-          Enter the password to access the bill splitter.
+          Enter the password to access your flat's apps.
         </p>
         <div className="form-group auth-field">
           <label htmlFor="password-field">Password</label>

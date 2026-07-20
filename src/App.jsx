@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import DashboardPage from './pages/DashboardPage';
 import MainPage from './pages/MainPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
@@ -37,9 +38,19 @@ function App() {
         <span className="underlay-grain" />
       </div>
       <Routes>
-        <Route path="/" element={<PasswordGate><MainPage /></PasswordGate>} />
-        <Route path="/flatmate1" element={<PasswordGate><UserExtrasPage personKey="matias" /></PasswordGate>} />
-        <Route path="/flatmate2" element={<UserExtrasPage personKey="reka" />} />
+        {/* FlatBrain dashboard — the app launcher */}
+        <Route path="/" element={<PasswordGate><DashboardPage /></PasswordGate>} />
+
+        {/* Bill Splitter app. Everything is password-gated except the
+            flatmate 2 page, which is deliberately shareable. */}
+        <Route path="/billsplitter" element={<PasswordGate><MainPage /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate1" element={<PasswordGate><UserExtrasPage personKey="matias" /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="reka" />} />
+
+        {/* Legacy paths from the single-app era keep old bookmarks working */}
+        <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />
+        <Route path="/flatmate2" element={<Navigate to="/billsplitter/flatmate2" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <DialogHost />
     </BrowserRouter>

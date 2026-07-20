@@ -1,4 +1,7 @@
-const API_URL = '/api';
+// Bill Splitter's API namespace under the FlatBrain server; each app gets
+// its own /api/<app> prefix (the server also keeps bare /api/* for
+// back-compat with pre-FlatBrain clients).
+const API_URL = '/api/billsplitter';
 
 // Throws on HTTP errors so callers can catch and react, instead of silently
 // receiving an error payload where data was expected.

@@ -4,7 +4,10 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 
-export default function Navigation({ activeTab, names = DEFAULT_NAMES }) {
+// FlatBrain header. The brand always links home to the dashboard; app pages
+// show their app's name next to it plus that app's tabs (showTabs=false on
+// the dashboard itself).
+export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs = true, appLabel }) {
   const [sound, setSound] = useState(soundEnabled);
 
   const toggleSound = () => {
@@ -15,19 +18,20 @@ export default function Navigation({ activeTab, names = DEFAULT_NAMES }) {
   };
 
   const tabs = [
-    { id: 'generator', to: '/', label: 'Generator' },
-    { id: 'history', to: '/?view=history', label: 'History' },
-    { id: 'flatmate1', to: '/flatmate1', label: names.matias?.trim() || 'Flatmate 1' },
-    { id: 'flatmate2', to: '/flatmate2', label: names.reka?.trim() || 'Flatmate 2' }
+    { id: 'generator', to: '/billsplitter', label: 'Generator' },
+    { id: 'history', to: '/billsplitter?view=history', label: 'History' },
+    { id: 'flatmate1', to: '/billsplitter/flatmate1', label: names.matias?.trim() || 'Flatmate 1' },
+    { id: 'flatmate2', to: '/billsplitter/flatmate2', label: names.reka?.trim() || 'Flatmate 2' }
   ];
 
   return (
     <header className="nav-header">
       <div className="nav-brand-row">
-        <Link to="/" className="nav-brand">
-          <span className="brand-icon" aria-hidden="true">£</span>
-          <span className="brand-title">Bill Splitter</span>
+        <Link to="/" className="nav-brand" title="FlatBrain — all apps">
+          <span className="brand-icon" aria-hidden="true">fb</span>
+          <span className="brand-title">FlatBrain</span>
         </Link>
+        {appLabel && <span className="brand-app">{appLabel}</span>}
         <button
           type="button"
           className="btn-icon sound-toggle"
@@ -40,13 +44,15 @@ export default function Navigation({ activeTab, names = DEFAULT_NAMES }) {
         </button>
       </div>
 
-      <nav className="tabs" aria-label="Main">
-        {tabs.map(({ id, to, label }) => (
-          <Link key={id} to={to} className={`tab ${activeTab === id ? 'active' : ''}`} id={`nav-${id}`}>
-            <span>{label}</span>
-          </Link>
-        ))}
-      </nav>
+      {showTabs && (
+        <nav className="tabs" aria-label="Main">
+          {tabs.map(({ id, to, label }) => (
+            <Link key={id} to={to} className={`tab ${activeTab === id ? 'active' : ''}`} id={`nav-${id}`}>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

@@ -133,7 +133,7 @@ export default function UserExtrasPage({ personKey }) {
 
   return (
     <div className="container container-narrow animate-fade-in">
-      <Navigation activeTab={personKey === 'matias' ? 'flatmate1' : 'flatmate2'} names={names} />
+      <Navigation activeTab={personKey === 'matias' ? 'flatmate1' : 'flatmate2'} names={names} appLabel="Bill Splitter" />
 
       <div className="page-header">
         <h1>{displayName}'s Extras</h1>

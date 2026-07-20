@@ -378,6 +378,134 @@ p {
   color: var(--text);
 }
 
+/* Which app you're inside, next to the FlatBrain brand */
+.brand-app {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  padding: 4px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ---------- FlatBrain dashboard (app launcher) ---------- */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.app-grid > * {
+  animation: cardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.app-grid > *:nth-child(2) { animation-delay: 0.06s; }
+.app-grid > *:nth-child(3) { animation-delay: 0.12s; }
+.app-grid > *:nth-child(n + 4) { animation-delay: 0.18s; }
+
+.app-tile-main {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.app-tile-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--lime), var(--pink));
+  color: var(--bg);
+  box-shadow: 0 0 24px rgba(212, 255, 63, 0.35);
+}
+
+.app-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.app-tile-name {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.app-tile-desc {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  text-wrap: pretty;
+}
+
+.app-tile-arrow {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-tile:hover .app-tile-arrow {
+    transform: translateX(4px);
+    color: var(--lime);
+  }
+
+  a.app-tile-main:hover .app-tile-name {
+    color: var(--lime-soft);
+  }
+}
+
+/* Quick links into an app's pages */
+.app-tile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.app-tile-link {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.app-tile-link:hover {
+  color: var(--bg);
+  background: linear-gradient(135deg, var(--lime), #c8ff6f);
+  border-color: transparent;
+}
+
+/* Placeholder tile for future apps */
+.app-tile-soon {
+  opacity: 0.55;
+}
+
+.app-tile-soon .app-tile-icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-faint);
+  box-shadow: none;
+}
+
 .brand-icon {
   display: flex;
   align-items: center;

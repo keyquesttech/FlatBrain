@@ -1,25 +1,26 @@
 #!/usr/bin/env bash
 #
-# Bill Splitter - Raspberry Pi installer
+# FlatBrain - Raspberry Pi installer
 # ----------------------------------------------------------------------------
 # Installs Node.js, installs dependencies, builds the web app, and configures a
 # systemd service so the app starts automatically on boot. Also sets the Pi's
-# mDNS hostname so it is reachable at http://billsplitter.local on the LAN.
+# mDNS hostname so it is reachable at http://flatbrain.local on the LAN.
 #
 # Usage (from inside the cloned repo):
 #     sudo bash install.sh
 #
 # The script is idempotent - it is safe to run again to update an existing
 # install. Behaviour can be tuned with environment variables, e.g.:
-#     sudo PORT=8080 APP_HOSTNAME=bills bash install.sh
+#     sudo PORT=8080 APP_HOSTNAME=myflat bash install.sh
 # ----------------------------------------------------------------------------
 set -euo pipefail
 
 # ----- Configuration (override via environment variables) -------------------
-SERVICE_NAME="${SERVICE_NAME:-billsplitter}"   # systemd service name
+SERVICE_NAME="${SERVICE_NAME:-flatbrain}"      # systemd service name
 PORT="${PORT:-80}"                              # port the app listens on
 NODE_MAJOR="${NODE_MAJOR:-22}"                  # Node.js major version to install
-APP_HOSTNAME="${APP_HOSTNAME:-billsplitter}"    # mDNS name -> http://<name>.local (empty to skip)
+APP_HOSTNAME="${APP_HOSTNAME:-flatbrain}"       # mDNS name -> http://<name>.local (empty to skip)
+LEGACY_SERVICE="billsplitter"                   # pre-FlatBrain service name, migrated away if present
 
 # ----- Re-run with root privileges if needed --------------------------------
 if [ "$(id -u)" -ne 0 ]; then
@@ -34,7 +35,7 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_USER="${SUDO_USER:-$(logname 2>/dev/null || echo pi)}"
 
 echo "=================================================================="
-echo " Bill Splitter installer"
+echo " FlatBrain installer"
 echo "   Repo directory : $APP_DIR"
 echo "   Run as user     : $RUN_USER"
 echo "   Listen port     : $PORT"
@@ -143,12 +144,21 @@ if [ ! -f "$APP_DIR/dist/index.html" ]; then
 fi
 
 # ----- 4. systemd service (auto-start on boot) ------------------------------
+# Migrate away from the pre-FlatBrain service name so two units never race
+# for the same port.
+if [ "$SERVICE_NAME" != "$LEGACY_SERVICE" ] && [ -f "/etc/systemd/system/${LEGACY_SERVICE}.service" ]; then
+  echo "==> Removing legacy '${LEGACY_SERVICE}' service (replaced by '${SERVICE_NAME}')..."
+  systemctl disable --now "${LEGACY_SERVICE}.service" 2>/dev/null || true
+  rm -f "/etc/systemd/system/${LEGACY_SERVICE}.service"
+  systemctl daemon-reload
+fi
+
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 NODE_BIN="$(command -v node)"
 echo "==> Writing systemd unit: $SERVICE_FILE"
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=Bill Splitter Invoice Generator
+Description=FlatBrain flat admin panel
 After=network-online.target
 Wants=network-online.target
 
@@ -196,7 +206,7 @@ if [ "$PORT" != "80" ]; then PORT_SUFFIX=":$PORT"; fi
 
 echo ""
 echo "=================================================================="
-echo " Bill Splitter is installed, running, and enabled on boot."
+echo " FlatBrain is installed, running, and enabled on boot."
 echo ""
 echo "   On this Pi : http://localhost${PORT_SUFFIX}"
 if [ -n "$APP_HOSTNAME" ]; then

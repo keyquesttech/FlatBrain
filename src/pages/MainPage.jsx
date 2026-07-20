@@ -361,7 +361,7 @@ export default function MainPage() {
 
   return (
     <div className="container animate-fade-in">
-      <Navigation activeTab={view === 'history' ? 'history' : 'generator'} names={formData.names} />
+      <Navigation activeTab={view === 'history' ? 'history' : 'generator'} names={formData.names} appLabel="Bill Splitter" />
 
       {view === 'new' ? (
         <>
