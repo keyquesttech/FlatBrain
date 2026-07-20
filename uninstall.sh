@@ -4,7 +4,8 @@
 # ----------------------------------------------------------------------------
 # Stops and removes the systemd service (including the pre-FlatBrain
 # 'billsplitter' unit if it still exists). By default it leaves your data
-# (draft.json, history.json, password.txt) and node_modules/dist in place.
+# (draft.json, history.json, password.txt, backup-config.json,
+# temp-history.json) and node_modules/dist in place.
 #
 # Usage:
 #     sudo bash uninstall.sh
@@ -49,5 +50,6 @@ systemctl reset-failed "${SERVICE_NAME}.service" 2>/dev/null || true
 
 echo ""
 echo "FlatBrain service removed."
-echo "Your data files (password.txt / draft.json / history.json) and the app"
+echo "Your data files (password.txt, draft.json, history.json, backup and"
+echo "temperature logs) and the app"
 echo "code were left untouched. Delete the repo folder to remove them."
