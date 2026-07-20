@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArchiveRestore, ArrowUpFromLine, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
+import CollapsibleCard from './CollapsibleCard';
 import SelectMenu from './SelectMenu';
 import { appAlert, appConfirm } from './Dialog';
 import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, ejectBackupDevice, restoreBackup, deleteBackup } from '../api';
@@ -199,9 +200,10 @@ export default function BackupCard() {
     : 'Automatic backups off — pick a drive to turn them on.';
 
   return (
-    <div className="glass-panel backup-card">
-      <div className="extras-section-header">
-        <h3 className="invoice-section-title">Backup</h3>
+    <CollapsibleCard
+      title="Backup"
+      storageKey="status-backup"
+      actions={
         <div className="backup-header-actions">
           <button className="btn btn-primary btn-sm" onClick={backupNow} disabled={!!busy || !cfg.device}>
             <HardDrive size={16} /> {busy === 'run' ? 'Backing up…' : 'Back up now'}
@@ -218,7 +220,8 @@ export default function BackupCard() {
             <ArrowUpFromLine size={16} /> {busy === 'eject' ? 'Ejecting…' : 'Eject'}
           </button>
         </div>
-      </div>
+      }
+    >
       <p className="section-desc">
         Copies all of FlatBrain's data — every app's files, the password and a bill-history CSV — to a USB stick on the schedule below. Keeps the newest {cfg.keep} backups.
       </p>
@@ -358,6 +361,6 @@ export default function BackupCard() {
           {cfg.lastAttempt ? ` — ${new Date(cfg.lastAttempt).toLocaleString('en-GB')}` : ''}
         </p>
       )}
-    </div>
+    </CollapsibleCard>
   );
 }

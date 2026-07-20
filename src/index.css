@@ -488,26 +488,28 @@ p {
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: clamp(12px, 2vw, 18px);
   margin-bottom: clamp(12px, 2vw, 18px);
+  /* collapsed cards hug their header instead of stretching to the row */
+  align-items: start;
 }
 
-.stat-head {
-  display: flex;
+/* The temperature card spans the whole top row */
+.stat-span-all {
+  grid-column: 1 / -1;
+}
+
+/* Icon + text inside a collapsible card's title */
+.stat-title {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
 }
 
-.stat-head svg {
+.stat-title svg {
   color: var(--blue);
 }
 
 .stat-value {
-  margin: 0.6rem 0 0.55rem;
+  margin: 0 0 0.55rem;
   font-family: var(--font-mono);
   font-size: 1.9rem;
   font-weight: 800;
@@ -549,7 +551,7 @@ p {
 }
 
 .sys-rows {
-  margin-top: 0.4rem;
+  margin-top: 0;
 }
 
 .sys-row {
@@ -575,6 +577,80 @@ p {
   color: var(--text);
   text-align: right;
   overflow-wrap: anywhere;
+}
+
+/* Temperature card: current reading beside the 4-hour graph */
+.temp-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+.temp-card-now {
+  flex: 0 1 180px;
+  min-width: 150px;
+}
+
+.temp-card-chart {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.temp-chart {
+  display: flex;
+  gap: 8px;
+}
+
+.temp-chart-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  /* keeps the scale spanning only the plot, not the x-label row below it */
+  padding-bottom: 1.35rem;
+}
+
+.temp-chart-plot {
+  flex: 1;
+  min-width: 0;
+}
+
+.temp-chart-plot svg {
+  display: block;
+  width: 100%;
+  height: 130px;
+}
+
+.temp-chart-grid {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.temp-chart-line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2;
+}
+
+.temp-chart-dot {
+  stroke: var(--lime);
+  stroke-width: 6;
+}
+
+.temp-chart-x {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.temp-chart-empty {
+  margin: 0;
 }
 
 .brand-icon {
@@ -1720,10 +1796,6 @@ input[type="checkbox"]:focus-visible {
 }
 
 /* ---------- Backup card (history tab) ---------- */
-.backup-card {
-  margin-top: 1.25rem;
-}
-
 .backup-schedule-controls {
   display: flex;
   flex-wrap: wrap;

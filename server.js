@@ -301,6 +301,31 @@ function readCpuTimes() {
 
 let lastCpuTimes = readCpuTimes();
 
+function readTempC() {
+  const raw = readSysFile('/sys/class/thermal/thermal_zone0/temp');
+  return raw ? Math.round(Number(raw) / 100) / 10 : null;
+}
+
+// Temperature history for the status page graph: sampled once a minute,
+// kept for four hours, and persisted to a git-ignored file so the service
+// restart that comes with every deploy doesn't blank the graph.
+const TEMP_HISTORY_FILE = path.join(__dirname, 'temp-history.json');
+const TEMP_WINDOW_MS = 4 * 60 * 60 * 1000;
+
+let tempHistory = readJSON(TEMP_HISTORY_FILE, []).filter(
+  (p) => p && Number.isFinite(p.t) && Number.isFinite(p.c) && Date.now() - p.t <= TEMP_WINDOW_MS
+);
+
+function sampleTemp() {
+  const c = readTempC();
+  if (c == null) return;
+  const now = Date.now();
+  tempHistory = [...tempHistory.filter((p) => now - p.t <= TEMP_WINDOW_MS), { t: now, c }];
+  writeJSON(TEMP_HISTORY_FILE, tempHistory);
+}
+sampleTemp();
+setInterval(sampleTemp, 60 * 1000);
+
 function cpuUsagePercent() {
   const now = readCpuTimes();
   if (!now) return null;
@@ -367,7 +392,6 @@ function readThrottled() {
 // Polled by the dashboard's Server Status page. Lives at /api/system/* —
 // panel-level, not part of any app's namespace.
 app.get('/api/system/stats', async (req, res) => {
-  const tempRaw = readSysFile('/sys/class/thermal/thermal_zone0/temp');
   const freqRaw = readSysFile('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq');
   res.json({
     hostname: os.hostname(),
@@ -377,7 +401,8 @@ app.get('/api/system/stats', async (req, res) => {
     arch: os.arch(),
     node: process.version,
     uptimeSec: Math.round(os.uptime()),
-    tempC: tempRaw ? Math.round(Number(tempRaw) / 100) / 10 : null,
+    tempC: readTempC(),
+    tempHistory,
     cpu: {
       percent: cpuUsagePercent(),
       cores: os.cpus().length,

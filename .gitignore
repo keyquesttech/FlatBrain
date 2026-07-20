@@ -22,6 +22,7 @@ draft.json
 history.json
 password.txt
 backup-config.json
+temp-history.json
 
 # Local Claude Code worktrees/session data — never part of the app
 .claude/
