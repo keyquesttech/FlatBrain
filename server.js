@@ -187,41 +187,6 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
-// ---- Rent app: one document holding the tenancy, payment schedule and
-// building charges (service charge, ground rent). Small and single-editor,
-// so a whole-document GET/PUT is enough. ----
-const RENT_FILE = path.join(__dirname, 'rent.json');
-
-const defaultRent = {
-  // The invoice being built: a title for the period plus free-form payment
-  // items (rent blocks, deposit, anything with a due date). `history` keeps
-  // every generated invoice with when it was created and when it was paid.
-  // Pre-redesign files (name/deposit/payments/charges) migrate client-side.
-  title: 'Rent',
-  items: [], // [{ id, thing, dueDate, amount, paidDate, include }]
-  bankDetails: {
-    // Rent has its own account details, independent of Bill Splitter's
-    name: 'Your Name',
-    bankName: 'Your Bank',
-    sortCode: '00-00-00',
-    accountNumber: '00000000'
-  },
-  history: [] // [{ id, title, items, bankDetails, total, generatedAt, paidDate }]
-};
-
-app.get('/api/rent', (req, res) => {
-  res.json(readJSON(RENT_FILE, defaultRent));
-});
-
-app.put('/api/rent', (req, res) => {
-  const rent = req.body;
-  if (!isPlainObject(rent)) {
-    return res.status(400).json({ success: false, error: 'Rent data must be an object' });
-  }
-  writeJSON(RENT_FILE, rent);
-  res.json({ success: true, rent });
-});
-
 // ---- USB backups (see backup.js) ----
 // Panel-level: one backup covers every app's data plus the password and
 // backup settings. Lives at the bare /api/backup/* (the old

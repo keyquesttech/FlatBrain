@@ -482,11 +482,6 @@ p {
   box-shadow: 0 0 24px rgba(95, 178, 255, 0.35);
 }
 
-.app-tile-pink .app-tile-icon {
-  background: linear-gradient(135deg, var(--pink), var(--blue));
-  box-shadow: 0 0 24px rgba(255, 95, 212, 0.35);
-}
-
 /* ---------- Server status page ---------- */
 .stat-grid {
   display: grid;
@@ -662,87 +657,6 @@ p {
   margin: 0;
 }
 
-/* ---------- Rent app ---------- */
-.rent-row {
-  padding: 0.75rem 0;
-  border-bottom: 1px dashed var(--border-soft);
-}
-
-.rent-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0.15rem;
-}
-
-/* A payment's fields sit two-up in a grid, so the date pickers always get
-   half the card instead of being squeezed; status and remove live on the
-   meta line below with the period total */
-.rent-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.rent-fields .fld {
-  min-width: 0;
-}
-
-.rent-fields .picker-trigger span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* The payment description spans the full row; date + amount share the
-   second line */
-.rent-item-fields .rent-fld-thing {
-  grid-column: 1 / -1;
-}
-
-/* Standalone Generator/History tabs under the header (the shared .tabs
-   pill is normally rendered inside Navigation) */
-.rent-tabs {
-  margin-bottom: 1rem;
-}
-
-/* The auth card's checkbox style, compacted to sit inline in a meta row */
-.rent-include {
-  width: auto;
-  margin-bottom: 0;
-}
-
-.rent-include span {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.rent-history-title {
-  font-weight: 700;
-}
-
-.rent-included-total {
-  margin-top: 0.75rem;
-  margin-bottom: 0;
-}
-
-.rent-included-total strong {
-  color: var(--lime);
-}
-
-.rent-row-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-}
-
-.rent-row-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* Calendar and month dropdowns size to their content, not the trigger, so
    a narrow field can't squeeze the grid inside them */
 .picker-dropdown:not(.picker-dropdown-list) {
@@ -750,65 +664,6 @@ p {
   width: max-content;
   min-width: 272px;
   max-width: min(320px, calc(100vw - 2rem));
-}
-
-/* Fields in the right-hand column (and the paid control at a row's right
-   edge) open their dropdown leftwards so it stays over the card */
-.rent-fields .fld:nth-child(even) .picker-dropdown,
-.paid-picker .picker-dropdown {
-  left: auto;
-  right: 0;
-}
-
-.rent-period {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.rent-period strong {
-  color: var(--lime);
-  font-weight: 700;
-}
-
-/* The sheet's Status column as a date picker: "Mark paid…" opens the
-   calendar; once dated it reads as a lime chip that stays editable */
-.paid-picker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.paid-picker .picker-trigger {
-  width: auto;
-  padding: 8px 12px;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-.paid-picker .picker-trigger-icon {
-  width: 15px;
-  height: 15px;
-}
-
-.paid-picker.is-paid .picker-trigger {
-  border-color: rgba(212, 255, 63, 0.4);
-  background: rgba(212, 255, 63, 0.12);
-  color: var(--lime-soft);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.paid-picker-tag {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-faint);
 }
 
 .brand-icon {
