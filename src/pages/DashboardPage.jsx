@@ -12,13 +12,7 @@ const APPS = [
     to: '/billsplitter',
     icon: Receipt,
     accent: 'lime',
-    description: 'Split monthly bills and shared purchases, then download the invoice as an image.',
-    links: [
-      { label: 'Generator', to: '/billsplitter' },
-      { label: 'History', to: '/billsplitter?view=history' },
-      { label: 'Flatmate 1', to: '/billsplitter/flatmate1' },
-      { label: 'Flatmate 2', to: '/billsplitter/flatmate2' }
-    ]
+    description: 'Split monthly bills and shared purchases, then download the invoice as an image.'
   }
 ];
 
@@ -33,7 +27,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="app-grid">
-        {APPS.map(({ key, name, to, icon: Icon, accent, description, links }) => (
+        {APPS.map(({ key, name, to, icon: Icon, accent, description }) => (
           <div className={`glass-panel app-tile app-tile-${accent}`} key={key}>
             <Link to={to} className="app-tile-main">
               <span className="app-tile-icon"><Icon size={26} /></span>
@@ -43,13 +37,6 @@ export default function DashboardPage() {
               </span>
               <ArrowRight size={18} className="app-tile-arrow" />
             </Link>
-            {links && (
-              <div className="app-tile-links">
-                {links.map((l) => (
-                  <Link key={l.label} to={l.to} className="app-tile-link">{l.label}</Link>
-                ))}
-              </div>
-            )}
           </div>
         ))}
 
