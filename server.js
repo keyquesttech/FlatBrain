@@ -15,6 +15,16 @@ app.disable('x-powered-by');
 app.use(compression());
 app.use(express.json({ limit: '512kb' }));
 
+// FlatBrain app namespaces: /api/billsplitter/* is the canonical path for
+// the bill splitter API. The bare /api/* routes below stay reachable for
+// back-compat, so this middleware just strips the app prefix.
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/billsplitter/')) {
+    req.url = req.url.replace('/api/billsplitter/', '/api/');
+  }
+  next();
+});
+
 // A plain-object body check: rejects null, arrays and primitives so a bad
 // client can't overwrite draft.json/history.json with unusable data.
 function isPlainObject(v) {
@@ -298,5 +308,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 80;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server listening on port ${PORT} (http://billsplitter.local)`);
+  console.log(`Server listening on port ${PORT} (http://flatbrain.local)`);
 });
