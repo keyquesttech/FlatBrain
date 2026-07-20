@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import MainPage from './pages/MainPage';
+import ServerStatusPage from './pages/ServerStatusPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
 import DialogHost from './components/Dialog';
@@ -46,6 +47,9 @@ function App() {
         <Route path="/billsplitter" element={<PasswordGate><MainPage /></PasswordGate>} />
         <Route path="/billsplitter/flatmate1" element={<PasswordGate><UserExtrasPage personKey="matias" /></PasswordGate>} />
         <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="reka" />} />
+
+        {/* Server status — live stats for the Pi this panel runs on */}
+        <Route path="/status" element={<PasswordGate><ServerStatusPage /></PasswordGate>} />
 
         {/* Legacy paths from the single-app era keep old bookmarks working */}
         <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />

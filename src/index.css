@@ -476,6 +476,107 @@ p {
   box-shadow: none;
 }
 
+/* Server status tile goes blue so the launcher isn't wall-to-wall lime */
+.app-tile-blue .app-tile-icon {
+  background: linear-gradient(135deg, var(--blue), var(--lime));
+  box-shadow: 0 0 24px rgba(95, 178, 255, 0.35);
+}
+
+/* ---------- Server status page ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: clamp(12px, 2vw, 18px);
+  margin-bottom: clamp(12px, 2vw, 18px);
+}
+
+.stat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.stat-head svg {
+  color: var(--blue);
+}
+
+.stat-value {
+  margin: 0.6rem 0 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+
+.stat-value-hot {
+  color: var(--pink);
+}
+
+.stat-meter-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+}
+
+.stat-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--lime));
+  transition: width 0.6s ease;
+}
+
+.stat-meter-fill.stat-meter-hot {
+  background: linear-gradient(90deg, var(--pink), var(--pink-soft));
+}
+
+.stat-detail {
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.stat-detail-warn {
+  color: var(--pink-soft);
+}
+
+.sys-rows {
+  margin-top: 0.4rem;
+}
+
+.sys-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+  font-size: 0.85rem;
+}
+
+.sys-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sys-row-label {
+  color: var(--text-faint);
+}
+
+.sys-row-value {
+  font-family: var(--font-mono);
+  color: var(--text);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .brand-icon {
   display: flex;
   align-items: center;

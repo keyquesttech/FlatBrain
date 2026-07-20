@@ -1,7 +1,9 @@
 import express from 'express';
 import compression from 'compression';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
+import { execFile } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createBackupManager } from './backup.js';
 
@@ -272,6 +274,118 @@ app.delete('/api/backup/:name', (req, res) => {
 
 // Scheduler heartbeat — fires the backup when its scheduled time passes.
 setInterval(() => backup.checkSchedule(), 60 * 1000);
+
+// ---- Server status: host stats for the Pi this panel runs on ----
+
+function readSysFile(file) {
+  try {
+    return fs.readFileSync(file, 'utf8').trim();
+  } catch {
+    return null;
+  }
+}
+
+// First line of /proc/stat: cumulative jiffies since boot. Usage is the busy
+// share between two samples, so the previous sample is kept between requests
+// — each poll reports the usage since the one before it.
+function readCpuTimes() {
+  const line = readSysFile('/proc/stat')?.split('\n')[0];
+  if (!line) return null;
+  const t = line.trim().split(/\s+/).slice(1, 9).map(Number);
+  const idle = t[3] + t[4]; // idle + iowait
+  return { idle, total: t.reduce((a, b) => a + b, 0) };
+}
+
+let lastCpuTimes = readCpuTimes();
+
+function cpuUsagePercent() {
+  const now = readCpuTimes();
+  if (!now) return null;
+  const prev = lastCpuTimes;
+  lastCpuTimes = now;
+  if (!prev || now.total <= prev.total) return null;
+  const busy = (now.total - prev.total) - (now.idle - prev.idle);
+  return Math.min(100, Math.max(0, Math.round((busy / (now.total - prev.total)) * 100)));
+}
+
+function memInfo() {
+  const text = readSysFile('/proc/meminfo');
+  if (!text) return null;
+  const kb = {};
+  for (const line of text.split('\n')) {
+    const m = line.match(/^(\w+):\s+(\d+)/);
+    if (m) kb[m[1]] = Number(m[2]) * 1024;
+  }
+  const total = kb.MemTotal || 0;
+  return {
+    total,
+    used: total - (kb.MemAvailable ?? kb.MemFree ?? 0),
+    swapTotal: kb.SwapTotal || 0,
+    swapUsed: (kb.SwapTotal || 0) - (kb.SwapFree || 0)
+  };
+}
+
+function diskInfo() {
+  try {
+    const s = fs.statfsSync(__dirname);
+    const total = s.blocks * s.bsize;
+    const avail = s.bavail * s.bsize; // what non-root users can still write
+    const used = total - s.bfree * s.bsize;
+    return {
+      total,
+      used,
+      avail,
+      // df-style percentage: the root-reserved blocks don't count as free
+      percent: used + avail > 0 ? Math.round((used / (used + avail)) * 100) : null
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Firmware throttling flags (undervoltage, thermal throttling). vcgencmd is
+// Pi-specific, so any failure just reports null and the page omits the line.
+function readThrottled() {
+  return new Promise((resolve) => {
+    execFile('vcgencmd', ['get_throttled'], { timeout: 1500 }, (err, stdout) => {
+      const m = !err && String(stdout).match(/=0x([0-9a-f]+)/i);
+      if (!m) return resolve(null);
+      const bits = parseInt(m[1], 16);
+      resolve({
+        undervoltageNow: Boolean(bits & 0x1),
+        throttledNow: Boolean(bits & 0x4),
+        undervoltageEver: Boolean(bits & 0x10000),
+        throttledEver: Boolean(bits & 0x40000)
+      });
+    });
+  });
+}
+
+// Polled by the dashboard's Server Status page. Lives at /api/system/* —
+// panel-level, not part of any app's namespace.
+app.get('/api/system/stats', async (req, res) => {
+  const tempRaw = readSysFile('/sys/class/thermal/thermal_zone0/temp');
+  const freqRaw = readSysFile('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq');
+  res.json({
+    hostname: os.hostname(),
+    // device-tree strings are NUL-terminated; strip that before serving
+    model: readSysFile('/proc/device-tree/model')?.replaceAll('\0', '') || null,
+    kernel: os.release(),
+    arch: os.arch(),
+    node: process.version,
+    uptimeSec: Math.round(os.uptime()),
+    tempC: tempRaw ? Math.round(Number(tempRaw) / 100) / 10 : null,
+    cpu: {
+      percent: cpuUsagePercent(),
+      cores: os.cpus().length,
+      load: os.loadavg().map((n) => Math.round(n * 100) / 100),
+      mhz: freqRaw ? Math.round(Number(freqRaw) / 1000) : null
+    },
+    memory: memInfo(),
+    disk: diskInfo(),
+    throttled: await readThrottled()
+  });
+});
 
 // Serve the built React app. Vite fingerprints everything under /assets, so
 // those files can be cached forever; everything else revalidates.
