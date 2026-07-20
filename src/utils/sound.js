@@ -3,12 +3,14 @@
 // break an interaction. The AudioContext is created lazily inside a user
 // gesture, which also satisfies browser autoplay policies.
 
-const STORAGE_KEY = 'bs-sound';
+const STORAGE_KEY = 'fb-sound';
+// Pre-FlatBrain key name, read as a fallback so the setting survives the rename.
+const LEGACY_STORAGE_KEY = 'bs-sound';
 let ctx = null;
 
 export function soundEnabled() {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== 'off';
+    return (localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)) !== 'off';
   } catch {
     return true;
   }
@@ -17,6 +19,7 @@ export function soundEnabled() {
 export function setSoundEnabled(on) {
   try {
     localStorage.setItem(STORAGE_KEY, on ? 'on' : 'off');
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch { /* private mode etc. — sound just stays session-default */ }
 }
 
