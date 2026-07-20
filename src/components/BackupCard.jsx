@@ -36,9 +36,11 @@ function formatSize(bytes) {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${Math.round(bytes / (1024 * 1024))} MB`;
 }
 
-// Backup settings card (history tab): pick + mount a USB stick plugged into
-// the Pi, choose the schedule, trigger a manual backup, and see what's on
-// the stick. Every control saves immediately, like the rest of the app.
+// Backup settings card (Server Status page): pick + mount a USB stick
+// plugged into the Pi, choose the schedule, trigger a manual backup, and
+// see what's on the stick. One backup covers all of FlatBrain — every
+// app's data, the password and these settings — not any single app.
+// Every control saves immediately, like the rest of the panel.
 export default function BackupCard() {
   const [status, setStatus] = useState(null);
   const [devices, setDevices] = useState([]);
@@ -105,7 +107,7 @@ export default function BackupCard() {
   };
 
   const restore = async (name) => {
-    if (!await appConfirm(`Restore ${name}? This replaces the app's current draft, history and password with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
+    if (!await appConfirm(`Restore ${name}? This replaces FlatBrain's current data — bill draft, history and password — with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
     setBusy('restore');
     setMessage('Restoring…');
     try {
@@ -218,7 +220,7 @@ export default function BackupCard() {
         </div>
       </div>
       <p className="section-desc">
-        Copies the app's data and a history CSV to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
+        Copies all of FlatBrain's data — every app's files, the password and a bill-history CSV — to a USB stick on the schedule below. Keeps the newest {cfg.keep} backups.
       </p>
 
       <div className="backup-tabs" role="tablist">
@@ -309,7 +311,7 @@ export default function BackupCard() {
       {tab === 'restore' && (
         <>
           <p className="section-desc">
-            Restoring replaces the app's current draft, history and password with the backup's files, then reloads the app.
+            Restoring replaces FlatBrain's data — bill draft, history and password — with the backup's files, then reloads. The backup settings themselves are kept as they are now.
           </p>
           {status.backups?.length > 0 ? (
             <div className="backup-list">

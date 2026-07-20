@@ -1,14 +1,20 @@
-// USB backup: copies the app's data files (draft.json, history.json,
-// password.txt) into a FlatBrainBackups folder on a USB stick, on a
-// schedule (default: weekly, Saturday 06:00), keeping the newest N backups
-// (default 2 — current + one behind). Configuration lives in the
-// git-ignored backup-config.json next to the data files.
+// USB backup for the whole of FlatBrain: copies every data file the panel
+// keeps (all apps' data, the password and the backup settings themselves)
+// into a FlatBrainBackups folder on a USB stick, on a schedule (default:
+// weekly, Saturday 06:00), keeping the newest N backups (default 2 —
+// current + one behind). Configuration lives in the git-ignored
+// backup-config.json next to the data files.
 import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { historyToCSV } from './src/utils/historyCsv.js';
 
-const DATA_FILES = ['draft.json', 'history.json', 'password.txt'];
+// Everything that goes to the stick. backup-config.json rides along so the
+// schedule survives an SD-card death, but it is NOT restored (see
+// RESTORE_FILES): it records which stick is the current backup target, and
+// an old copy could silently point automatic backups at a retired drive.
+const DATA_FILES = ['draft.json', 'history.json', 'password.txt', 'backup-config.json'];
+const RESTORE_FILES = ['draft.json', 'history.json', 'password.txt'];
 const BACKUP_DIR_NAME = 'FlatBrainBackups';
 // Sticks used before the FlatBrain rename carry this folder; backupRoot
 // renames it in place the first time it's seen.
@@ -258,7 +264,7 @@ export function createBackupManager(baseDir) {
     }
   }
 
-  // Restore the app's data files from one backup folder on the stick.
+  // Restore FlatBrain's data files from one backup folder on the stick.
   // Both JSON files are validated before anything is touched, and each
   // file is swapped in atomically (tmp + rename), so a bad or half-copied
   // backup can never corrupt the live data.
@@ -279,7 +285,7 @@ export function createBackupManager(baseDir) {
     if (!fs.existsSync(dir)) throw new Error('Backup not found on the stick');
 
     const staged = [];
-    for (const file of DATA_FILES) {
+    for (const file of RESTORE_FILES) {
       const src = path.join(dir, file);
       if (!fs.existsSync(src)) continue;
       const content = fs.readFileSync(src);

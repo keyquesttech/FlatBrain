@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, Cpu, HardDrive, MemoryStick, Thermometer } from 'lucide-react';
+import BackupCard from '../components/BackupCard';
 import Navigation from '../components/Navigation';
 
 const POLL_MS = 3000;
@@ -129,18 +130,23 @@ export default function ServerStatusPage() {
             />
           </div>
 
-          <div className="glass-panel">
-            <div className="stat-head"><Activity size={15} /><span>System</span></div>
-            <div className="sys-rows">
-              <div className="sys-row"><span className="sys-row-label">Hostname</span><span className="sys-row-value">{stats.hostname}</span></div>
-              {stats.model && (
-                <div className="sys-row"><span className="sys-row-label">Board</span><span className="sys-row-value">{stats.model}</span></div>
-              )}
-              <div className="sys-row"><span className="sys-row-label">Kernel</span><span className="sys-row-value">Linux {stats.kernel} · {stats.arch}</span></div>
-              <div className="sys-row"><span className="sys-row-label">Uptime</span><span className="sys-row-value">{formatUptime(stats.uptimeSec)}</span></div>
-              <div className="sys-row"><span className="sys-row-label">Load average</span><span className="sys-row-value">{cpu.load.join(' · ')}</span></div>
-              <div className="sys-row"><span className="sys-row-label">Node</span><span className="sys-row-value">{stats.node}</span></div>
+          <div className="form-card-stack">
+            <div className="glass-panel">
+              <div className="stat-head"><Activity size={15} /><span>System</span></div>
+              <div className="sys-rows">
+                <div className="sys-row"><span className="sys-row-label">Hostname</span><span className="sys-row-value">{stats.hostname}</span></div>
+                {stats.model && (
+                  <div className="sys-row"><span className="sys-row-label">Board</span><span className="sys-row-value">{stats.model}</span></div>
+                )}
+                <div className="sys-row"><span className="sys-row-label">Kernel</span><span className="sys-row-value">Linux {stats.kernel} · {stats.arch}</span></div>
+                <div className="sys-row"><span className="sys-row-label">Uptime</span><span className="sys-row-value">{formatUptime(stats.uptimeSec)}</span></div>
+                <div className="sys-row"><span className="sys-row-label">Load average</span><span className="sys-row-value">{cpu.load.join(' · ')}</span></div>
+                <div className="sys-row"><span className="sys-row-label">Node</span><span className="sys-row-value">{stats.node}</span></div>
+              </div>
             </div>
+
+            {/* Whole-panel USB backups live here — server care, not any one app's */}
+            <BackupCard />
           </div>
         </>
       )}
