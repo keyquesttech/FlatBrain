@@ -1,5 +1,5 @@
 // USB backup: copies the app's data files (draft.json, history.json,
-// password.txt) into a BillSplitterBackups folder on a USB stick, on a
+// password.txt) into a FlatBrainBackups folder on a USB stick, on a
 // schedule (default: weekly, Saturday 06:00), keeping the newest N backups
 // (default 2 — current + one behind). Configuration lives in the
 // git-ignored backup-config.json next to the data files.
@@ -9,8 +9,11 @@ import path from 'path';
 import { historyToCSV } from './src/utils/historyCsv.js';
 
 const DATA_FILES = ['draft.json', 'history.json', 'password.txt'];
-const BACKUP_DIR_NAME = 'BillSplitterBackups';
-const FALLBACK_MOUNTPOINT = '/media/billsplitter-backup';
+const BACKUP_DIR_NAME = 'FlatBrainBackups';
+// Sticks used before the FlatBrain rename carry this folder; backupRoot
+// renames it in place the first time it's seen.
+const LEGACY_BACKUP_DIR_NAME = 'BillSplitterBackups';
+const FALLBACK_MOUNTPOINT = '/media/flatbrain-backup';
 const RETRY_MS = 30 * 60 * 1000; // a failed scheduled backup retries every 30 min
 
 // Automatic backups are enabled by selecting a drive: device set = on,
@@ -152,10 +155,30 @@ export function createBackupManager(baseDir) {
     return { mountpoint, device: cfg.device };
   }
 
+  // The backups folder on the stick. A pre-rename BillSplitterBackups
+  // folder is renamed in place on first sight, so existing backups stay
+  // listed and restorable; on a read-only stick the old folder keeps
+  // working under its old name instead.
+  function backupRoot(mountpoint) {
+    const dir = path.join(mountpoint, BACKUP_DIR_NAME);
+    const legacy = path.join(mountpoint, LEGACY_BACKUP_DIR_NAME);
+    if (fs.existsSync(legacy)) {
+      try {
+        // rename() replaces an empty target dir (mountDevice pre-creates
+        // one on ext sticks), so old backups slide under the new name
+        if (!fs.existsSync(dir) || fs.readdirSync(dir).length === 0) {
+          fs.renameSync(legacy, dir);
+        }
+      } catch { /* read-only or busy stick */ }
+      if (!fs.existsSync(dir)) return legacy;
+    }
+    return dir;
+  }
+
   // Backups are ordered by folder mtime, newest first — the folder names
   // carry month NAMES (backup_2026_July_16), which don't sort by date.
   function listBackups(mountpoint) {
-    const dir = path.join(mountpoint, BACKUP_DIR_NAME);
+    const dir = backupRoot(mountpoint);
     if (!fs.existsSync(dir)) return [];
     return fs
       .readdirSync(dir)
@@ -183,7 +206,7 @@ export function createBackupManager(baseDir) {
       const device = findConfiguredDevice(cfg);
       if (!device) throw new Error(`USB drive "${cfg.device.label}" is not plugged in`);
       const mountpoint = mountDevice(device);
-      const dir = path.join(mountpoint, BACKUP_DIR_NAME);
+      const dir = backupRoot(mountpoint);
       fs.mkdirSync(dir, { recursive: true });
 
       // backup_{Year}_{MonthName}_{Day}; a second backup on the same day
@@ -252,7 +275,7 @@ export function createBackupManager(baseDir) {
     const device = findConfiguredDevice(cfg);
     if (!device) throw new Error(`USB drive "${cfg.device.label}" is not plugged in`);
     const mountpoint = device.mountpoint || mountDevice(device);
-    const dir = path.join(mountpoint, BACKUP_DIR_NAME, name);
+    const dir = path.join(backupRoot(mountpoint), name);
     if (!fs.existsSync(dir)) throw new Error('Backup not found on the stick');
 
     const staged = [];
@@ -316,7 +339,7 @@ export function createBackupManager(baseDir) {
 
   // Delete one backup folder from the stick (manual housekeeping from the
   // Backup card). The name must be a plain "backup…" folder name — no
-  // separators — so nothing outside BillSplitterBackups can be touched.
+  // separators — so nothing outside the backups folder can be touched.
   function deleteBackup(name) {
     if (
       typeof name !== 'string' ||
@@ -329,7 +352,7 @@ export function createBackupManager(baseDir) {
     const device = findConfiguredDevice(cfg);
     if (!device) throw new Error('USB drive is not plugged in');
     const mountpoint = device.mountpoint || mountDevice(device);
-    const dir = path.join(mountpoint, BACKUP_DIR_NAME, name);
+    const dir = path.join(backupRoot(mountpoint), name);
     if (!fs.existsSync(dir)) throw new Error('Backup not found on the stick');
     fs.rmSync(dir, { recursive: true, force: true });
     return { success: true, backups: listBackups(mountpoint) };

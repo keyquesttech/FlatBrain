@@ -66,8 +66,8 @@ as apps under one domain:
 On a Raspberry Pi running Raspberry Pi OS, open a terminal and run:
 
 ```bash
-git clone https://github.com/keyquesttech/BillSplitter.git flatbrain
-cd flatbrain
+git clone https://github.com/keyquesttech/FlatBrain.git
+cd FlatBrain
 sudo bash install.sh
 ```
 
@@ -123,7 +123,7 @@ The frontend build (`dist/`) is committed to the repo, so updating the Pi is
 just a pull + restart:
 
 ```bash
-cd flatbrain
+cd FlatBrain
 git pull
 sudo systemctl restart flatbrain
 ```

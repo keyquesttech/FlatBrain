@@ -1,7 +1,7 @@
 // Collision-proof id generator. Date.now() alone collides when two items are
 // added within the same millisecond (e.g. double-clicking "Add Item"), which
 // breaks per-row updates/removes. crypto.randomUUID isn't available on plain
-// HTTP origins like billsplitter.local, so combine time + counter + random.
+// HTTP origins like flatbrain.local, so combine time + counter + random.
 let counter = 0;
 
 export function newId() {

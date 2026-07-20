@@ -10,7 +10,9 @@ import { ChevronDown } from 'lucide-react';
 export default function CollapsibleCard({ title, storageKey, actions, defaultOpen = true, children }) {
   const [open, setOpen] = useState(() => {
     try {
-      const saved = localStorage.getItem(`bs-card-${storageKey}`);
+      // fb- is current; bs- is the pre-FlatBrain prefix, read as a fallback
+      // so nobody's saved open/closed states reset on the rename.
+      const saved = localStorage.getItem(`fb-card-${storageKey}`) ?? localStorage.getItem(`bs-card-${storageKey}`);
       return saved == null ? defaultOpen : saved === '1';
     } catch {
       return defaultOpen;
@@ -25,7 +27,7 @@ export default function CollapsibleCard({ title, storageKey, actions, defaultOpe
     setOpen(next);
     setSettling(true);
     try {
-      localStorage.setItem(`bs-card-${storageKey}`, next ? '1' : '0');
+      localStorage.setItem(`fb-card-${storageKey}`, next ? '1' : '0');
     } catch { /* private mode — state just won't persist */ }
   };
 

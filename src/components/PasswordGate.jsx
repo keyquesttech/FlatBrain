@@ -2,9 +2,23 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { login } from '../api';
 
-const AUTH_SESSION_KEY = 'bill-splitter-authed';
-const AUTH_LOCAL_KEY = 'bill-splitter-authed-remember';
-const PASSWORD_LOCAL_KEY = 'bill-splitter-password';
+const AUTH_SESSION_KEY = 'flatbrain-authed';
+const AUTH_LOCAL_KEY = 'flatbrain-authed-remember';
+const PASSWORD_LOCAL_KEY = 'flatbrain-password';
+
+// One-time carry-over from the pre-FlatBrain key names, so the rename
+// doesn't log anyone out or forget a remembered password.
+try {
+  [
+    [sessionStorage, 'bill-splitter-authed', AUTH_SESSION_KEY],
+    [localStorage, 'bill-splitter-authed-remember', AUTH_LOCAL_KEY],
+    [localStorage, 'bill-splitter-password', PASSWORD_LOCAL_KEY]
+  ].forEach(([store, legacyKey, key]) => {
+    const value = store.getItem(legacyKey);
+    if (value != null && store.getItem(key) == null) store.setItem(key, value);
+    store.removeItem(legacyKey);
+  });
+} catch { /* private mode — nothing to migrate */ }
 
 function isAuthed() {
   return (
