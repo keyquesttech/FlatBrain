@@ -32,6 +32,7 @@ function App() {
         <span className="lava lava-2"><span className="lava-blob" /></span>
         <span className="lava lava-3"><span className="lava-blob" /></span>
         <span className="lava lava-4"><span className="lava-blob" /></span>
+        <span className="lava lava-5"><span className="lava-blob" /></span>
         <span className="underlay-grain" />
       </div>
       <Routes>
