@@ -916,6 +916,15 @@ input[type="checkbox"]:focus-visible {
   text-overflow: ellipsis;
 }
 
+/* Outranks the mobile per-column INPUT padding rules that share these
+   classes (.extras-row .packs-input, .extras-row .discount-value get
+   10px 6px padding for the inputs) — labels must stay padding-free or
+   they drop out of line with the other labels */
+.input-row.row-labels > span {
+  padding: 0;
+  min-height: 0;
+}
+
 /* Spacer over the remove-button column */
 .row-labels .row-labels-action {
   flex: 0 0 44px;
