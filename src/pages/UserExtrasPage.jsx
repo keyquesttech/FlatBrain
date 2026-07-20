@@ -6,6 +6,8 @@ import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
 import ExtrasInputList from '../components/ExtrasInputList';
 import SpendingChart from '../components/SpendingChart';
+import CollapsibleCard from '../components/CollapsibleCard';
+import { Plus } from 'lucide-react';
 
 const POLL_MS = 3000;
 const SAVE_DEBOUNCE_MS = 600;
@@ -139,21 +141,27 @@ export default function UserExtrasPage({ personKey }) {
       </div>
 
       <div className="form-card-stack">
-        <div className="glass-panel">
+        <CollapsibleCard
+          title={`${displayName}'s Extras`}
+          storageKey="fm-extras"
+          actions={(
+            <button className="btn btn-primary btn-sm" onClick={() => saveExtras([...extras, newExtra()])}>
+              <Plus size={16} /> Add Item
+            </button>
+          )}
+        >
           <ExtrasInputList
-            title={`${displayName}'s Extras`}
             description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share you pay — e.g. 10% means you pay 10%, ${otherDisplayName} 90%.`}
             extras={extras}
-            onAdd={() => saveExtras([...extras, newExtra()])}
             onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
             onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
             percentPayer={displayName}
             percentOther={otherDisplayName}
+            showAddButton={false}
           />
-        </div>
+        </CollapsibleCard>
 
-        <div className="glass-panel">
-          <h3 className="invoice-section-title">Your notes</h3>
+        <CollapsibleCard title="Your notes" storageKey="fm-notes">
           <p className="section-desc">Optional — shown on the invoice.</p>
           <div className="form-group">
             <label htmlFor="flatmate-note">Note</label>
@@ -166,10 +174,9 @@ export default function UserExtrasPage({ personKey }) {
               maxLength={300}
             />
           </div>
-        </div>
+        </CollapsibleCard>
 
-        <div className="glass-panel">
-          <h3 className="invoice-section-title">Charged to {otherDisplayName}</h3>
+        <CollapsibleCard title={`Charged to ${otherDisplayName}`} storageKey="fm-charged-other">
           <p className="section-desc">Everything {otherDisplayName} pays for extras this month.</p>
           {chargedToOther.map((extra) => {
             const total = extraShares(extra).total;
@@ -185,10 +192,9 @@ export default function UserExtrasPage({ personKey }) {
               </div>
             );
           })}
-        </div>
+        </CollapsibleCard>
 
-        <div className="glass-panel">
-          <h3 className="invoice-section-title">Charged to you</h3>
+        <CollapsibleCard title="Charged to you" storageKey="fm-charged-you">
           <p className="section-desc">Your share of {otherDisplayName}'s items.</p>
           {chargedToYou.map((extra) => {
             const total = extraShares(extra).total;
@@ -204,13 +210,12 @@ export default function UserExtrasPage({ personKey }) {
               </div>
             );
           })}
-        </div>
+        </CollapsibleCard>
 
-        <div className="glass-panel">
-          <h3 className="invoice-section-title">History</h3>
+        <CollapsibleCard title="History" storageKey="fm-history">
           <p className="section-desc">Bills per month from saved invoices.</p>
           <SpendingChart history={history} />
-        </div>
+        </CollapsibleCard>
       </div>
     </div>
   );
