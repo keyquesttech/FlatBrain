@@ -5,6 +5,7 @@ import DatePicker from './DatePicker';
 import ExtrasInputList from './ExtrasInputList';
 import CurrencyInput from './CurrencyInput';
 import SelectMenu from './SelectMenu';
+import CollapsibleCard from './CollapsibleCard';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra, newId } from '../utils/id';
 import { billDiscountPercent, clampSplitPercent, limitDecimals } from '../utils/calculations';
@@ -162,26 +163,31 @@ export default function InvoiceForm({ data, onChange }) {
     const other = otherName(personKey);
 
     return (
-      <div className="glass-panel">
+      <CollapsibleCard
+        title={`${name}'s Extras`}
+        storageKey={`extras-${personKey}`}
+        actions={(
+          <button className="btn btn-primary btn-sm" onClick={() => addExtra(extrasKey)}>
+            <Plus size={16} /> Add Item
+          </button>
+        )}
+      >
         <ExtrasInputList
-          title={`${name}'s Extras`}
           description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share ${name} pays — e.g. 10% means ${name} pays 10%, ${other} 90%.`}
           extras={data[extrasKey]}
-          onAdd={() => addExtra(extrasKey)}
           onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
           onRemove={(id) => removeExtra(extrasKey, id)}
           percentPayer={name}
           percentOther={other}
-          addLabel="Add Item"
+          showAddButton={false}
         />
-      </div>
+      </CollapsibleCard>
     );
   };
 
   return (
     <div className="form-card-stack">
-      <div className="glass-panel">
-        <h3 className="invoice-section-title">Invoice Details</h3>
+      <CollapsibleCard title="Invoice Details" storageKey="invoice-details">
         <p className="section-desc">Due date auto-fills to the 7th of the next month.</p>
 
         <div className="form-group">
@@ -199,10 +205,9 @@ export default function InvoiceForm({ data, onChange }) {
             onChange={(val) => updateField('dueDate', val)}
           />
         </div>
-      </div>
+      </CollapsibleCard>
 
-      <div className="glass-panel">
-        <h3 className="invoice-section-title">Names</h3>
+      <CollapsibleCard title="Names" storageKey="names">
         <div className="input-row">
           <label className="fld">
             <span className="fld-label">Flatmate 1</span>
@@ -256,15 +261,17 @@ export default function InvoiceForm({ data, onChange }) {
             {names.matias.trim() || 'Flatmate 1'} pays {splitPct}%, {names.reka.trim() || 'Flatmate 2'} pays {otherPct}% of every bill.
           </p>
         </div>
-      </div>
+      </CollapsibleCard>
 
-      <div className="glass-panel">
-        <div className="extras-section-header">
-          <h3 className="invoice-section-title">Bills</h3>
+      <CollapsibleCard
+        title="Bills"
+        storageKey="bills"
+        actions={(
           <button className="btn btn-primary btn-sm" onClick={addBill}>
             <Plus size={16} /> Add Bill
           </button>
-        </div>
+        )}
+      >
         <p className="section-desc">
           Discount: set a % and who it's for — the other flatmate covers that part. All = nobody pays it.
         </p>
@@ -326,20 +333,18 @@ export default function InvoiceForm({ data, onChange }) {
             </button>
           </div>
         ))}
-      </div>
+      </CollapsibleCard>
 
       {renderPersonExtras('matias', 'Flatmate 1')}
       {renderPersonExtras('reka', 'Flatmate 2')}
 
-      <div className="glass-panel">
-        <h3 className="invoice-section-title">Discounts</h3>
+      <CollapsibleCard title="Discounts" storageKey="discounts">
         <p className="section-desc">Off a flatmate's final total — £ fixed, or % of the total.</p>
         {renderPersonDiscounts('matias', 'Flatmate 1')}
         {renderPersonDiscounts('reka', 'Flatmate 2')}
-      </div>
+      </CollapsibleCard>
 
-      <div className="glass-panel">
-        <h3 className="invoice-section-title">Notes</h3>
+      <CollapsibleCard title="Notes" storageKey="notes">
         <p className="section-desc">Optional — shown on the invoice.</p>
         <div className="form-group">
           <label>{names.matias.trim() || 'Flatmate 1'}</label>
@@ -361,10 +366,9 @@ export default function InvoiceForm({ data, onChange }) {
             maxLength={300}
           />
         </div>
-      </div>
+      </CollapsibleCard>
 
-      <div className="glass-panel">
-        <h3 className="invoice-section-title">Bank Details</h3>
+      <CollapsibleCard title="Bank Details" storageKey="bank-details">
         <p className="section-desc">Shown at the bottom of the invoice.</p>
         <div className="form-group">
           <label>Name</label>
@@ -402,7 +406,7 @@ export default function InvoiceForm({ data, onChange }) {
             placeholder="12345678"
           />
         </div>
-      </div>
+      </CollapsibleCard>
     </div>
   );
 }
