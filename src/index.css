@@ -673,32 +673,48 @@ p {
   padding-bottom: 0.15rem;
 }
 
-/* Labelled fields wrap as a unit, so rows read fine at any width */
+/* One payment = one line of labelled fields on desktop; the status and
+   remove controls live on the meta line below with the period total */
 .rent-fields {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: flex-end;
 }
 
 .rent-fields .fld {
-  flex: 1 1 138px;
-  min-width: 124px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .rent-fields .fld-months {
-  flex: 0 1 96px;
-  min-width: 88px;
+  flex: 0 0 88px;
 }
 
-.rent-fields .rent-charge-name {
-  flex: 2 1 200px;
+.rent-fields .rent-fld-money {
+  flex: 0 1 132px;
+  min-width: 100px;
 }
 
-.rent-fields .rent-remove {
+/* Tenancy: name, monthly rent, deposit and its status on a single line */
+.rent-tenancy-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.rent-tenancy-row .rent-fld-name {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.rent-tenancy-row .rent-fld-money {
+  flex: 0 1 150px;
+  min-width: 104px;
+}
+
+.rent-tenancy-status {
   flex: 0 0 auto;
-  align-self: flex-end;
-  margin-bottom: 1px;
+  padding-bottom: 6px;
 }
 
 .rent-row-meta {
@@ -710,9 +726,10 @@ p {
   margin-top: 8px;
 }
 
-.rent-deposit-fld {
-  flex: 0 1 180px;
-  min-width: 140px;
+.rent-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .rent-period {
@@ -2777,6 +2794,33 @@ input[type="checkbox"]:focus-visible {
   .history-card-actions .btn-icon {
     min-width: 42px;
     min-height: 42px;
+  }
+
+  /* Rent rows: fields go two-up so the pickers keep 16px text without
+     overflowing; the tenancy line wraps with the name on its own row */
+  .rent-fields {
+    flex-wrap: wrap;
+  }
+
+  .rent-fields .fld,
+  .rent-fields .fld-months,
+  .rent-fields .rent-fld-money {
+    flex: 1 1 calc(50% - 4px);
+    min-width: calc(50% - 4px);
+  }
+
+  .rent-tenancy-row {
+    flex-wrap: wrap;
+  }
+
+  .rent-tenancy-row .rent-fld-name {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .rent-tenancy-row .rent-fld-money {
+    flex: 1 1 110px;
+    min-width: 96px;
   }
 
   .auth-wrap {
