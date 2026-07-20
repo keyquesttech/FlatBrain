@@ -11,6 +11,7 @@ import SelectMenu from '../components/SelectMenu';
 import { getDraft, updateDraft, patchDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
 import { calculateInvoice } from '../utils/calculations';
 import { normalizeDraft } from '../utils/defaults';
+import { prefillBillsFromHistory } from '../utils/standingCharges';
 import { newId } from '../utils/id';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { historyToCSV, csvToHistory } from '../utils/historyCsv';
@@ -189,11 +190,15 @@ export default function MainPage() {
 
     // Reset the draft for next month, but keep the standing settings —
     // bank details, names and the bills split — so they never have to be
-    // re-entered. Only bills, extras, notes and discounts start fresh.
+    // re-entered. The bills come back pre-filled from the rolling average
+    // of recent invoices (standing charges memory), so the next invoice
+    // starts nearly done; extras, notes and discounts start fresh.
     cancelPendingSave();
     const reset = await resetDraft();
+    const prefilled = prefillBillsFromHistory(res.history);
     const nextDraft = {
       ...reset.draft,
+      ...(prefilled ? { bills: prefilled } : {}),
       bankDetails: data.bankDetails,
       names: data.names,
       splitPercent: data.splitPercent ?? 50
@@ -207,7 +212,7 @@ export default function MainPage() {
       // or unmount, and the pending flag stops the poller clobbering the form.
       markAllPending();
     }
-    appToast(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history — draft reset for next month.`);
+    appToast(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history — next month's bills pre-filled from recent averages.`);
   };
 
   // Single action: download the PNG first (while the invoice is still on

@@ -20,6 +20,7 @@ dist-ssr
 # uploaded to GitHub and each deployment keeps its own state.
 draft.json
 history.json
+rent.json
 password.txt
 backup-config.json
 temp-history.json
