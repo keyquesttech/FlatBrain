@@ -109,7 +109,7 @@ export default function InvoiceForm({ data, onChange }) {
         </div>
         {list.length > 0 && (
           <div className="input-row extras-row row-labels" aria-hidden="true">
-            <span>Reason</span>
+            <span className="rl-over-input">Reason</span>
             <span className="packs-input discount-value">Value</span>
             <span className="discount-type-select">£ / %</span>
             <span className="row-labels-action" />
@@ -270,8 +270,8 @@ export default function InvoiceForm({ data, onChange }) {
         </p>
         {data.bills.length > 0 && (
           <div className="input-row extras-row bill-row row-labels" aria-hidden="true">
-            <span>Bill</span>
-            <span className="currency-input">Amount £</span>
+            <span className="rl-over-input">Bill</span>
+            <span className="currency-input rl-over-pill">Amount £</span>
             <span className="percent-input">Disc %</span>
             {billDiscountPercent(data.bills[0]) > 0 && <span className="bill-discount-select">Disc for</span>}
             <span className="row-labels-action" />

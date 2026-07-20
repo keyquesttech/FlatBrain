@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArchiveRestore, ArrowUpFromLine, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import SelectMenu from './SelectMenu';
+import { appAlert, appConfirm } from './Dialog';
 import { getBackupStatus, getBackupDevices, mountBackupDevice, updateBackupConfig, runBackupNow, ejectBackupDevice, restoreBackup, deleteBackup } from '../api';
 
 const DAY_OPTIONS = [
@@ -104,13 +105,13 @@ export default function BackupCard() {
   };
 
   const restore = async (name) => {
-    if (!window.confirm(`Restore ${name}? This replaces the app's current draft, history and password with the backup.`)) return;
+    if (!await appConfirm(`Restore ${name}? This replaces the app's current draft, history and password with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
     setBusy('restore');
     setMessage('Restoring…');
     try {
       const res = await restoreBackup(name);
       if (res.success) {
-        alert(`Restored ${res.restored.join(', ')} from ${name}. The app will now reload.`);
+        await appAlert(`Restored ${res.restored.join(', ')} from ${name}. The app will now reload.`, { title: 'Backup restored' });
         window.location.reload();
       } else {
         setMessage(`Restore failed: ${res.error}`);
@@ -123,7 +124,7 @@ export default function BackupCard() {
   };
 
   const removeBackup = async (name) => {
-    if (!window.confirm(`Delete ${name} from the USB stick? This can't be undone.`)) return;
+    if (!await appConfirm(`Delete ${name} from the USB stick? This can't be undone.`, { title: 'Delete backup', okLabel: 'Delete', danger: true })) return;
     setBusy('delete');
     try {
       const res = await deleteBackup(name);
