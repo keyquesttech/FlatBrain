@@ -6,9 +6,9 @@ import { DEFAULT_BANK } from '../utils/defaults';
 // The Rent app's invoice, built from the same frame and cards as Bill
 // Splitter's so it downloads through the identical PNG capture path.
 // Every rent payment is itemized: period, block size × monthly amount,
-// due date and paid status.
-const RentInvoicePreview = forwardRef(({ rent, bank }, ref) => {
-  const bankDetails = { ...DEFAULT_BANK, ...(bank || {}) };
+// due date and paid status. Bank details are the Rent app's own.
+const RentInvoicePreview = forwardRef(({ rent }, ref) => {
+  const bankDetails = { ...DEFAULT_BANK, ...(rent.bankDetails || {}) };
   const totals = rentTotals(rent);
   const payments = rent.payments || [];
   const nextUnpaid = payments

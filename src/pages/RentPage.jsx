@@ -8,7 +8,7 @@ import MonthPicker from '../components/MonthPicker';
 import RentInvoicePreview from '../components/RentInvoicePreview';
 import SelectMenu from '../components/SelectMenu';
 import { appAlert, appToast } from '../components/Dialog';
-import { getDraft, getRent, updateRent } from '../api';
+import { getRent, updateRent } from '../api';
 import { formatCurrency } from '../utils/calculations';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { newId } from '../utils/id';
@@ -18,32 +18,45 @@ import { playSuccess } from '../utils/sound';
 const SAVE_DEBOUNCE_MS = 600;
 const MONTH_OPTIONS = [1, 2, 3, 4, 6, 12].map((n) => ({ value: n, label: `${n} mo` }));
 
+const DEFAULT_RENT_BANK = {
+  name: 'Your Name',
+  bankName: 'Your Bank',
+  sortCode: '00-00-00',
+  accountNumber: '00000000'
+};
+
 function normalizeRent(r) {
   return {
     name: r?.name || 'Rent',
     monthlyAmount: r?.monthlyAmount || '',
     deposit: { amount: r?.deposit?.amount || '', paidDate: r?.deposit?.paidDate || '' },
     payments: Array.isArray(r?.payments) ? r.payments : [],
-    charges: Array.isArray(r?.charges) ? r.charges : []
+    charges: Array.isArray(r?.charges) ? r.charges : [],
+    bankDetails: { ...DEFAULT_RENT_BANK, ...(r?.bankDetails || {}) }
   };
 }
 
-// Paid ⇄ unpaid toggle, shown as the sheet's Status column: an outline
-// button before payment, a lime chip with the date once marked.
-function PaidToggle({ paidDate, onChange }) {
-  return paidDate ? (
-    <button
-      type="button"
-      className="paid-chip"
-      onClick={() => onChange('')}
-      title="Tap to mark as not paid"
-    >
-      Paid {formatDay(paidDate)}
-    </button>
-  ) : (
-    <button type="button" className="btn btn-secondary btn-sm" onClick={() => onChange(todayISO())}>
-      Mark paid
-    </button>
+// The sheet's Status column as a date picker, so a payment can be marked
+// paid on ANY date, not just today: unpaid shows a "Mark paid…" trigger
+// that opens the calendar; once set it turns into a lime chip showing the
+// date (still tappable to change it) with a small × to unmark.
+function PaidControl({ paidDate, onChange }) {
+  return (
+    <span className={`paid-picker ${paidDate ? 'is-paid' : ''}`}>
+      {paidDate && <span className="paid-picker-tag">Paid</span>}
+      <DatePicker value={paidDate} onChange={onChange} placeholder="Mark paid…" />
+      {paidDate && (
+        <button
+          type="button"
+          className="btn-icon btn-icon-danger"
+          onClick={() => onChange('')}
+          title="Mark as not paid"
+          aria-label="Mark as not paid"
+        >
+          <X size={14} />
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -52,7 +65,6 @@ function PaidToggle({ paidDate, onChange }) {
 // plus a downloadable invoice that itemizes every payment.
 export default function RentPage() {
   const [rent, setRent] = useState(null);
-  const [bank, setBank] = useState(null);
   const [saveError, setSaveError] = useState(false);
   const [busy, setBusy] = useState(false);
   const dataRef = useRef(null);
@@ -68,11 +80,6 @@ export default function RentPage() {
         dataRef.current = normalizeRent(r);
         setRent(dataRef.current);
       })
-      .catch(() => {});
-    // The invoice's bank details are the same account Bill Splitter uses —
-    // read them from its draft rather than keeping a second copy.
-    getDraft()
-      .then((d) => { if (!cancelled) setBank(d?.bankDetails || null); })
       .catch(() => {});
     return () => {
       cancelled = true;
@@ -173,7 +180,7 @@ export default function RentPage() {
         </div>
       </div>
 
-      <div className="main-content">
+      <div className="main-content rent-content">
         <div className="form-card-stack">
           <CollapsibleCard title={<span className="stat-title"><CalendarClock size={15} /> Overview</span>} storageKey="rent-overview">
             <div className="sys-rows">
@@ -189,12 +196,16 @@ export default function RentPage() {
                 <span className="sys-row-label">Rent outstanding</span>
                 <span className="sys-row-value">{formatCurrency(totals.rentOutstanding)}</span>
               </div>
-              <div className="sys-row">
+              <div className="sys-row sys-row-control">
                 <span className="sys-row-label">Deposit</span>
                 <span className="sys-row-value">
-                  {totals.depositAmount > 0
-                    ? `${formatCurrency(totals.depositAmount)}${rent.deposit.paidDate ? ` — paid ${formatDay(rent.deposit.paidDate)}` : ' — not paid'}`
-                    : '—'}
+                  {totals.depositAmount > 0 ? formatCurrency(totals.depositAmount) : '—'}
+                  {totals.depositAmount > 0 && (
+                    <PaidControl
+                      paidDate={rent.deposit.paidDate}
+                      onChange={(paidDate) => update({ deposit: { ...rent.deposit, paidDate } })}
+                    />
+                  )}
                 </span>
               </div>
             </div>
@@ -230,12 +241,6 @@ export default function RentPage() {
                   aria-label="Deposit amount"
                 />
               </label>
-              <div className="rent-tenancy-status">
-                <PaidToggle
-                  paidDate={rent.deposit.paidDate}
-                  onChange={(paidDate) => update({ deposit: { ...rent.deposit, paidDate } })}
-                />
-              </div>
             </div>
           </CollapsibleCard>
 
@@ -289,7 +294,7 @@ export default function RentPage() {
                     {periodLabel(p.periodStart, p.months) || 'Pick a period'} · <strong>{formatCurrency(periodTotal(p))}</strong>
                   </span>
                   <span className="rent-row-actions">
-                    <PaidToggle paidDate={p.paidDate} onChange={(paidDate) => updatePayment(p.id, { paidDate })} />
+                    <PaidControl paidDate={p.paidDate} onChange={(paidDate) => updatePayment(p.id, { paidDate })} />
                     <button
                       className="btn-icon btn-icon-danger"
                       onClick={() => update({ payments: rent.payments.filter((x) => x.id !== p.id) })}
@@ -304,13 +309,33 @@ export default function RentPage() {
             ))}
           </CollapsibleCard>
 
+          <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank details</span>} storageKey="rent-bank">
+            <p className="section-desc">Shown on the rent invoice — separate from Bill Splitter's account details.</p>
+            {[
+              ['name', 'Name', 'Account holder name'],
+              ['bankName', 'Bank Name', 'Bank name'],
+              ['sortCode', 'Sort Code', '00-00-00'],
+              ['accountNumber', 'Account Number', '12345678']
+            ].map(([key, label, ph]) => (
+              <div className="form-group" key={key}>
+                <label>{label}</label>
+                <input
+                  type="text"
+                  value={rent.bankDetails[key]}
+                  onChange={(e) => update({ bankDetails: { ...rent.bankDetails, [key]: e.target.value } })}
+                  placeholder={ph}
+                />
+              </div>
+            ))}
+          </CollapsibleCard>
+
           {saveError && (
             <p className="section-desc stat-detail-warn">Changes aren’t saving — check the server.</p>
           )}
         </div>
 
         <div className="preview-column">
-          <RentInvoicePreview rent={rent} bank={bank} ref={previewRef} />
+          <RentInvoicePreview rent={rent} ref={previewRef} />
         </div>
       </div>
     </div>

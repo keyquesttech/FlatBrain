@@ -673,29 +673,26 @@ p {
   padding-bottom: 0.15rem;
 }
 
-/* One payment = one line of labelled fields on desktop; the status and
-   remove controls live on the meta line below with the period total */
+/* A payment's fields sit two-up in a grid, so the date pickers always get
+   half the card instead of being squeezed; status and remove live on the
+   meta line below with the period total */
 .rent-fields {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  align-items: flex-end;
 }
 
 .rent-fields .fld {
-  flex: 1 1 0;
   min-width: 0;
 }
 
-.rent-fields .fld-months {
-  flex: 0 0 88px;
+.rent-fields .picker-trigger span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.rent-fields .rent-fld-money {
-  flex: 0 1 132px;
-  min-width: 100px;
-}
-
-/* Tenancy: name, monthly rent, deposit and its status on a single line */
+/* Tenancy: name, monthly rent and deposit on a single line */
 .rent-tenancy-row {
   display: flex;
   gap: 8px;
@@ -710,11 +707,6 @@ p {
 .rent-tenancy-row .rent-fld-money {
   flex: 0 1 150px;
   min-width: 104px;
-}
-
-.rent-tenancy-status {
-  flex: 0 0 auto;
-  padding-bottom: 6px;
 }
 
 .rent-row-meta {
@@ -732,6 +724,42 @@ p {
   gap: 8px;
 }
 
+/* An overview row that carries a control next to its value */
+.sys-row-control .sys-row-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Web: fixed-size columns — cards at 400px, the invoice at 680px — so the
+   rent page keeps one constant layout instead of stretching with the
+   window (below 1000px the shared main-content rules stack it fluidly) */
+@media (min-width: 1000px) {
+  .rent-content {
+    grid-template-columns: 400px 680px;
+    justify-content: center;
+  }
+}
+
+/* Calendar and month dropdowns size to their content, not the trigger, so
+   a narrow field can't squeeze the grid inside them */
+.picker-dropdown:not(.picker-dropdown-list) {
+  right: auto;
+  width: max-content;
+  min-width: 272px;
+  max-width: min(320px, calc(100vw - 2rem));
+}
+
+/* Fields in the right-hand column (and the paid control at a row's right
+   edge) open their dropdown leftwards so it stays over the card */
+.rent-fields .fld:nth-child(even) .picker-dropdown,
+.paid-picker .picker-dropdown {
+  left: auto;
+  right: 0;
+}
+
 .rent-period {
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -743,26 +771,44 @@ p {
   font-weight: 700;
 }
 
-/* The sheet's Status column: a lime chip once paid, tap to undo */
-.paid-chip {
+/* The sheet's Status column as a date picker: "Mark paid…" opens the
+   calendar; once dated it reads as a lime chip that stays editable */
+.paid-picker {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 13px;
-  border-radius: 999px;
-  border: 1px solid rgba(212, 255, 63, 0.4);
+}
+
+.paid-picker .picker-trigger {
+  width: auto;
+  padding: 8px 12px;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.paid-picker .picker-trigger-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.paid-picker.is-paid .picker-trigger {
+  border-color: rgba(212, 255, 63, 0.4);
   background: rgba(212, 255, 63, 0.12);
   color: var(--lime-soft);
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
 }
 
-.paid-chip:hover {
-  border-color: var(--pink);
-  color: var(--pink-soft);
+.paid-picker-tag {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
 }
 
 .brand-icon {
@@ -2796,19 +2842,8 @@ input[type="checkbox"]:focus-visible {
     min-height: 42px;
   }
 
-  /* Rent rows: fields go two-up so the pickers keep 16px text without
-     overflowing; the tenancy line wraps with the name on its own row */
-  .rent-fields {
-    flex-wrap: wrap;
-  }
-
-  .rent-fields .fld,
-  .rent-fields .fld-months,
-  .rent-fields .rent-fld-money {
-    flex: 1 1 calc(50% - 4px);
-    min-width: calc(50% - 4px);
-  }
-
+  /* Rent: the tenancy line wraps with the name on its own row (payment
+     fields are already a two-up grid at every width) */
   .rent-tenancy-row {
     flex-wrap: wrap;
   }

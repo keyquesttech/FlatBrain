@@ -197,7 +197,14 @@ const defaultRent = {
   monthlyAmount: '',
   deposit: { amount: '', paidDate: '' },
   payments: [],
-  charges: []
+  charges: [],
+  // Rent has its own account details, independent of Bill Splitter's
+  bankDetails: {
+    name: 'Your Name',
+    bankName: 'Your Bank',
+    sortCode: '00-00-00',
+    accountNumber: '00000000'
+  }
 };
 
 app.get('/api/rent', (req, res) => {
