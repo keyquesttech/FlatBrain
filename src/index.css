@@ -692,21 +692,40 @@ p {
   text-overflow: ellipsis;
 }
 
-/* Tenancy: name, monthly rent and deposit on a single line */
-.rent-tenancy-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
+/* The payment description spans the full row; date + amount share the
+   second line */
+.rent-item-fields .rent-fld-thing {
+  grid-column: 1 / -1;
 }
 
-.rent-tenancy-row .rent-fld-name {
-  flex: 1 1 0;
-  min-width: 0;
+/* Standalone Generator/History tabs under the header (the shared .tabs
+   pill is normally rendered inside Navigation) */
+.rent-tabs {
+  margin-bottom: 1rem;
 }
 
-.rent-tenancy-row .rent-fld-money {
-  flex: 0 1 150px;
-  min-width: 104px;
+/* The auth card's checkbox style, compacted to sit inline in a meta row */
+.rent-include {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.rent-include span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rent-history-title {
+  font-weight: 700;
+}
+
+.rent-included-total {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.rent-included-total strong {
+  color: var(--lime);
 }
 
 .rent-row-meta {
@@ -722,25 +741,6 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-/* An overview row that carries a control next to its value */
-.sys-row-control .sys-row-value {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* Web: fixed-size columns — cards at 400px, the invoice at 680px — so the
-   rent page keeps one constant layout instead of stretching with the
-   window (below 1000px the shared main-content rules stack it fluidly) */
-@media (min-width: 1000px) {
-  .rent-content {
-    grid-template-columns: 400px 680px;
-    justify-content: center;
-  }
 }
 
 /* Calendar and month dropdowns size to their content, not the trigger, so
@@ -2842,11 +2842,6 @@ input[type="checkbox"]:focus-visible {
     min-height: 42px;
   }
 
-  /* Rent: the tenancy line wraps with the name on its own row (payment
-     fields are already a two-up grid at every width) */
-  .rent-tenancy-row {
-    flex-wrap: wrap;
-  }
 
   .rent-tenancy-row .rent-fld-name {
     flex: 1 1 100%;

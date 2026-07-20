@@ -193,18 +193,20 @@ app.delete('/api/history/:id', (req, res) => {
 const RENT_FILE = path.join(__dirname, 'rent.json');
 
 const defaultRent = {
-  name: 'Rent',
-  monthlyAmount: '',
-  deposit: { amount: '', paidDate: '' },
-  payments: [],
-  charges: [],
-  // Rent has its own account details, independent of Bill Splitter's
+  // The invoice being built: a title for the period plus free-form payment
+  // items (rent blocks, deposit, anything with a due date). `history` keeps
+  // every generated invoice with when it was created and when it was paid.
+  // Pre-redesign files (name/deposit/payments/charges) migrate client-side.
+  title: 'Rent',
+  items: [], // [{ id, thing, dueDate, amount, paidDate, include }]
   bankDetails: {
+    // Rent has its own account details, independent of Bill Splitter's
     name: 'Your Name',
     bankName: 'Your Bank',
     sortCode: '00-00-00',
     accountNumber: '00000000'
-  }
+  },
+  history: [] // [{ id, title, items, bankDetails, total, generatedAt, paidDate }]
 };
 
 app.get('/api/rent', (req, res) => {
