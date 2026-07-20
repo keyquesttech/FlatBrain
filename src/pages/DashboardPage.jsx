@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Receipt, Sparkles, ArrowRight } from 'lucide-react';
+import { Activity, Receipt, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 // FlatBrain home: the launcher for every app the flat runs. Each tile is an
@@ -47,16 +47,6 @@ export default function DashboardPage() {
             </Link>
           </div>
         ))}
-
-        <div className="glass-panel app-tile app-tile-soon" aria-disabled="true">
-          <div className="app-tile-main">
-            <span className="app-tile-icon"><Sparkles size={26} /></span>
-            <span className="app-tile-text">
-              <span className="app-tile-name">More apps soon</span>
-              <span className="app-tile-desc">Chores, shopping list, meter readings… whatever the flat needs next.</span>
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );

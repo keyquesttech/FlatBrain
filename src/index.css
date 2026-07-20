@@ -465,17 +465,6 @@ p {
   }
 }
 
-/* Placeholder tile for future apps */
-.app-tile-soon {
-  opacity: 0.55;
-}
-
-.app-tile-soon .app-tile-icon {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-faint);
-  box-shadow: none;
-}
-
 /* Server status tile goes blue so the launcher isn't wall-to-wall lime */
 .app-tile-blue .app-tile-icon {
   background: linear-gradient(135deg, var(--blue), var(--lime));
