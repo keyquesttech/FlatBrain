@@ -482,6 +482,11 @@ p {
   box-shadow: 0 0 24px rgba(95, 178, 255, 0.35);
 }
 
+.app-tile-pink .app-tile-icon {
+  background: linear-gradient(135deg, var(--pink), var(--blue));
+  box-shadow: 0 0 24px rgba(255, 95, 212, 0.35);
+}
+
 /* ---------- Server status page ---------- */
 .stat-grid {
   display: grid;
@@ -655,6 +660,92 @@ p {
 
 .temp-chart-empty {
   margin: 0;
+}
+
+/* ---------- Rent app ---------- */
+.rent-row {
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+.rent-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0.15rem;
+}
+
+/* Labelled fields wrap as a unit, so rows read fine at any width */
+.rent-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.rent-fields .fld {
+  flex: 1 1 138px;
+  min-width: 124px;
+}
+
+.rent-fields .fld-months {
+  flex: 0 1 96px;
+  min-width: 88px;
+}
+
+.rent-fields .rent-charge-name {
+  flex: 2 1 200px;
+}
+
+.rent-fields .rent-remove {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  margin-bottom: 1px;
+}
+
+.rent-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.rent-deposit-fld {
+  flex: 0 1 180px;
+  min-width: 140px;
+}
+
+.rent-period {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rent-period strong {
+  color: var(--lime);
+  font-weight: 700;
+}
+
+/* The sheet's Status column: a lime chip once paid, tap to undo */
+.paid-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 255, 63, 0.4);
+  background: rgba(212, 255, 63, 0.12);
+  color: var(--lime-soft);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.paid-chip:hover {
+  border-color: var(--pink);
+  color: var(--pink-soft);
 }
 
 .brand-icon {

@@ -187,6 +187,32 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
+// ---- Rent app: one document holding the tenancy, payment schedule and
+// building charges (service charge, ground rent). Small and single-editor,
+// so a whole-document GET/PUT is enough. ----
+const RENT_FILE = path.join(__dirname, 'rent.json');
+
+const defaultRent = {
+  name: 'Rent',
+  monthlyAmount: '',
+  deposit: { amount: '', paidDate: '' },
+  payments: [],
+  charges: []
+};
+
+app.get('/api/rent', (req, res) => {
+  res.json(readJSON(RENT_FILE, defaultRent));
+});
+
+app.put('/api/rent', (req, res) => {
+  const rent = req.body;
+  if (!isPlainObject(rent)) {
+    return res.status(400).json({ success: false, error: 'Rent data must be an object' });
+  }
+  writeJSON(RENT_FILE, rent);
+  res.json({ success: true, rent });
+});
+
 // ---- USB backups (see backup.js) ----
 // Panel-level: one backup covers every app's data plus the password and
 // backup settings. Lives at the bare /api/backup/* (the old
