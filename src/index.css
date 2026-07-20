@@ -110,56 +110,68 @@ body {
   animation: lavaRise ease-in-out infinite alternate;
 }
 
-.lava-1 { top: -12%; right: -6%; animation-duration: 37s; animation-delay: -9s; }
+.lava-1 { top: -12%; right: -6%; animation-duration: 26s; animation-delay: -9s; }
 .lava-1 .lava-blob {
   width: 440px;
   height: 440px;
-  background: radial-gradient(circle, rgba(212, 255, 63, 0.2), transparent 70%);
-  animation-duration: 29s;
+  background: radial-gradient(circle, rgba(212, 255, 63, 0.27), transparent 70%);
+  animation-duration: 17s;
   animation-delay: -11s;
 }
 
-.lava-2 { bottom: -16%; left: -8%; animation-duration: 43s; animation-delay: -19s; }
+.lava-2 { bottom: -16%; left: -8%; animation-duration: 31s; animation-delay: -19s; }
 .lava-2 .lava-blob {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(255, 95, 212, 0.17), transparent 70%);
-  animation-duration: 31s;
+  background: radial-gradient(circle, rgba(255, 95, 212, 0.23), transparent 70%);
+  animation-duration: 19s;
   animation-delay: -7s;
   animation-direction: alternate-reverse;
 }
 
-.lava-3 { top: 28%; left: 56%; animation-duration: 49s; animation-delay: -23s; }
+.lava-3 { top: 28%; left: 56%; animation-duration: 23s; animation-delay: -14s; }
 .lava-3 .lava-blob {
   width: 380px;
   height: 380px;
-  background: radial-gradient(circle, rgba(95, 178, 255, 0.13), transparent 70%);
-  animation-duration: 26s;
+  background: radial-gradient(circle, rgba(95, 178, 255, 0.18), transparent 70%);
+  animation-duration: 15s;
   animation-delay: -13s;
 }
 
-.lava-4 { top: 58%; left: 6%; animation-duration: 41s; animation-delay: -5s; }
+.lava-4 { top: 58%; left: 6%; animation-duration: 21s; animation-delay: -5s; }
 .lava-4 .lava-blob {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(255, 200, 80, 0.11), transparent 70%);
-  animation-duration: 23s;
+  background: radial-gradient(circle, rgba(255, 200, 80, 0.15), transparent 70%);
+  animation-duration: 13s;
   animation-delay: -16s;
   animation-direction: alternate-reverse;
 }
 
+/* The small fast bubble — the classic lava-lamp tell, and the first thing
+   the eye catches */
+.lava-5 { bottom: -8%; left: 32%; animation-duration: 12s; animation-delay: -3s; }
+.lava-5 .lava-blob {
+  width: 150px;
+  height: 150px;
+  filter: blur(14px);
+  background: radial-gradient(circle, rgba(212, 255, 63, 0.3), transparent 70%);
+  animation-duration: 9s;
+  animation-delay: -4s;
+}
+
 @keyframes lavaSway {
-  from { transform: translateX(-6vw); }
-  to { transform: translateX(7vw); }
+  from { transform: translateX(-8vw); }
+  to { transform: translateX(9vw); }
 }
 
 /* Rise with a wobble: asymmetric scale at the waypoints reads as the blob
    stretching and settling like wax, without animating the blur itself */
 @keyframes lavaRise {
-  0% { transform: translateY(22vh) scale(0.92, 1.06); }
-  35% { transform: translateY(-2vh) scale(1.07, 0.94); }
-  70% { transform: translateY(-15vh) scale(0.97, 1.04); }
-  100% { transform: translateY(-27vh) scale(1.05, 0.95); }
+  0% { transform: translateY(30vh) scale(0.88, 1.1); }
+  35% { transform: translateY(-5vh) scale(1.12, 0.9); }
+  70% { transform: translateY(-20vh) scale(0.94, 1.07); }
+  100% { transform: translateY(-33vh) scale(1.09, 0.93); }
 }
 
 /* Film-grain overlay: inline SVG turbulence, tiled — breaks up the flat
