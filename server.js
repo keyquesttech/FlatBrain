@@ -188,6 +188,9 @@ app.delete('/api/history/:id', (req, res) => {
 });
 
 // ---- USB backups (see backup.js) ----
+// Panel-level: one backup covers every app's data plus the password and
+// backup settings. Lives at the bare /api/backup/* (the old
+// /api/billsplitter/backup/* path still reaches it via the prefix strip).
 const backup = createBackupManager(__dirname);
 
 app.get('/api/backup/status', (req, res) => {
