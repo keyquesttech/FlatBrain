@@ -488,8 +488,12 @@ p {
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: clamp(12px, 2vw, 18px);
   margin-bottom: clamp(12px, 2vw, 18px);
-  /* collapsed cards hug their header instead of stretching to the row */
-  align-items: start;
+}
+
+/* Open cards stretch to share their row's height, so CPU/Memory/Storage
+   stay the same size; a collapsed card still hugs its header. */
+.stat-grid > .is-closed {
+  align-self: start;
 }
 
 /* The temperature card spans the whole top row */
