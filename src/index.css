@@ -1011,27 +1011,64 @@ input[type="checkbox"]:focus-visible {
   pointer-events: none;
 }
 
-.invoice-orb {
+/* The invoice's own lava: same nested sway+rise trick as the app underlay,
+   but with element-relative % travel so it scales with each orb. On screen
+   only — the PNG capture removes .invoice-orb-layer before rendering. */
+.invoice-lava {
   position: absolute;
+  will-change: transform;
+  animation: invoiceLavaSway ease-in-out infinite alternate;
+}
+
+.invoice-orb {
+  display: block;
   border-radius: 50%;
   filter: blur(10px);
   pointer-events: none;
+  will-change: transform;
+  animation: invoiceLavaRise ease-in-out infinite alternate;
 }
 
+.invoice-lava-lime { top: -120px; right: -110px; animation-duration: 19s; animation-delay: -6s; }
 .invoice-orb-lime {
-  top: -120px;
-  right: -110px;
   width: 320px;
   height: 320px;
   background: radial-gradient(circle, rgba(212, 255, 63, 0.32), transparent 70%);
+  animation-duration: 13s;
+  animation-delay: -5s;
 }
 
+.invoice-lava-pink { bottom: -140px; left: -90px; animation-duration: 23s; animation-delay: -11s; }
 .invoice-orb-pink {
-  bottom: -140px;
-  left: -90px;
   width: 300px;
   height: 300px;
   background: radial-gradient(circle, rgba(255, 95, 212, 0.25), transparent 70%);
+  animation-duration: 15s;
+  animation-delay: -8s;
+  animation-direction: alternate-reverse;
+}
+
+/* Small fast bubble drifting up the right edge of the document */
+.invoice-lava-bubble { bottom: 8%; right: 4%; animation-duration: 10s; animation-delay: -2s; }
+.invoice-orb-bubble {
+  width: 120px;
+  height: 120px;
+  filter: blur(12px);
+  background: radial-gradient(circle, rgba(212, 255, 63, 0.2), transparent 70%);
+  animation-duration: 8s;
+  animation-delay: -3s;
+}
+
+@keyframes invoiceLavaSway {
+  from { transform: translateX(-14%); }
+  to { transform: translateX(16%); }
+}
+
+@keyframes invoiceLavaRise {
+  0% { transform: translateY(26%) scale(0.9, 1.08); }
+  35% { transform: translateY(-6%) scale(1.1, 0.92); }
+  70% { transform: translateY(-18%) scale(0.95, 1.05); }
+  100% { transform: translateY(-30%) scale(1.07, 0.94); }
 }
 
 .invoice-card {
