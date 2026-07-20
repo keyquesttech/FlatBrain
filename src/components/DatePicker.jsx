@@ -8,7 +8,7 @@ const MONTH_NAMES = [
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-export default function DatePicker({ value, onChange, placeholder = 'Select due date' }) {
+export default function DatePicker({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -59,7 +59,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select due 
   // Force UTC parsing so timezone doesn't shift the date backwards
   const displayValue = value
     ? new Date(value + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
-    : placeholder;
+    : 'Select due date';
 
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
   // JS getDay(): 0 = Sunday. Convert so Monday = 0 to match the Mo..Su header.

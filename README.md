@@ -179,7 +179,6 @@ git-ignored):
 
 - `draft.json` — Bill Splitter's current in-progress invoice
 - `history.json` — saved past invoices
-- `rent.json` — the Rent app's tenancy, payment schedule and building charges
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
 - `temp-history.json` — the Server Status page's rolling 4-hour temperature log
