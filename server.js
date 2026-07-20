@@ -295,6 +295,7 @@ function readCpuTimes() {
   const line = readSysFile('/proc/stat')?.split('\n')[0];
   if (!line) return null;
   const t = line.trim().split(/\s+/).slice(1, 9).map(Number);
+  if (t.length < 5 || !t.every(Number.isFinite)) return null;
   const idle = t[3] + t[4]; // idle + iowait
   return { idle, total: t.reduce((a, b) => a + b, 0) };
 }
@@ -373,24 +374,41 @@ function diskInfo() {
 
 // Firmware throttling flags (undervoltage, thermal throttling). vcgencmd is
 // Pi-specific, so any failure just reports null and the page omits the line.
+// Spawning a process per 3-second poll adds up on a Pi, so the result is
+// cached briefly — the flags change rarely and 15s staleness is fine.
+const THROTTLE_CACHE_MS = 15 * 1000;
+let throttledCache = { value: null, at: 0 };
+
 function readThrottled() {
+  if (Date.now() - throttledCache.at < THROTTLE_CACHE_MS) {
+    return Promise.resolve(throttledCache.value);
+  }
   return new Promise((resolve) => {
     execFile('vcgencmd', ['get_throttled'], { timeout: 1500 }, (err, stdout) => {
       const m = !err && String(stdout).match(/=0x([0-9a-f]+)/i);
-      if (!m) return resolve(null);
-      const bits = parseInt(m[1], 16);
-      resolve({
-        undervoltageNow: Boolean(bits & 0x1),
-        throttledNow: Boolean(bits & 0x4),
-        undervoltageEver: Boolean(bits & 0x10000),
-        throttledEver: Boolean(bits & 0x40000)
-      });
+      const value = m
+        ? {
+            undervoltageNow: Boolean(parseInt(m[1], 16) & 0x1),
+            throttledNow: Boolean(parseInt(m[1], 16) & 0x4),
+            undervoltageEver: Boolean(parseInt(m[1], 16) & 0x10000),
+            throttledEver: Boolean(parseInt(m[1], 16) & 0x40000)
+          }
+        : null;
+      throttledCache = { value, at: Date.now() };
+      resolve(value);
     });
   });
 }
 
-// Polled by the dashboard's Server Status page. Lives at /api/system/* —
-// panel-level, not part of any app's namespace.
+// Core count never changes at runtime — read it once instead of allocating
+// the whole os.cpus() array on every poll.
+const CPU_CORES = os.cpus().length;
+
+// Polled every few seconds by the dashboard's Server Status page. Lives at
+// /api/system/* — panel-level, not part of any app's namespace. The 4-hour
+// temperature history is deliberately NOT in here: it only gains a point a
+// minute, so the page fetches /api/system/temp-history on its own slower
+// cadence instead of shipping ~240 points with every fast poll.
 app.get('/api/system/stats', async (req, res) => {
   const freqRaw = readSysFile('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq');
   res.json({
@@ -402,10 +420,9 @@ app.get('/api/system/stats', async (req, res) => {
     node: process.version,
     uptimeSec: Math.round(os.uptime()),
     tempC: readTempC(),
-    tempHistory,
     cpu: {
       percent: cpuUsagePercent(),
-      cores: os.cpus().length,
+      cores: CPU_CORES,
       load: os.loadavg().map((n) => Math.round(n * 100) / 100),
       mhz: freqRaw ? Math.round(Number(freqRaw) / 1000) : null
     },
@@ -413,6 +430,10 @@ app.get('/api/system/stats', async (req, res) => {
     disk: diskInfo(),
     throttled: await readThrottled()
   });
+});
+
+app.get('/api/system/temp-history', (req, res) => {
+  res.json({ history: tempHistory });
 });
 
 // Serve the built React app. Vite fingerprints everything under /assets, so

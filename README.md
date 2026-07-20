@@ -181,6 +181,7 @@ git-ignored):
 - `history.json` — saved past invoices
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
+- `temp-history.json` — the Server Status page's rolling 4-hour temperature log
 
 To back up, use the **USB Backup card** on the History page (scheduled backups
 to a USB stick, with restore), copy those files somewhere safe, or use

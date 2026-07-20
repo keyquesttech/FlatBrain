@@ -5,6 +5,9 @@ import CollapsibleCard from '../components/CollapsibleCard';
 import Navigation from '../components/Navigation';
 
 const POLL_MS = 3000;
+// The graph only gains a point a minute, so its data refreshes on its own
+// slower cadence instead of riding along with every fast stats poll.
+const HISTORY_POLL_MS = 60 * 1000;
 const CHART_WINDOW_MS = 4 * 60 * 60 * 1000;
 // A gap in the samples longer than this (service down, Pi off) breaks the
 // temperature line instead of drawing a misleading bridge across it.
@@ -157,22 +160,30 @@ function TempChart({ history }) {
 // can be null for an instant and the meters settle after one interval.
 export default function ServerStatusPage() {
   const [stats, setStats] = useState(null);
+  const [tempHistory, setTempHistory] = useState([]);
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    const getJSON = (url) => fetch(url).then((res) => {
+      if (!res.ok) throw new Error(`API ${url} failed with status ${res.status}`);
+      return res.json();
+    });
     const load = () => {
-      fetch('/api/system/stats')
-        .then((res) => {
-          if (!res.ok) throw new Error(`API /system/stats failed with status ${res.status}`);
-          return res.json();
-        })
+      getJSON('/api/system/stats')
         .then((s) => { if (!cancelled) { setStats(s); setOffline(false); } })
         .catch(() => { if (!cancelled) setOffline(true); });
     };
+    const loadHistory = () => {
+      getJSON('/api/system/temp-history')
+        .then((r) => { if (!cancelled) setTempHistory(r.history); })
+        .catch(() => {});
+    };
     load();
-    const intervalId = setInterval(load, POLL_MS);
-    return () => { cancelled = true; clearInterval(intervalId); };
+    loadHistory();
+    const statsId = setInterval(load, POLL_MS);
+    const historyId = setInterval(loadHistory, HISTORY_POLL_MS);
+    return () => { cancelled = true; clearInterval(statsId); clearInterval(historyId); };
   }, []);
 
   const cpu = stats?.cpu;
@@ -210,7 +221,7 @@ export default function ServerStatusPage() {
                     />
                   </div>
                   <div className="temp-card-chart">
-                    <TempChart history={stats.tempHistory} />
+                    <TempChart history={tempHistory} />
                   </div>
                 </div>
               </CollapsibleCard>
