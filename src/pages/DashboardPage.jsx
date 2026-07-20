@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Receipt, Sparkles, ArrowRight } from 'lucide-react';
+import { Activity, Receipt, Sparkles, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 // FlatBrain home: the launcher for every app the flat runs. Each tile is an
@@ -13,6 +13,14 @@ const APPS = [
     icon: Receipt,
     accent: 'lime',
     description: 'Split bills'
+  },
+  {
+    key: 'status',
+    name: 'Server status',
+    to: '/status',
+    icon: Activity,
+    accent: 'blue',
+    description: 'Pi temperature, CPU, memory & storage'
   }
 ];
 
