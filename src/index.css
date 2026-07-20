@@ -431,8 +431,16 @@ p {
   min-width: 0;
 }
 
+/* Icon-only remove button: a fixed 44px square, so the column labels'
+   spacer (also 44px) keeps every label centered on its column — the old
+   auto width (pill padding) pushed the label row out of line */
 .input-row .action-btn {
-  flex: 0 0 auto;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
 }
 
 input[type="text"],
