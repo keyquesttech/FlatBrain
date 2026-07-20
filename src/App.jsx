@@ -24,12 +24,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Ambient underlay behind every page: slow-drifting neon orbs and a
-          faint grain wash. Purely decorative, fixed and non-interactive. */}
+      {/* Lava-lamp underlay behind every page: neon blobs that rise, sink
+          and sway on independent periods. Purely decorative, fixed and
+          non-interactive. */}
       <div className="app-underlay" aria-hidden="true">
-        <span className="underlay-orb underlay-orb-lime" />
-        <span className="underlay-orb underlay-orb-pink" />
-        <span className="underlay-orb underlay-orb-blue" />
+        <span className="lava lava-1"><span className="lava-blob" /></span>
+        <span className="lava lava-2"><span className="lava-blob" /></span>
+        <span className="lava lava-3"><span className="lava-blob" /></span>
+        <span className="lava lava-4"><span className="lava-blob" /></span>
         <span className="underlay-grain" />
       </div>
       <Routes>

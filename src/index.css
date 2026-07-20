@@ -91,48 +91,75 @@ body {
   pointer-events: none;
 }
 
-.underlay-orb {
+/* Lava-lamp blobs. Each blob is two nested animated layers: the wrapper
+   sways horizontally while the inner blob rises/sinks and squishes on a
+   DIFFERENT period, so the combined path is a slow Lissajous wander that
+   never visibly repeats. Transforms + a static blur only (cheap to
+   composite on phones); negative delays start every blob mid-flow. */
+.lava {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(22px);
   will-change: transform;
+  animation: lavaSway ease-in-out infinite alternate;
 }
 
-.underlay-orb-lime {
-  top: -160px;
-  right: -120px;
+.lava-blob {
+  display: block;
+  border-radius: 50%;
+  filter: blur(24px);
+  will-change: transform;
+  animation: lavaRise ease-in-out infinite alternate;
+}
+
+.lava-1 { top: -12%; right: -6%; animation-duration: 37s; animation-delay: -9s; }
+.lava-1 .lava-blob {
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(212, 255, 63, 0.2), transparent 70%);
+  animation-duration: 29s;
+  animation-delay: -11s;
+}
+
+.lava-2 { bottom: -16%; left: -8%; animation-duration: 43s; animation-delay: -19s; }
+.lava-2 .lava-blob {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(212, 255, 63, 0.22), transparent 70%);
-  animation: orbDrift 52s ease-in-out infinite alternate;
+  background: radial-gradient(circle, rgba(255, 95, 212, 0.17), transparent 70%);
+  animation-duration: 31s;
+  animation-delay: -7s;
+  animation-direction: alternate-reverse;
 }
 
-.underlay-orb-pink {
-  bottom: -180px;
-  left: -120px;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255, 95, 212, 0.18), transparent 70%);
-  animation: orbDrift 64s ease-in-out infinite alternate-reverse;
+.lava-3 { top: 28%; left: 56%; animation-duration: 49s; animation-delay: -23s; }
+.lava-3 .lava-blob {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(95, 178, 255, 0.13), transparent 70%);
+  animation-duration: 26s;
+  animation-delay: -13s;
 }
 
-.underlay-orb-blue {
-  top: 38%;
-  left: 55%;
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, rgba(95, 178, 255, 0.1), transparent 70%);
-  animation: orbDriftWide 75s ease-in-out infinite alternate;
+.lava-4 { top: 58%; left: 6%; animation-duration: 41s; animation-delay: -5s; }
+.lava-4 .lava-blob {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 200, 80, 0.11), transparent 70%);
+  animation-duration: 23s;
+  animation-delay: -16s;
+  animation-direction: alternate-reverse;
 }
 
-@keyframes orbDrift {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-60px, 50px, 0) scale(1.12); }
+@keyframes lavaSway {
+  from { transform: translateX(-6vw); }
+  to { transform: translateX(7vw); }
 }
 
-@keyframes orbDriftWide {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-140px, -70px, 0) scale(1.18); }
+/* Rise with a wobble: asymmetric scale at the waypoints reads as the blob
+   stretching and settling like wax, without animating the blur itself */
+@keyframes lavaRise {
+  0% { transform: translateY(22vh) scale(0.92, 1.06); }
+  35% { transform: translateY(-2vh) scale(1.07, 0.94); }
+  70% { transform: translateY(-15vh) scale(0.97, 1.04); }
+  100% { transform: translateY(-27vh) scale(1.05, 0.95); }
 }
 
 /* Film-grain overlay: inline SVG turbulence, tiled — breaks up the flat
