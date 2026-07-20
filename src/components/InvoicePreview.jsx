@@ -108,9 +108,12 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
 
   return (
     <div className="invoice-frame" ref={ref} id="invoice-preview">
+      {/* Animated on screen only — the PNG capture removes this whole
+          layer, so downloads stay static and identical everywhere */}
       <div className="invoice-orb-layer" aria-hidden="true">
-        <div className="invoice-orb invoice-orb-lime" />
-        <div className="invoice-orb invoice-orb-pink" />
+        <span className="invoice-lava invoice-lava-lime"><span className="invoice-orb invoice-orb-lime" /></span>
+        <span className="invoice-lava invoice-lava-pink"><span className="invoice-orb invoice-orb-pink" /></span>
+        <span className="invoice-lava invoice-lava-bubble"><span className="invoice-orb invoice-orb-bubble" /></span>
       </div>
       <div className="invoice-card">
       <div className="invoice-header">
