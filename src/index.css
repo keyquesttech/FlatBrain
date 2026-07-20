@@ -465,36 +465,6 @@ p {
   }
 }
 
-/* Quick links into an app's pages */
-.app-tile-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
-  border-top: 1px dashed var(--border-soft);
-}
-
-.app-tile-link {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-faint);
-  text-decoration: none;
-  padding: 6px 12px;
-  border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.app-tile-link:hover {
-  color: var(--bg);
-  background: linear-gradient(135deg, var(--lime), #c8ff6f);
-  border-color: transparent;
-}
-
 /* Placeholder tile for future apps */
 .app-tile-soon {
   opacity: 0.55;
