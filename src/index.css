@@ -651,6 +651,42 @@ p {
   margin: 0;
 }
 
+/* Status pills — compact state chips used by the Backup and Reboot cards
+   instead of sentence-long status labels */
+.status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.9rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--pill-bg);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.status-pill-ok {
+  border-color: rgba(212, 255, 63, 0.35);
+  background: rgba(212, 255, 63, 0.1);
+  color: var(--lime-soft);
+}
+
+.status-pill-warn {
+  border-color: rgba(255, 95, 212, 0.4);
+  background: rgba(255, 95, 212, 0.1);
+  color: var(--pink-soft);
+}
+
 /* Calendar and month dropdowns size to their content, not the trigger, so
    a narrow field can't squeeze the grid inside them */
 .picker-dropdown:not(.picker-dropdown-list) {

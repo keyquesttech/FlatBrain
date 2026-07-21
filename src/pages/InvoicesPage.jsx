@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, FileText, Landmark, Plus, X } from 'lucide-react';
+import { Download, FileText, Landmark, Plus, RotateCcw, X } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
 import CustomInvoicePreview from '../components/CustomInvoicePreview';
 import DatePicker from '../components/DatePicker';
-import { appAlert, appToast } from '../components/Dialog';
+import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getInvoicesDoc, updateInvoicesDoc } from '../api';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { newId } from '../utils/id';
@@ -97,6 +97,9 @@ export default function InvoicesPage() {
     update({ items: [...doc.items, { id: newId(), thing: '', units: 1, amount: '' }] });
   };
 
+  // Bank details are standing settings; everything else clears.
+  const resetDoc = () => update({ title: '', dueDate: '', items: [] });
+
   const downloadInvoice = async () => {
     if (busy) return;
     if (doc.items.length === 0) {
@@ -106,8 +109,9 @@ export default function InvoicesPage() {
     setBusy(true);
     try {
       await captureInvoicePng(previewRef.current, `Invoice-${(doc.title || 'Custom').trim().replace(/\s+/g, '-')}.png`);
+      resetDoc();
       playSuccess();
-      appToast('Invoice downloaded.');
+      appToast('Invoice downloaded — form reset for the next one.');
     } catch (err) {
       console.error('Error generating invoice image', err);
       appAlert('Failed to generate the invoice image. See the browser console for details.', { title: 'Download failed', tone: 'error' });
@@ -116,12 +120,22 @@ export default function InvoicesPage() {
     }
   };
 
+  const clearForm = async () => {
+    if (busy) return;
+    if (!await appConfirm('Reset the invoice? Title, due date and items will be cleared. Bank details are kept.', { title: 'Reset invoice', okLabel: 'Reset', danger: true })) return;
+    resetDoc();
+  };
+
   return (
     <div className="container animate-fade-in">
       <Navigation showTabs={false} appLabel="Invoices" />
 
       <div className="page-toolbar">
         <div className="page-toolbar-actions">
+          <button className="btn btn-secondary" onClick={clearForm} disabled={busy}>
+            <RotateCcw size={16} />
+            Reset invoice
+          </button>
           <button className="btn btn-primary" onClick={downloadInvoice} disabled={busy}>
             <Download size={18} />
             {busy ? 'Generating…' : 'Download invoice'}

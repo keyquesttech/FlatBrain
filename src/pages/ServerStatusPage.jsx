@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, Cpu, HardDrive, MemoryStick, Thermometer } from 'lucide-react';
 import BackupCard from '../components/BackupCard';
 import CollapsibleCard from '../components/CollapsibleCard';
+import RebootCard from '../components/RebootCard';
 import Navigation from '../components/Navigation';
 
 const POLL_MS = 3000;
@@ -271,6 +272,9 @@ export default function ServerStatusPage() {
 
             {/* Whole-panel USB backups live here — server care, not any one app's */}
             <BackupCard />
+
+            {/* Scheduled reboots — 06:30 default, after the backup slot */}
+            <RebootCard />
           </div>
         </>
       )}

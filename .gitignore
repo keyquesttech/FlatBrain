@@ -24,6 +24,7 @@ invoices.json
 rent.json
 password.txt
 backup-config.json
+reboot-config.json
 temp-history.json
 
 # Local Claude Code worktrees/session data — never part of the app

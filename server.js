@@ -310,6 +310,101 @@ app.delete('/api/backup/:name', (req, res) => {
 // Scheduler heartbeat — fires the backup when its scheduled time passes.
 setInterval(() => backup.checkSchedule(), 60 * 1000);
 
+// ---- Scheduled reboots (panel-level, like backups) ----
+// Weekly by default at 06:30 Sunday — half an hour after the default
+// backup slot, so the stick is fresh before the Pi goes down.
+const REBOOT_FILE = path.join(__dirname, 'reboot-config.json');
+const REBOOT_RETRY_MS = 30 * 60 * 1000;
+
+const DEFAULT_REBOOT = {
+  enabled: true,
+  frequency: 'weekly', // 'daily' | 'weekly' | 'monthly'
+  dayOfWeek: 0, // Sunday
+  dayOfMonth: 1,
+  time: '06:30',
+  lastReboot: 0,
+  lastAttempt: 0,
+  lastResult: ''
+};
+
+function readRebootConfig() {
+  const existing = readJSON(REBOOT_FILE, null);
+  if (existing) return { ...DEFAULT_REBOOT, ...existing };
+  // First run: count the schedule from now, so enabling by default can't
+  // fire a reboot for an occurrence that predates the feature.
+  const cfg = { ...DEFAULT_REBOOT, lastReboot: Date.now() };
+  writeJSON(REBOOT_FILE, cfg);
+  return cfg;
+}
+
+// Before any reboot, scheduled actions get dealt with first — and backups
+// take priority: if the backup schedule has a due, un-run backup and a
+// configured drive, it runs before the Pi goes down. The config is written
+// BEFORE the reboot command so the post-boot state can't re-trigger it.
+function performReboot(trigger) {
+  const cfg = readRebootConfig();
+  cfg.lastAttempt = Date.now();
+  let note = '';
+  const backupCfg = backup.readConfig();
+  if (backupCfg.device && backupCfg.lastSuccess < backup.lastScheduledOccurrence(backupCfg).getTime()) {
+    const result = backup.performBackup();
+    note = result.success
+      ? ' — ran the due backup first'
+      : ` — due backup failed first (${result.error})`;
+  }
+  cfg.lastReboot = Date.now();
+  cfg.lastResult = `${trigger} reboot on ${new Date().toLocaleString('en-GB')}${note}`;
+  writeJSON(REBOOT_FILE, cfg);
+  // Let the HTTP response land before the network goes away.
+  setTimeout(() => {
+    execFile('sudo', ['systemctl', 'reboot'], (err) => {
+      if (err) console.error('Reboot command failed:', err);
+    });
+  }, 1500);
+  return { success: true, message: `Rebooting${note}.` };
+}
+
+// Reuses the backup manager's schedule maths (it only reads frequency,
+// day and time from the config it's given).
+function checkRebootSchedule() {
+  const cfg = readRebootConfig();
+  if (!cfg.enabled) return;
+  if (cfg.lastReboot >= backup.lastScheduledOccurrence(cfg).getTime()) return;
+  // Never reboot within 10 minutes of boot — guards against clock
+  // catch-up right after startup looking like a missed occurrence.
+  if (os.uptime() < 600) return;
+  if (Date.now() - cfg.lastAttempt < REBOOT_RETRY_MS) return;
+  console.log('Scheduled reboot due — triggering');
+  performReboot('Scheduled');
+}
+setInterval(checkRebootSchedule, 60 * 1000);
+
+app.get('/api/reboot/status', (req, res) => {
+  res.json({ config: readRebootConfig(), uptimeSec: Math.round(os.uptime()) });
+});
+
+app.put('/api/reboot/config', (req, res) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    return res.status(400).json({ success: false, error: 'Config must be an object' });
+  }
+  const cfg = readRebootConfig();
+  const updated = {
+    ...cfg,
+    enabled: typeof body.enabled === 'boolean' ? body.enabled : cfg.enabled,
+    frequency: ['daily', 'weekly', 'monthly'].includes(body.frequency) ? body.frequency : cfg.frequency,
+    dayOfWeek: Number.isInteger(body.dayOfWeek) && body.dayOfWeek >= 0 && body.dayOfWeek <= 6 ? body.dayOfWeek : cfg.dayOfWeek,
+    dayOfMonth: Number.isInteger(body.dayOfMonth) && body.dayOfMonth >= 1 && body.dayOfMonth <= 28 ? body.dayOfMonth : cfg.dayOfMonth,
+    time: /^\d{1,2}:\d{2}$/.test(body.time || '') ? body.time : cfg.time
+  };
+  writeJSON(REBOOT_FILE, updated);
+  res.json({ success: true, config: updated });
+});
+
+app.post('/api/reboot/now', (req, res) => {
+  res.json(performReboot('Manual'));
+});
+
 // ---- Server status: host stats for the Pi this panel runs on ----
 
 function readSysFile(file) {

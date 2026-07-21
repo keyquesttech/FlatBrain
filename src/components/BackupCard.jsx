@@ -191,14 +191,6 @@ export default function BackupCard() {
     ? TIME_OPTIONS
     : [{ value: cfg.time, label: cfg.time }, ...TIME_OPTIONS];
 
-  const driveState = cfg.device
-    ? status.mounted
-      ? `Automatic backups on — mounted at ${status.mounted}.`
-      : status.devicePresent
-        ? 'Automatic backups on — mounts when backing up.'
-        : 'Automatic backups on — not plugged in right now, retries every 30 min.'
-    : 'Automatic backups off — pick a drive to turn them on.';
-
   return (
     <CollapsibleCard
       title="Backup"
@@ -223,8 +215,37 @@ export default function BackupCard() {
       }
     >
       <p className="section-desc">
-        Copies all of FlatBrain's data — every app's files, the password and a bill-history CSV — to a USB stick on the schedule below. Keeps the newest {cfg.keep} backups.
+        Everything FlatBrain stores, copied to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
       </p>
+
+      <div className="status-pills">
+        <span className={`status-pill ${cfg.device ? 'status-pill-ok' : ''}`}>
+          {cfg.device ? 'Auto backups on' : 'Auto backups off'}
+        </span>
+        {cfg.device && (
+          <span
+            className={`status-pill ${status.mounted ? 'status-pill-ok' : status.devicePresent ? '' : 'status-pill-warn'}`}
+            title={status.mounted
+              ? `Mounted at ${status.mounted}`
+              : status.devicePresent
+                ? 'Plugged in — mounts when backing up'
+                : 'Not plugged in — retries every 30 min'}
+          >
+            {cfg.device.label} · {status.mounted ? 'mounted' : status.devicePresent ? 'ready' : 'unplugged'}
+          </span>
+        )}
+        {cfg.lastResult && (
+          <span
+            className={`status-pill ${cfg.lastResult.startsWith('Backup failed') ? 'status-pill-warn' : 'status-pill-ok'}`}
+            title={cfg.lastResult}
+          >
+            Last: {cfg.lastAttempt
+              ? new Date(cfg.lastAttempt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+              : '—'}
+            {cfg.lastResult.startsWith('Backup failed') ? ' · failed' : ''}
+          </span>
+        )}
+      </div>
 
       <div className="backup-tabs" role="tablist">
         <button
@@ -253,7 +274,6 @@ export default function BackupCard() {
           options={driveOptions}
           width="100%"
         />
-        <p className="section-desc split-desc">{driveState}</p>
         {status.usage && (
           <div className="usb-meter" title="Space on the selected drive">
             <div className="usb-meter-track">
@@ -353,14 +373,6 @@ export default function BackupCard() {
       )}
 
       {message && <p className="backup-message">{message}</p>}
-      {tab === 'backup' && cfg.lastResult && (
-        <p className="section-desc backup-last">
-          {/* lastAttempt is stamped with every result, success or failure,
-              so the date always belongs to the message shown */}
-          Last: {cfg.lastResult}
-          {cfg.lastAttempt ? ` — ${new Date(cfg.lastAttempt).toLocaleString('en-GB')}` : ''}
-        </p>
-      )}
     </CollapsibleCard>
   );
 }
