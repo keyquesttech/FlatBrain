@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { CalendarClock, Landmark, Percent, Plus, Receipt, ShoppingBag, StickyNote, Users, X } from 'lucide-react';
 import MonthPicker from './MonthPicker';
 import DatePicker from './DatePicker';
 import ExtrasInputList from './ExtrasInputList';
@@ -164,7 +164,7 @@ export default function InvoiceForm({ data, onChange }) {
 
     return (
       <CollapsibleCard
-        title={`${name}'s Extras`}
+        title={<span className="stat-title"><ShoppingBag size={15} /> {name}'s Extras</span>}
         storageKey={`extras-${personKey}`}
         actions={(
           <button className="btn btn-primary btn-sm" onClick={() => addExtra(extrasKey)}>
@@ -187,7 +187,7 @@ export default function InvoiceForm({ data, onChange }) {
 
   return (
     <div className="form-card-stack">
-      <CollapsibleCard title="Invoice Details" storageKey="invoice-details">
+      <CollapsibleCard title={<span className="stat-title"><CalendarClock size={15} /> Invoice Details</span>} storageKey="invoice-details">
         <p className="section-desc">Pick the month this invoice covers — the due date fills itself in as the 7th of the month after, and stays editable.</p>
 
         <div className="form-group">
@@ -207,7 +207,7 @@ export default function InvoiceForm({ data, onChange }) {
         </div>
       </CollapsibleCard>
 
-      <CollapsibleCard title="Names" storageKey="names">
+      <CollapsibleCard title={<span className="stat-title"><Users size={15} /> Names</span>} storageKey="names">
         <div className="input-row">
           <label className="fld">
             <span className="fld-label">Flatmate 1</span>
@@ -264,7 +264,7 @@ export default function InvoiceForm({ data, onChange }) {
       </CollapsibleCard>
 
       <CollapsibleCard
-        title="Bills"
+        title={<span className="stat-title"><Receipt size={15} /> Bills</span>}
         storageKey="bills"
         actions={(
           <button className="btn btn-primary btn-sm" onClick={addBill}>
@@ -338,13 +338,13 @@ export default function InvoiceForm({ data, onChange }) {
       {renderPersonExtras('matias', 'Flatmate 1')}
       {renderPersonExtras('reka', 'Flatmate 2')}
 
-      <CollapsibleCard title="Discounts" storageKey="discounts">
+      <CollapsibleCard title={<span className="stat-title"><Percent size={15} /> Discounts</span>} storageKey="discounts">
         <p className="section-desc">Taken off a flatmate's final total — a fixed £ amount, or a % of it.</p>
         {renderPersonDiscounts('matias', 'Flatmate 1')}
         {renderPersonDiscounts('reka', 'Flatmate 2')}
       </CollapsibleCard>
 
-      <CollapsibleCard title="Notes" storageKey="notes">
+      <CollapsibleCard title={<span className="stat-title"><StickyNote size={15} /> Notes</span>} storageKey="notes">
         <p className="section-desc">Optional — anything written here appears on the invoice.</p>
         <div className="form-group">
           <label>{names.matias.trim() || 'Flatmate 1'}</label>
@@ -368,7 +368,7 @@ export default function InvoiceForm({ data, onChange }) {
         </div>
       </CollapsibleCard>
 
-      <CollapsibleCard title="Bank Details" storageKey="bank-details">
+      <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="bank-details">
         <p className="section-desc">Printed at the bottom of every invoice.</p>
         <div className="form-group">
           <label>Name</label>

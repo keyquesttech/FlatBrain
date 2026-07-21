@@ -7,7 +7,7 @@ import Navigation from '../components/Navigation';
 import ExtrasInputList from '../components/ExtrasInputList';
 import SpendingChart from '../components/SpendingChart';
 import CollapsibleCard from '../components/CollapsibleCard';
-import { Plus } from 'lucide-react';
+import { ArrowRightLeft, BarChart3, Plus, Receipt, ShoppingBag, StickyNote } from 'lucide-react';
 
 const POLL_MS = 3000;
 const SAVE_DEBOUNCE_MS = 600;
@@ -142,7 +142,7 @@ export default function UserExtrasPage({ personKey }) {
 
       <div className="form-card-stack">
         <CollapsibleCard
-          title={`${displayName}'s Extras`}
+          title={<span className="stat-title"><ShoppingBag size={15} /> {displayName}'s Extras</span>}
           storageKey="fm-extras"
           actions={(
             <button className="btn btn-primary btn-sm" onClick={() => saveExtras([...extras, newExtra()])}>
@@ -161,7 +161,7 @@ export default function UserExtrasPage({ personKey }) {
           />
         </CollapsibleCard>
 
-        <CollapsibleCard title="Your notes" storageKey="fm-notes">
+        <CollapsibleCard title={<span className="stat-title"><StickyNote size={15} /> Your notes</span>} storageKey="fm-notes">
           <p className="section-desc">Optional — anything written here appears on the invoice.</p>
           <div className="form-group">
             <label htmlFor="flatmate-note">Note</label>
@@ -176,7 +176,7 @@ export default function UserExtrasPage({ personKey }) {
           </div>
         </CollapsibleCard>
 
-        <CollapsibleCard title={`Charged to ${otherDisplayName}`} storageKey="fm-charged-other">
+        <CollapsibleCard title={<span className="stat-title"><ArrowRightLeft size={15} /> Charged to {otherDisplayName}</span>} storageKey="fm-charged-other">
           <p className="section-desc">Everything {otherDisplayName} is paying towards extras this month.</p>
           {chargedToOther.map((extra) => {
             const total = extraShares(extra).total;
@@ -194,7 +194,7 @@ export default function UserExtrasPage({ personKey }) {
           })}
         </CollapsibleCard>
 
-        <CollapsibleCard title="Charged to you" storageKey="fm-charged-you">
+        <CollapsibleCard title={<span className="stat-title"><Receipt size={15} /> Charged to you</span>} storageKey="fm-charged-you">
           <p className="section-desc">Your share of the extras {otherDisplayName} added.</p>
           {chargedToYou.map((extra) => {
             const total = extraShares(extra).total;
@@ -212,7 +212,7 @@ export default function UserExtrasPage({ personKey }) {
           })}
         </CollapsibleCard>
 
-        <CollapsibleCard title="History" storageKey="fm-history">
+        <CollapsibleCard title={<span className="stat-title"><BarChart3 size={15} /> History</span>} storageKey="fm-history">
           <p className="section-desc">Monthly bill totals from the saved invoices.</p>
           <SpendingChart history={history} />
         </CollapsibleCard>

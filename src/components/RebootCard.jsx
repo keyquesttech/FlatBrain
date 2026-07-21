@@ -100,7 +100,7 @@ export default function RebootCard() {
 
   return (
     <CollapsibleCard
-      title="Reboots"
+      title={<span className="stat-title"><Power size={15} /> Reboots</span>}
       storageKey="status-reboot"
       actions={(
         <div className="backup-header-actions">
