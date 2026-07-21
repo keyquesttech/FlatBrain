@@ -15,7 +15,7 @@ const LIST_COLUMNS = [
 ];
 
 const HEADER = [
-  'id', 'period', 'dueDate', 'timestamp',
+  'id', 'period', 'dueDate', 'timestamp', 'paidDate',
   'netTotal', 'eachNetTotal', 'matiasTotalDue', 'rekaTotalDue', 'splitPercent',
   'matiasName', 'rekaName', 'matiasNote', 'rekaNote',
   'bankName', 'bankBankName', 'bankSortCode', 'bankAccountNumber',
@@ -30,6 +30,7 @@ export function historyToCSV(invoices) {
       inv.period ?? '',
       inv.dueDate ?? '',
       inv.timestamp ?? '',
+      inv.paidDate ?? '',
       inv.netTotal ?? '',
       inv.eachNetTotal ?? '',
       inv.matiasTotalDue ?? '',
@@ -83,6 +84,7 @@ export function csvToHistory(text) {
       period: get('period'),
       dueDate: get('dueDate'),
       timestamp: num('timestamp') || Date.now(),
+      paidDate: get('paidDate'),
       netTotal: num('netTotal'),
       eachNetTotal: num('eachNetTotal'),
       matiasTotalDue: num('matiasTotalDue'),

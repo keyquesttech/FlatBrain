@@ -235,6 +235,18 @@ export default function MainPage() {
     }
   };
 
+  // Marking paid upserts the invoice with its paid date (the server
+  // replaces by id), which stamps its preview and future downloads.
+  const handleMarkPaid = async (invoice, paidDate) => {
+    try {
+      const res = await saveInvoice({ ...invoice, paidDate });
+      setInvoices(res.history);
+    } catch (err) {
+      console.error('Error updating paid status', err);
+      appAlert('Failed to update the paid status. Check the server and try again.', { title: 'Update failed', tone: 'error' });
+    }
+  };
+
   const handleDeleteInvoice = async (id) => {
     if (!await appConfirm('Delete this invoice from history?', { title: 'Delete invoice', okLabel: 'Delete', danger: true })) return;
     try {
@@ -420,6 +432,7 @@ export default function MainPage() {
             onDelete={handleDeleteInvoice}
             onLoad={loadInvoice}
             onDownload={downloadFromHistory}
+            onMarkPaid={handleMarkPaid}
             downloadingId={historyDownload?.id}
           />
 
@@ -451,7 +464,7 @@ export default function MainPage() {
       {historyDownload && (
         <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '720px' }} aria-hidden="true">
           <InvoicePreview
-            data={{ ...normalizeDraft(historyDownload), timestamp: historyDownload.timestamp }}
+            data={{ ...normalizeDraft(historyDownload), timestamp: historyDownload.timestamp, paidDate: historyDownload.paidDate }}
             history={invoices}
             ref={historyPreviewRef}
           />
