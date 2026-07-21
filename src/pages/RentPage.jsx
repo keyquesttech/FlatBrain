@@ -155,7 +155,7 @@ export default function RentPage() {
       try {
         await captureInvoicePng(
           downloadPreviewRef.current,
-          `Rent-${(dataRef.current?.lodger || 'period').trim().replace(/\s+/g, '-')}-${periodDownload.periodFrom || 'period'}.png`
+          `Rent-${(dataRef.current?.lodger || 'period').trim().replace(/\s+/g, '-')}-${periodDownload.periodFrom || 'period'}${periodDownload.paymentDate ? '-PAID' : ''}.png`
         );
       } catch (err) {
         console.error('Error generating rent invoice image', err);
