@@ -185,7 +185,7 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
                 </div>
                 {item.boughtDate && (
                   <div className="due-item-sub">
-                    Added on {new Date(item.boughtDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                    Bought on {new Date(item.boughtDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
                   </div>
                 )}
               </div>
