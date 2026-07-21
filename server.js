@@ -194,7 +194,8 @@ const INVOICES_FILE = path.join(__dirname, 'invoices.json');
 
 const defaultInvoicesDoc = {
   title: '',
-  items: [], // [{ id, thing, dueDate, amount, paidDate, include }]
+  dueDate: '',
+  items: [], // [{ id, thing, units, amount }] — amount is the line's TOTAL
   bankDetails: {
     // The generator's own account details, independent of Bill Splitter's
     name: 'Your Name',
@@ -202,7 +203,7 @@ const defaultInvoicesDoc = {
     sortCode: '00-00-00',
     accountNumber: '00000000'
   },
-  history: [] // [{ id, title, items, bankDetails, total, generatedAt, paidDate }]
+  history: [] // [{ id, title, dueDate, items, bankDetails, total, generatedAt, paidDate }]
 };
 
 app.get('/api/invoices', (req, res) => {

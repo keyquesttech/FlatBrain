@@ -652,54 +652,13 @@ p {
 }
 
 /* ---------- Custom invoice generator ---------- */
-.inv-row {
-  padding: 0.75rem 0;
-  border-bottom: 1px dashed var(--border-soft);
-}
-
-.inv-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0.15rem;
-}
-
-/* An item's fields sit two-up in a grid — the description spans the full
-   first row, date + amount share the second; status and remove live on
-   the meta line below */
-.inv-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.inv-fields .fld {
-  min-width: 0;
-}
-
-.inv-fields .inv-fld-thing {
-  grid-column: 1 / -1;
-}
-
-.inv-fields .picker-trigger span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* Item rows reuse Bill Splitter's extras-row styles; only the tabs,
+   history cards and paid control need their own rules. */
 
 /* Standalone Generator/History tabs under the header (the shared .tabs
    pill is normally rendered inside Navigation) */
 .inv-tabs {
   margin-bottom: 1rem;
-}
-
-/* The auth card's checkbox style, compacted to sit inline in a meta row */
-.inv-include {
-  width: auto;
-  margin-bottom: 0;
-}
-
-.inv-include span {
-  font-size: 0.8rem;
-  color: var(--text-muted);
 }
 
 .inv-history-title {
@@ -741,9 +700,8 @@ p {
   gap: 8px;
 }
 
-/* Fields in the right-hand column (and the paid control at a row's right
-   edge) open their dropdown leftwards so it stays over the card */
-.inv-fields .fld:nth-child(even) .picker-dropdown,
+/* The paid control sits at a row's right edge, so its calendar opens
+   leftwards to stay over the card */
 .paid-picker .picker-dropdown {
   left: auto;
   right: 0;

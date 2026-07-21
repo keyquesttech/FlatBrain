@@ -1,19 +1,29 @@
 import React, { forwardRef } from 'react';
 import { formatCurrency, parseAmount, round2 } from '../utils/calculations';
-import { formatDay } from '../utils/dates';
 import { DEFAULT_BANK } from '../utils/defaults';
 
 // A custom invoice, built from the same frame and cards as Bill Splitter's
 // so it downloads through the identical PNG capture path. `doc` is either
-// the live draft (title + the ticked items) or a history snapshot, in
-// which case generatedAt fixes the issued date.
+// the live draft (title, due date, items) or a history snapshot, in which
+// case generatedAt fixes the issued date.
+const unitsOf = (i) => {
+  const n = parseInt(i?.units, 10);
+  return isNaN(n) || n < 1 ? 1 : n;
+};
+
+// Multi-unit lines read like Bill Splitter's extras: "Bulbs (2 × £7.50)";
+// single-unit lines keep just their name.
+function itemLabel(i) {
+  const units = unitsOf(i);
+  const name = i.thing?.trim() || 'Item';
+  if (units === 1) return name;
+  return `${name} (${units} × ${formatCurrency(parseAmount(i.amount) / units)})`;
+}
+
 const CustomInvoicePreview = forwardRef(({ doc }, ref) => {
   const bankDetails = { ...DEFAULT_BANK, ...(doc.bankDetails || {}) };
   const items = doc.items || [];
   const total = items.reduce((sum, i) => round2(sum + round2(parseAmount(i.amount))), 0);
-  const nextUnpaid = items
-    .filter((i) => !i.paidDate && i.dueDate)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   const issued = doc.generatedAt ? new Date(doc.generatedAt) : new Date();
 
   return (
@@ -37,21 +47,12 @@ const CustomInvoicePreview = forwardRef(({ doc }, ref) => {
           <div className="due-card due-card-summary due-card-summary-flatmate2">
             <div className="due-card-name">Items</div>
             {items.length === 0 && (
-              <div className="due-item-sub">Nothing on this invoice yet — tick items in the list.</div>
+              <div className="due-item-sub">Nothing on this invoice yet — add items in the form.</div>
             )}
             {items.map((i) => (
-              <div className="due-item" key={i.id}>
-                <div className="due-line">
-                  <span>{i.thing?.trim() || 'Item'}</span>
-                  <span>{formatCurrency(i.amount)}</span>
-                </div>
-                {(i.dueDate || i.paidDate) && (
-                  <div className="due-item-sub">
-                    {i.dueDate ? `Due ${formatDay(i.dueDate)}` : ''}
-                    {i.dueDate && i.paidDate ? ' — ' : ''}
-                    {i.paidDate ? `paid ${formatDay(i.paidDate)}` : (i.dueDate ? 'not paid yet' : '')}
-                  </div>
-                )}
+              <div className="due-line" key={i.id}>
+                <span>{itemLabel(i)}</span>
+                <span>{formatCurrency(i.amount)}</span>
               </div>
             ))}
           </div>
@@ -92,9 +93,9 @@ const CustomInvoicePreview = forwardRef(({ doc }, ref) => {
         <div className="invoice-footer">
           <p>Thank you for settling this promptly!</p>
           <p>Please send the total due to the account above.</p>
-          {nextUnpaid && (
+          {doc.dueDate && (
             <p className="invoice-due-date">
-              Due by: {formatDay(nextUnpaid.dueDate)}
+              Due by: {new Date(doc.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
             </p>
           )}
         </div>

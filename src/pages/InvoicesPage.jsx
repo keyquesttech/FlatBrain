@@ -23,20 +23,30 @@ const DEFAULT_INV_BANK = {
   accountNumber: '00000000'
 };
 
+// Items are Bill Splitter-style lines: description, units and the TOTAL
+// price for the line (the per-unit price is derived, never entered).
+// Items saved by the first version of this app carried per-line due/paid
+// dates and an include flag — those fold away here; the invoice's due
+// date now lives at the top level like Bill Splitter's.
 function normalizeDoc(d) {
   return {
     title: d?.title || '',
-    items: Array.isArray(d?.items) ? d.items : [],
+    dueDate: d?.dueDate || '',
+    items: (Array.isArray(d?.items) ? d.items : []).map((i) => ({
+      id: i.id || newId(),
+      thing: i.thing || '',
+      units: i.units ?? 1,
+      amount: i.amount || ''
+    })),
     bankDetails: { ...DEFAULT_INV_BANK, ...(d?.bankDetails || {}) },
     history: Array.isArray(d?.history) ? d.history : []
   };
 }
 
-// Custom invoice generator, shaped like Bill Splitter: keep a list of
-// anything owed (each line with a due date, amount and paid status), tick
-// the lines a given invoice should cover, download it as a PNG — and the
-// History tab remembers every generated invoice with when it was created
-// and when it got paid.
+// Custom invoice generator, shaped like Bill Splitter: the draft IS the
+// invoice — title, due date and itemized lines — Download & Save captures
+// the PNG and files it in History, which tracks when each invoice was
+// generated and when it got paid.
 export default function InvoicesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') === 'history' ? 'history' : 'new';
@@ -118,17 +128,15 @@ export default function InvoicesPage() {
   };
 
   const addItem = () => {
-    update({ items: [...doc.items, { id: newId(), thing: '', dueDate: '', amount: '', paidDate: '', include: true }] });
+    update({ items: [...doc.items, { id: newId(), thing: '', units: 1, amount: '' }] });
   };
 
-  const included = doc.items.filter((i) => i.include !== false);
-  const invoiceTotal = included.reduce((sum, i) => round2(sum + round2(parseAmount(i.amount))), 0);
-  const invoiceDoc = { title: doc.title, items: included, bankDetails: doc.bankDetails };
+  const invoiceTotal = doc.items.reduce((sum, i) => round2(sum + round2(parseAmount(i.amount))), 0);
 
   const downloadAndSave = async () => {
     if (busy) return;
-    if (included.length === 0) {
-      appAlert('Tick at least one item ("On invoice") before generating.', { title: 'Nothing to invoice' });
+    if (doc.items.length === 0) {
+      appAlert('Add at least one item before generating.', { title: 'Nothing to invoice' });
       return;
     }
     setBusy(true);
@@ -137,15 +145,23 @@ export default function InvoicesPage() {
       const entry = {
         id: newId(),
         title: doc.title,
-        items: included.map((i) => ({ ...i })),
+        dueDate: doc.dueDate,
+        items: doc.items.map((i) => ({ ...i })),
         bankDetails: { ...doc.bankDetails },
         total: invoiceTotal,
         generatedAt: Date.now(),
         paidDate: ''
       };
-      update({ history: [entry, ...doc.history] });
+      // Like Bill Splitter: the saved invoice goes to history and the form
+      // resets for the next one — only the bank details are standing.
+      update({
+        history: [entry, ...doc.history],
+        title: '',
+        dueDate: '',
+        items: []
+      });
       playSuccess();
-      appToast('Invoice downloaded and saved to history.');
+      appToast('Invoice downloaded, saved to history — form reset for the next one.');
     } catch (err) {
       console.error('Error generating invoice image', err);
       appAlert('Failed to generate the invoice image. See the browser console for details.', { title: 'Download failed', tone: 'error' });
@@ -186,18 +202,7 @@ export default function InvoicesPage() {
 
           <div className="main-content">
             <div className="form-card-stack">
-              <CollapsibleCard
-                title={<span className="stat-title"><FileText size={15} /> Items</span>}
-                storageKey="inv-items"
-                actions={(
-                  <button className="btn btn-primary btn-sm" onClick={addItem}>
-                    <Plus size={16} /> Add item
-                  </button>
-                )}
-              >
-                <p className="section-desc">
-                  List anything owed — each line has a due date, amount and its own paid status. Tick the lines this invoice covers; the rest stay here for later invoices.
-                </p>
+              <CollapsibleCard title={<span className="stat-title"><FileText size={15} /> Invoice Details</span>} storageKey="inv-details">
                 <div className="form-group">
                   <label>Invoice title</label>
                   <input
@@ -208,67 +213,80 @@ export default function InvoicesPage() {
                     maxLength={80}
                   />
                 </div>
+                <div className="form-group">
+                  <label>Due Date</label>
+                  <DatePicker value={doc.dueDate} onChange={(v) => update({ dueDate: v })} />
+                </div>
+              </CollapsibleCard>
+
+              <CollapsibleCard
+                title={<span className="stat-title"><Landmark size={15} /> Items</span>}
+                storageKey="inv-items"
+                actions={(
+                  <button className="btn btn-primary btn-sm" onClick={addItem}>
+                    <Plus size={16} /> Add Item
+                  </button>
+                )}
+              >
+                <p className="section-desc">
+                  Units and the total price for the line — the price per unit is worked out automatically.
+                </p>
                 {doc.items.length === 0 && (
                   <p className="section-desc">No items yet — add the first one.</p>
                 )}
+                {doc.items.length > 0 && (
+                  <div className="input-row extras-row row-labels" aria-hidden="true">
+                    <span className="rl-over-input">Item</span>
+                    <span className="packs-input">Units</span>
+                    <span className="currency-input rl-over-pill">Total £</span>
+                    <span className="row-labels-action" />
+                  </div>
+                )}
                 {doc.items.map((i) => (
-                  <div className="inv-row" key={i.id}>
-                    <div className="inv-fields">
-                      <label className="fld inv-fld-thing">
-                        <span className="fld-label">Description</span>
-                        <input
-                          type="text"
-                          value={i.thing}
-                          onChange={(e) => updateItem(i.id, { thing: e.target.value })}
-                          placeholder="What this line charges for"
-                          maxLength={80}
-                        />
-                      </label>
-                      <label className="fld">
-                        <span className="fld-label">Due date</span>
-                        <DatePicker value={i.dueDate} onChange={(v) => updateItem(i.id, { dueDate: v })} />
-                      </label>
-                      <label className="fld">
-                        <span className="fld-label">Amount</span>
-                        <CurrencyInput
-                          formatted
-                          value={i.amount}
-                          onChange={(e) => updateItem(i.id, { amount: e.target.value })}
-                          aria-label="Item amount"
-                        />
-                      </label>
-                    </div>
-                    <div className="inv-row-meta">
-                      <label className="remember-checkbox inv-include">
-                        <input
-                          type="checkbox"
-                          checked={i.include !== false}
-                          onChange={(e) => updateItem(i.id, { include: e.target.checked })}
-                        />
-                        <span>On invoice</span>
-                      </label>
-                      <span className="inv-row-actions">
-                        <PaidControl paidDate={i.paidDate} onChange={(paidDate) => updateItem(i.id, { paidDate })} />
-                        <button
-                          className="btn-icon btn-icon-danger"
-                          onClick={() => update({ items: doc.items.filter((x) => x.id !== i.id) })}
-                          aria-label="Remove item"
-                          title="Remove this item"
-                        >
-                          <X size={16} />
-                        </button>
-                      </span>
-                    </div>
+                  <div key={i.id} className="input-row extras-row">
+                    <input
+                      type="text"
+                      value={i.thing}
+                      onChange={(e) => updateItem(i.id, { thing: e.target.value })}
+                      placeholder="Item"
+                      aria-label="Item description"
+                      maxLength={80}
+                    />
+                    <input
+                      type="number"
+                      className="packs-input"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      value={i.units}
+                      onChange={(e) => updateItem(i.id, { units: e.target.value })}
+                      placeholder="1"
+                      aria-label="Units"
+                    />
+                    <CurrencyInput
+                      formatted
+                      value={i.amount}
+                      onChange={(e) => updateItem(i.id, { amount: e.target.value })}
+                      placeholder="Total"
+                      aria-label="Item total price"
+                    />
+                    <button
+                      className="btn btn-danger action-btn"
+                      onClick={() => update({ items: doc.items.filter((x) => x.id !== i.id) })}
+                      aria-label="Remove item"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
                 ))}
-                {included.length > 0 && (
+                {doc.items.length > 0 && (
                   <p className="section-desc inv-included-total">
-                    On this invoice: {included.length} item{included.length === 1 ? '' : 's'} · <strong>{formatCurrency(invoiceTotal)}</strong>
+                    Invoice total: <strong>{formatCurrency(invoiceTotal)}</strong>
                   </p>
                 )}
               </CollapsibleCard>
 
-              <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank details</span>} storageKey="inv-bank">
+              <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="inv-bank">
                 <p className="section-desc">Shown on the invoice — separate from Bill Splitter's account details.</p>
                 {[
                   ['name', 'Name', 'Account holder name'],
@@ -294,7 +312,7 @@ export default function InvoicesPage() {
             </div>
 
             <div className="preview-column">
-              <CustomInvoicePreview doc={invoiceDoc} ref={previewRef} />
+              <CustomInvoicePreview doc={doc} ref={previewRef} />
             </div>
           </div>
         </>
