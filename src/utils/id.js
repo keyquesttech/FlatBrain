@@ -14,5 +14,5 @@ export function newExtra() {
   // marks price as "total paid" with packs = units in the pack (current
   // semantics) — items without the markers are legacy and get converted
   // on read (see mergedExtras).
-  return { id: newId(), thing: '', packs: 1, price: '', percent: 50, percentOwn: true, unitPriced: true };
+  return { id: newId(), thing: '', packs: 1, price: '', percent: 50, percentOwn: true, unitPriced: true, boughtDate: '' };
 }

@@ -183,6 +183,11 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
                 <div className="due-item-sub">
                   Added by {addedBy} — {person.otherName} {`pays ${formatCurrency(otherAmount)}`}
                 </div>
+                {item.boughtDate && (
+                  <div className="due-item-sub">
+                    Added on {new Date(item.boughtDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                  </div>
+                )}
               </div>
             ))}
             {person.discounts.filter((d) => parseAmount(d.value) !== 0).map((d) => (

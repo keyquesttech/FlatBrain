@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
+import DatePicker from './DatePicker';
 import { extraUnitPrice, formatCurrency, limitDecimals, packsOf, parseAmount } from '../utils/calculations';
 
 export default function ExtrasInputList({
@@ -101,6 +102,27 @@ export default function ExtrasInputList({
               = {formatCurrency(extraUnitPrice(extra))} per unit ({packsOf(extra)} units)
             </div>
           )}
+          {/* The optional bought date lives on its own compact line, so the
+              item row keeps its one-line layout on every screen */}
+          <div className="extra-bought">
+            <span className="extra-bought-tag">Bought</span>
+            <DatePicker
+              value={extra.boughtDate || ''}
+              onChange={(v) => onUpdate(extra.id, 'boughtDate', v)}
+              placeholder="Add date…"
+            />
+            {extra.boughtDate && (
+              <button
+                type="button"
+                className="btn-icon btn-icon-danger"
+                onClick={() => onUpdate(extra.id, 'boughtDate', '')}
+                title="Clear the bought date"
+                aria-label="Clear the bought date"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </React.Fragment>
       ))}
     </>
