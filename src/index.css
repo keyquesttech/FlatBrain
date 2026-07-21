@@ -733,6 +733,36 @@ p {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+  position: relative;
+}
+
+.rent-tile-selected {
+  border-color: rgba(212, 255, 63, 0.5);
+}
+
+/* Bulk-select tick floating over the thumbnail's corner */
+.rent-tile-select {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 2;
+  width: auto;
+  margin: 0;
+}
+
+/* The read-only Period total, dressed like an input so the form reads as
+   one piece — but it's computed, never typed */
+.rent-total-display {
+  display: flex;
+  align-items: center;
+  min-height: 47px;
+  padding: 12px 16px;
+  background: var(--pill-bg);
+  border: 1px dashed var(--border-soft);
+  border-radius: 14px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--lime-soft);
 }
 
 .rent-thumb {

@@ -102,6 +102,7 @@ export default function RentPage() {
   const [rent, setRent] = useState(null);
   const [saveError, setSaveError] = useState(false);
   const [periodDownload, setPeriodDownload] = useState(null);
+  const [selected, setSelected] = useState(() => new Set());
   const dataRef = useRef(null);
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
@@ -242,7 +243,29 @@ export default function RentPage() {
       payments: rent.payments.filter((x) => x.id !== p.id),
       ...(rent.editingId === p.id ? { draftPayment: normalizePayment({}), editingId: '' } : {})
     });
+    setSelected((s) => { const next = new Set(s); next.delete(p.id); return next; });
     appToast('Period deleted.');
+  };
+
+  // Bulk selection on the History tab: tick tiles (or Select all), then
+  // delete them in one confirmed sweep.
+  const toggleSelect = (id) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (!await appConfirm(`Delete ${selected.size} selected period${selected.size === 1 ? '' : 's'} from history? This can't be undone.`, { title: 'Delete selected', okLabel: 'Delete', danger: true })) return;
+    update({
+      payments: rent.payments.filter((p) => !selected.has(p.id)),
+      ...(selected.has(rent.editingId) ? { draftPayment: normalizePayment({}), editingId: '' } : {})
+    });
+    setSelected(new Set());
+    appToast('Selected periods deleted.');
   };
 
   const clearForm = async () => {
@@ -362,7 +385,7 @@ export default function RentPage() {
                 ) : undefined}
               >
                 <p className="section-desc">
-                  One period at a time — the total fills itself from the 1× period rent, and filling the payment date marks it paid. Save payment files it in History and rolls the form on to the next block.
+                  One period at a time — the total works itself out from the 1× period rent, and filling the payment date marks it paid. Save payment files it in History and rolls the form on to the next block.
                 </p>
                 {editing && (
                   <p className="section-desc stat-detail-warn">
@@ -382,15 +405,18 @@ export default function RentPage() {
                     <span className="fld-label">Due date</span>
                     <DatePicker value={draft.dueDate} onChange={(v) => updateDraft({ dueDate: v })} placeholder="Select date" />
                   </label>
-                  <label className="fld">
-                    <span className="fld-label">Period total</span>
-                    <CurrencyInput
-                      formatted
-                      value={draft.amount}
-                      onChange={(e) => updateDraft({ amount: e.target.value })}
+                  <div className="fld">
+                    <span className="fld-label">Period total — automatic</span>
+                    <div
+                      className="rent-total-display"
+                      title="1× period rent × the period's length"
                       aria-label="Period total"
-                    />
-                  </label>
+                    >
+                      {parseAmount(draft.amount) > 0
+                        ? formatCurrency(draft.amount)
+                        : parseAmount(rent.unitRent) > 0 ? '—' : 'Set the 1× period rent'}
+                    </div>
+                  </div>
                   <label className="fld rent-fld-wide">
                     <span className="fld-label">Payment date — filling it marks the period paid</span>
                     <DatePicker value={draft.paymentDate} onChange={(v) => updateDraft({ paymentDate: v })} placeholder="Not paid yet" />
@@ -437,8 +463,25 @@ export default function RentPage() {
         </>
       ) : (
         <>
+          {sortedPayments.length > 0 && (
+            <div className="page-toolbar">
+              <div className="page-toolbar-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setSelected(selected.size === sortedPayments.length ? new Set() : new Set(sortedPayments.map((p) => p.id)))}
+                >
+                  {selected.size === sortedPayments.length ? 'Clear selection' : 'Select all'}
+                </button>
+                <button className="btn btn-danger" onClick={deleteSelected} disabled={selected.size === 0}>
+                  <Trash2 size={16} />
+                  Delete selected{selected.size > 0 ? ` (${selected.size})` : ''}
+                </button>
+              </div>
+            </div>
+          )}
+
           <p className="section-desc">
-            Every saved period as its own invoice — tap the pencil to edit it in the generator, download it, or mark it paid when the money lands.
+            Every saved period as its own invoice — tap the pencil to edit it in the generator, download it, or mark it paid when the money lands. Tick tiles to delete several at once.
           </p>
 
           {sortedPayments.length === 0 && (
@@ -451,7 +494,15 @@ export default function RentPage() {
 
           <div className="rent-grid">
             {sortedPayments.map((p) => (
-              <div className="glass-panel rent-tile" key={p.id}>
+              <div className={`glass-panel rent-tile ${selected.has(p.id) ? 'rent-tile-selected' : ''}`} key={p.id}>
+                <label className="remember-checkbox rent-tile-select" title="Select this period">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                    aria-label={`Select ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
+                  />
+                </label>
                 <div className="rent-thumb" aria-hidden="true">
                   <div className="rent-thumb-inner">
                     <RentInvoicePreview doc={docFor(p)} />
