@@ -16,7 +16,11 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
     .filter((p) => !p.paymentDate && p.dueDate)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   const issued = doc.generatedAt ? new Date(doc.generatedAt) : new Date();
-  const tenancy = formatPeriod(doc.startDate, doc.endDate);
+  // The stretch this particular invoice covers, spanning its periods
+  const sortedItems = [...items].sort((a, b) => (a.periodFrom || '').localeCompare(b.periodFrom || ''));
+  const invoicePeriod = items.length > 0
+    ? formatPeriod(sortedItems[0].periodFrom, sortedItems[sortedItems.length - 1].periodTo)
+    : '';
   // Once every period on the invoice has a payment date, it renders as a
   // receipt: PAID stamp across the card, settled footer, no due-by.
   const isPaid = items.length > 0 && items.every((p) => p.paymentDate);
@@ -46,20 +50,26 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
           </div>
         </div>
 
-        {(tenancy || parseAmount(doc.deposit) > 0) && (
+        {(doc.startDate || doc.endDate || invoicePeriod) && (
           <div className="invoice-section">
             <div className="due-card due-card-bills">
               <div className="due-card-name">Tenancy</div>
-              {tenancy && (
+              {doc.startDate && (
                 <div className="due-line due-line-text">
-                  <span>Period:</span>
-                  <span>{tenancy}</span>
+                  <span>Start date:</span>
+                  <span>{formatDay(doc.startDate)}</span>
                 </div>
               )}
-              {parseAmount(doc.deposit) > 0 && (
-                <div className="due-line">
-                  <span>Deposit</span>
-                  <span>{formatCurrency(doc.deposit)}</span>
+              {doc.endDate && (
+                <div className="due-line due-line-text">
+                  <span>End date:</span>
+                  <span>{formatDay(doc.endDate)}</span>
+                </div>
+              )}
+              {invoicePeriod && (
+                <div className="due-line due-line-text">
+                  <span>Invoice period:</span>
+                  <span>{invoicePeriod}</span>
                 </div>
               )}
             </div>
