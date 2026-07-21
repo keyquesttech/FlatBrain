@@ -255,16 +255,17 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
 
       <div className="invoice-footer">
         <p>Thank you for settling the bills promptly!</p>
-        <p>Please send your total due to the account above and remittance of payment via WhatsApp</p>
+        <p>Please transfer the total due to the account above, then send the payment confirmation over WhatsApp.</p>
         {data.dueDate && (
           <p className="invoice-due-date">
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
           </p>
         )}
-        {/* Spelled out as text — the invoice travels as a PNG, so a
-            clickable link wouldn't survive the download */}
+        {/* Small print, set off by the app's dashed divider. The address is
+            spelled out as text — the invoice travels as a PNG, so a
+            clickable link wouldn't survive the download. */}
         <p className="invoice-legend">
-          To add items to the invoice visit <strong><em>http://flatbrain.local/billsplitter/flatmate2</em></strong> while connected to the Wi-Fi in the flat.
+          Add your extras to the invoice anytime at <strong><em>flatbrain.local/billsplitter/flatmate2</em></strong> — it works whenever you're on the flat's Wi-Fi.
         </p>
       </div>
       </div>
