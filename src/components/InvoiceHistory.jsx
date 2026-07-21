@@ -2,7 +2,6 @@ import React from 'react';
 import { calculateInvoice, formatCurrency } from '../utils/calculations';
 import { Trash2, Download } from 'lucide-react';
 import { DEFAULT_NAMES, normalizeDraft } from '../utils/defaults';
-import InvoicePreview from './InvoicePreview';
 import PaidControl from './PaidControl';
 
 function formatPeriod(period) {
@@ -31,17 +30,6 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
         const calc = calculateInvoice(normalizeDraft(invoice));
         return (
           <div key={invoice.id} className="glass-panel history-card" onClick={() => onLoad(invoice)}>
-            {/* Live scaled preview of this exact invoice (empty history
-                skips the trend card, keeping thumbnails cheap) */}
-            <div className="rent-thumb history-thumb" aria-hidden="true">
-              <div className="rent-thumb-inner">
-                <InvoicePreview
-                  data={{ ...normalizeDraft(invoice), timestamp: invoice.timestamp, paidDate: invoice.paidDate }}
-                  history={[]}
-                />
-              </div>
-            </div>
-
             <div className="history-card-head">
               <div>
                 <h3 className="history-card-title">{formatPeriod(invoice.period)}</h3>

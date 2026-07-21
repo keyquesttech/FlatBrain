@@ -874,12 +874,7 @@ p {
   display: none;
 }
 
-/* Bill Splitter history cards reuse the rent thumbnail, centred above the
-   card's details; the paid row keeps card clicks from loading the invoice */
-.history-thumb {
-  margin: 0 auto 12px;
-}
-
+/* The paid row keeps card clicks from loading the invoice */
 .history-paid-row {
   display: flex;
   margin: 10px 0 4px;
