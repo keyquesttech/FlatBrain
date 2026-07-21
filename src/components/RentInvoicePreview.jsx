@@ -13,7 +13,7 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
   const items = doc.items || [];
   const total = items.reduce((sum, p) => round2(sum + round2(parseAmount(p.amount))), 0);
   const nextUnpaid = items
-    .filter((p) => !p.paid && p.dueDate)
+    .filter((p) => !p.paymentDate && p.dueDate)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   const issued = doc.generatedAt ? new Date(doc.generatedAt) : new Date();
   const tenancy = formatPeriod(doc.startDate, doc.endDate);
@@ -72,9 +72,7 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
                 </div>
                 <div className="due-item-sub">
                   {p.dueDate ? `Due ${formatDay(p.dueDate)}` : 'No due date'}
-                  {p.paid
-                    ? ` — paid${p.paymentDate ? ` ${formatDay(p.paymentDate)}` : ''}`
-                    : ' — not paid yet'}
+                  {p.paymentDate ? ` — paid ${formatDay(p.paymentDate)}` : ' — not paid yet'}
                 </div>
               </div>
             ))}

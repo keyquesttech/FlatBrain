@@ -719,6 +719,45 @@ p {
   color: var(--text-muted);
 }
 
+/* History entries: a square live thumbnail of the period's invoice beside
+   its details — the real preview scaled down, orbs off for performance */
+.rent-history-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rent-history-info {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
+.rent-thumb {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background: var(--bg);
+  position: relative;
+}
+
+.rent-thumb-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 720px;
+  transform: scale(0.1333);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.rent-thumb .invoice-orb-layer {
+  display: none;
+}
+
 .rent-history-title {
   font-weight: 700;
 }
