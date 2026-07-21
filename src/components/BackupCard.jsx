@@ -108,7 +108,7 @@ export default function BackupCard() {
   };
 
   const restore = async (name) => {
-    if (!await appConfirm(`Restore ${name}? This replaces FlatBrain's current data — bill draft, history and password — with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
+    if (!await appConfirm(`Restore ${name}? FlatBrain's current data — bills, invoices, history and the password — will be replaced with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
     setBusy('restore');
     setMessage('Restoring…');
     try {
@@ -215,7 +215,7 @@ export default function BackupCard() {
       }
     >
       <p className="section-desc">
-        Everything FlatBrain stores, copied to a USB stick on the schedule below — keeps the newest {cfg.keep} backups.
+        Everything FlatBrain stores, copied to the stick on the schedule below. The newest {cfg.keep} backups are kept.
       </p>
 
       <div className="status-pills">
@@ -334,7 +334,7 @@ export default function BackupCard() {
       {tab === 'restore' && (
         <>
           <p className="section-desc">
-            Restoring replaces FlatBrain's data — bill draft, history and password — with the backup's files, then reloads. The backup settings themselves are kept as they are now.
+            Restoring swaps the live data — bills, invoices, history and the password — for the backup's files, then reloads the app. Backup settings stay as they are.
           </p>
           {status.backups?.length > 0 ? (
             <div className="backup-list">
@@ -366,7 +366,7 @@ export default function BackupCard() {
             </div>
           ) : (
             <p className="section-desc">
-              No backups found on the stick{status.mounted ? '.' : ' — it may not be mounted yet; Back up now mounts it.'}
+              No backups on the stick yet{status.mounted ? '.' : ' — it may not be mounted; Back up now takes care of that.'}
             </p>
           )}
         </>

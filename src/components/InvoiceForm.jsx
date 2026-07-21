@@ -173,7 +173,7 @@ export default function InvoiceForm({ data, onChange }) {
         )}
       >
         <ExtrasInputList
-          description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share ${name} pays — e.g. 10% means ${name} pays 10%, ${other} 90%.`}
+          description={`Enter the units in the pack and the total paid — the per-unit price works itself out. The % is the share ${name} keeps: at 10%, ${name} pays 10% and ${other} pays the rest.`}
           extras={data[extrasKey]}
           onUpdate={(id, field, value) => updateExtra(extrasKey, id, field, value)}
           onRemove={(id) => removeExtra(extrasKey, id)}
@@ -188,7 +188,7 @@ export default function InvoiceForm({ data, onChange }) {
   return (
     <div className="form-card-stack">
       <CollapsibleCard title="Invoice Details" storageKey="invoice-details">
-        <p className="section-desc">Due date auto-fills to the 7th of the next month.</p>
+        <p className="section-desc">Pick the month this invoice covers — the due date fills itself in as the 7th of the month after, and stays editable.</p>
 
         <div className="form-group">
           <label>Period</label>
@@ -273,7 +273,7 @@ export default function InvoiceForm({ data, onChange }) {
         )}
       >
         <p className="section-desc">
-          Discount: set a % and who it's for — the other flatmate covers that part. All = nobody pays it.
+          Set a discount % and who it's for — the other flatmate covers that part. All means nobody pays it.
         </p>
         {data.bills.length > 0 && (
           <div className="input-row extras-row bill-row row-labels" aria-hidden="true">
@@ -339,13 +339,13 @@ export default function InvoiceForm({ data, onChange }) {
       {renderPersonExtras('reka', 'Flatmate 2')}
 
       <CollapsibleCard title="Discounts" storageKey="discounts">
-        <p className="section-desc">Off a flatmate's final total — £ fixed, or % of the total.</p>
+        <p className="section-desc">Taken off a flatmate's final total — a fixed £ amount, or a % of it.</p>
         {renderPersonDiscounts('matias', 'Flatmate 1')}
         {renderPersonDiscounts('reka', 'Flatmate 2')}
       </CollapsibleCard>
 
       <CollapsibleCard title="Notes" storageKey="notes">
-        <p className="section-desc">Optional — shown on the invoice.</p>
+        <p className="section-desc">Optional — anything written here appears on the invoice.</p>
         <div className="form-group">
           <label>{names.matias.trim() || 'Flatmate 1'}</label>
           <textarea
@@ -369,7 +369,7 @@ export default function InvoiceForm({ data, onChange }) {
       </CollapsibleCard>
 
       <CollapsibleCard title="Bank Details" storageKey="bank-details">
-        <p className="section-desc">Shown at the bottom of the invoice.</p>
+        <p className="section-desc">Printed at the bottom of every invoice.</p>
         <div className="form-group">
           <label>Name</label>
           <input

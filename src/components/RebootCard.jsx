@@ -111,7 +111,7 @@ export default function RebootCard() {
       )}
     >
       <p className="section-desc">
-        Restarts the Pi on the schedule below. A due backup always runs first — backups take priority.
+        Restarts the Pi on the schedule below — any backup that's due runs first.
       </p>
 
       <div className="status-pills">

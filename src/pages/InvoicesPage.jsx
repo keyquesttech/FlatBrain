@@ -172,7 +172,7 @@ export default function InvoicesPage() {
             )}
           >
             <p className="section-desc">
-              Units and the total price for the line — the price per unit is worked out automatically.
+              Enter the units and the total for each line — the per-unit price works itself out.
             </p>
             {doc.items.length === 0 && (
               <p className="section-desc">No items yet — add the first one.</p>
@@ -225,7 +225,7 @@ export default function InvoicesPage() {
           </CollapsibleCard>
 
           <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="inv-bank">
-            <p className="section-desc">Shown on the invoice — separate from Bill Splitter's account details.</p>
+            <p className="section-desc">Printed on the invoice — kept separate from Bill Splitter's account details.</p>
             {[
               ['name', 'Name', 'Account holder name'],
               ['bankName', 'Bank Name', 'Bank name'],
