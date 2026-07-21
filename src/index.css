@@ -651,12 +651,19 @@ p {
   margin: 0;
 }
 
-/* Small print at the invoice's very bottom */
+/* Small print at the invoice's very bottom, set off from the payment
+   lines by the same dashed divider the cards use */
 .invoice-legend {
-  margin-top: 0.55rem;
+  margin-top: 0.7rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--border-soft);
   font-size: 0.72rem;
   color: var(--text-faint);
   overflow-wrap: anywhere;
+}
+
+.invoice-legend strong {
+  color: var(--text-muted);
 }
 
 /* Status pills — compact state chips used by the Backup and Reboot cards
