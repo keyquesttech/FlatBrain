@@ -187,6 +187,37 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
+// ---- Custom invoice generator: one document holding the draft (title +
+// line items + its own bank details) and the history of generated
+// invoices. Small and single-editor, so whole-document GET/PUT is enough.
+const INVOICES_FILE = path.join(__dirname, 'invoices.json');
+
+const defaultInvoicesDoc = {
+  title: '',
+  items: [], // [{ id, thing, dueDate, amount, paidDate, include }]
+  bankDetails: {
+    // The generator's own account details, independent of Bill Splitter's
+    name: 'Your Name',
+    bankName: 'Your Bank',
+    sortCode: '00-00-00',
+    accountNumber: '00000000'
+  },
+  history: [] // [{ id, title, items, bankDetails, total, generatedAt, paidDate }]
+};
+
+app.get('/api/invoices', (req, res) => {
+  res.json(readJSON(INVOICES_FILE, defaultInvoicesDoc));
+});
+
+app.put('/api/invoices', (req, res) => {
+  const docBody = req.body;
+  if (!isPlainObject(docBody)) {
+    return res.status(400).json({ success: false, error: 'Invoices data must be an object' });
+  }
+  writeJSON(INVOICES_FILE, docBody);
+  res.json({ success: true, doc: docBody });
+});
+
 // ---- USB backups (see backup.js) ----
 // Panel-level: one backup covers every app's data plus the password and
 // backup settings. Lives at the bare /api/backup/* (the old

@@ -35,6 +35,10 @@ export const saveInvoice = (invoice) => request('/history', jsonBody('POST', inv
 export const importHistory = (invoices) => request('/history/import', jsonBody('POST', { invoices }));
 export const deleteInvoice = (id) => request(`/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+// Custom invoice generator: one document, whole-object reads and writes.
+export const getInvoicesDoc = () => http('/api/invoices');
+export const updateInvoicesDoc = (docBody) => http('/api/invoices', jsonBody('PUT', docBody));
+
 // USB backup is panel-level: one backup covers every app's data.
 export const getBackupStatus = () => panelRequest('/backup/status');
 export const getBackupDevices = () => panelRequest('/backup/devices');
