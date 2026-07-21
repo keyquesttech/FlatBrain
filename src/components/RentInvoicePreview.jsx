@@ -40,7 +40,10 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
       <div className="invoice-card">
         {isPaid && (
           <div className="paid-stamp" aria-hidden="true">
-            <span>PAID</span>
+            <span>
+              PAID
+              <span className="paid-stamp-date">{formatDay(paidOn)}</span>
+            </span>
           </div>
         )}
         <div className="invoice-header">
