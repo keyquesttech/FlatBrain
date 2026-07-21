@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Receipt, ArrowRight } from 'lucide-react';
+import { Activity, FileText, Receipt, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 // FlatBrain home: the launcher for every app the flat runs. Each tile is an
@@ -13,6 +13,14 @@ const APPS = [
     icon: Receipt,
     accent: 'lime',
     description: 'Split bills'
+  },
+  {
+    key: 'invoices',
+    name: 'Invoice generator',
+    to: '/invoices',
+    icon: FileText,
+    accent: 'pink',
+    description: 'Custom invoices — itemized, downloadable, tracked'
   },
   {
     key: 'status',

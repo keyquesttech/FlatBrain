@@ -179,6 +179,7 @@ git-ignored):
 
 - `draft.json` — Bill Splitter's current in-progress invoice
 - `history.json` — saved past invoices
+- `invoices.json` — the custom invoice generator's draft and history
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
 - `temp-history.json` — the Server Status page's rolling 4-hour temperature log
