@@ -2304,6 +2304,10 @@ input[type="checkbox"]:focus-visible {
 
 .collapsible-actions {
   flex: 0 0 auto;
+  /* Never wider than the card, so multi-button action sets (Backup) wrap
+     inside instead of cropping off the edge */
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Height animates via the 0fr/1fr grid trick — no measuring. The inner
@@ -2684,6 +2688,17 @@ input[type="checkbox"]:focus-visible {
   .history-card-actions .btn-icon {
     min-width: 42px;
     min-height: 42px;
+  }
+
+  /* Backup card actions: full-width buttons that share rows evenly,
+     like the page toolbar, instead of cropping off the right edge */
+  .backup-header-actions {
+    width: 100%;
+  }
+
+  .backup-header-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
 
