@@ -756,6 +756,37 @@ p {
   margin: 0;
 }
 
+/* Each extra's optional bought date: a compact chip line under its row,
+   so the one-line item layout never has to squeeze it in */
+.extra-bought {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 10px;
+}
+
+.extra-bought-tag {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+}
+
+.extra-bought .picker-trigger {
+  width: auto;
+  padding: 7px 12px;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.extra-bought .picker-trigger-icon {
+  width: 14px;
+  height: 14px;
+}
+
 /* Paid invoices become receipts: a rubber-stamp PAID across the card.
    Plain borders + transform only, so the PNG capture renders it exactly. */
 .invoice-card {
