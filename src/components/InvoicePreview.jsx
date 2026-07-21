@@ -12,6 +12,7 @@ import {
   parseAmount
 } from '../utils/calculations';
 import { DEFAULT_NAMES, DEFAULT_BANK } from '../utils/defaults';
+import { formatDay } from '../utils/dates';
 import SpendingTrendCard from './SpendingTrendCard';
 
 const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
@@ -116,6 +117,15 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
         <span className="invoice-lava invoice-lava-bubble"><span className="invoice-orb invoice-orb-bubble" /></span>
       </div>
       <div className="invoice-card">
+      {/* Saved invoices marked as paid wear the same stamp as rent receipts */}
+      {data.paidDate && (
+        <div className="paid-stamp" aria-hidden="true">
+          <span>
+            PAID
+            <span className="paid-stamp-date">{formatDay(data.paidDate)}</span>
+          </span>
+        </div>
+      )}
       <div className="invoice-header">
         <h2>{periodLabel} Bills</h2>
         <div className="text-muted invoice-meta">
