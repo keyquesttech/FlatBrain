@@ -7,10 +7,11 @@ import CurrencyInput from '../components/CurrencyInput';
 import DatePicker from '../components/DatePicker';
 import PaidControl from '../components/PaidControl';
 import RentInvoicePreview from '../components/RentInvoicePreview';
+import SelectMenu from '../components/SelectMenu';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getRent, updateRent } from '../api';
-import { formatCurrency } from '../utils/calculations';
-import { formatDay, formatPeriod, monthsBetween } from '../utils/dates';
+import { formatCurrency, parseAmount, round2 } from '../utils/calculations';
+import { formatDay, formatPeriod, monthsBetween, periodUnits, periodUnitsLabel } from '../utils/dates';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { newId } from '../utils/id';
 
@@ -22,6 +23,21 @@ const DEFAULT_RENT_BANK = {
   sortCode: '00-00-00',
   accountNumber: '00000000'
 };
+
+const UNIT_OPTIONS = [
+  { value: 'month', label: 'Per month' },
+  { value: 'week', label: 'Per week' },
+  { value: 'day', label: 'Per day' }
+];
+
+// Period total = the 1× period rent × how many units the period spans,
+// in whatever unit rent is charged per. Null when it can't be computed.
+function autoTotal(rate, unit, fromISO, toISO) {
+  const rateN = parseAmount(rate);
+  const units = periodUnits(fromISO, toISO, unit);
+  if (rateN <= 0 || units <= 0) return null;
+  return String(round2(rateN * units));
+}
 
 // A period is paid exactly when its payment date is filled in — there is
 // no separate flag to keep in sync.
@@ -42,6 +58,8 @@ function normalizeRent(r) {
     deposit: r?.deposit || '',
     startDate: r?.startDate || '',
     endDate: r?.endDate || '',
+    unitRent: r?.unitRent || '',
+    unitPeriod: ['month', 'week', 'day'].includes(r?.unitPeriod) ? r.unitPeriod : 'month',
     payments: (Array.isArray(r?.payments) ? r.payments : []).map(normalizePayment),
     bankDetails: { ...DEFAULT_RENT_BANK, ...(r?.bankDetails || {}) }
   };
@@ -146,20 +164,47 @@ export default function RentPage() {
 
   if (!rent) return <div className="page-loading">Loading…</div>;
 
+  // Editing a row's period recomputes its total from the 1× period rent;
+  // the total stays hand-editable afterwards.
   const updatePayment = (id, changes) => {
-    update({ payments: rent.payments.map((p) => (p.id === id ? { ...p, ...changes } : p)) });
+    update({
+      payments: rent.payments.map((p) => {
+        if (p.id !== id) return p;
+        const next = { ...p, ...changes };
+        if ('periodFrom' in changes || 'periodTo' in changes) {
+          const auto = autoTotal(rent.unitRent, rent.unitPeriod, next.periodFrom, next.periodTo);
+          if (auto != null) next.amount = auto;
+        }
+        return next;
+      })
+    });
   };
 
-  // New rows continue the schedule: same block length and period total as
-  // the last row, starting where its period ends.
+  // Changing the rate (or its unit) refills every period's total.
+  const updateRate = (changes) => {
+    const merged = { ...rent, ...changes };
+    update({
+      ...changes,
+      payments: rent.payments.map((p) => {
+        const auto = autoTotal(merged.unitRent, merged.unitPeriod, p.periodFrom, p.periodTo);
+        return auto != null ? { ...p, amount: auto } : p;
+      })
+    });
+  };
+
+  // New rows continue the schedule: same block length as the last row,
+  // starting where its period ends, with the total filled from the rate.
   const addPayment = () => {
     const last = rent.payments[rent.payments.length - 1];
-    update({ payments: [...rent.payments, last ? continueFrom(last) : normalizePayment({})] });
+    const row = last ? continueFrom(last) : normalizePayment({});
+    const auto = autoTotal(rent.unitRent, rent.unitPeriod, row.periodFrom, row.periodTo);
+    if (auto != null) row.amount = auto;
+    update({ payments: [...rent.payments, row] });
   };
 
   const clearForm = async () => {
     if (!await appConfirm('Reset the whole form? The tenancy details and every payment period will be cleared. Bank details are kept.', { title: 'Reset form', okLabel: 'Reset', danger: true })) return;
-    update({ lodger: '', deposit: '', startDate: '', endDate: '', payments: [] });
+    update({ lodger: '', deposit: '', startDate: '', endDate: '', unitRent: '', unitPeriod: 'month', payments: [] });
     appToast('Form reset — bank details kept.');
   };
 
@@ -172,6 +217,7 @@ export default function RentPage() {
     deposit: rent.deposit,
     startDate: rent.startDate,
     endDate: rent.endDate,
+    unitPeriod: rent.unitPeriod,
     items: period ? [period] : [],
     bankDetails: rent.bankDetails
   });
@@ -215,6 +261,32 @@ export default function RentPage() {
                     />
                   </label>
                   <label className="fld">
+                    <span className="fld-label">Start date</span>
+                    <DatePicker value={rent.startDate} onChange={(v) => update({ startDate: v })} placeholder="Select date" />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">End date</span>
+                    <DatePicker value={rent.endDate} onChange={(v) => update({ endDate: v })} placeholder="Select date" />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">1× period rent</span>
+                    <CurrencyInput
+                      formatted
+                      value={rent.unitRent}
+                      onChange={(e) => updateRate({ unitRent: e.target.value })}
+                      aria-label="Rent for one charging period"
+                    />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">Charged</span>
+                    <SelectMenu
+                      value={rent.unitPeriod}
+                      onChange={(v) => updateRate({ unitPeriod: v })}
+                      options={UNIT_OPTIONS}
+                      width="100%"
+                    />
+                  </label>
+                  <label className="fld">
                     <span className="fld-label">Deposit amount</span>
                     <CurrencyInput
                       formatted
@@ -222,14 +294,6 @@ export default function RentPage() {
                       onChange={(e) => update({ deposit: e.target.value })}
                       aria-label="Deposit amount"
                     />
-                  </label>
-                  <label className="fld">
-                    <span className="fld-label">Start date</span>
-                    <DatePicker value={rent.startDate} onChange={(v) => update({ startDate: v })} placeholder="Select date" />
-                  </label>
-                  <label className="fld">
-                    <span className="fld-label">End date</span>
-                    <DatePicker value={rent.endDate} onChange={(v) => update({ endDate: v })} placeholder="Select date" />
                   </label>
                 </div>
               </CollapsibleCard>
@@ -244,7 +308,7 @@ export default function RentPage() {
                 )}
               >
                 <p className="section-desc">
-                  One row per rent period — filling the payment date is what marks it paid. Add payment continues the schedule from the last block.
+                  One row per rent period — the total fills itself from the 1× period rent and the period's length, and filling the payment date is what marks it paid.
                 </p>
                 {rent.payments.length === 0 && (
                   <p className="section-desc">No payments yet — add the first period.</p>
@@ -281,7 +345,7 @@ export default function RentPage() {
                     <div className="rent-row-meta">
                       <span className="rent-period">
                         {formatPeriod(p.periodFrom, p.periodTo) || 'Pick the period dates'}
-                        {monthsBetween(p.periodFrom, p.periodTo) > 0 ? ` · ${monthsBetween(p.periodFrom, p.periodTo)} mo block` : ''}
+                        {periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod) ? ` · ${periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod)} block` : ''}
                         {p.paymentDate ? ` · paid ${formatDay(p.paymentDate)}` : ''}
                       </span>
                       <span className="rent-row-actions">
@@ -343,40 +407,40 @@ export default function RentPage() {
             </div>
           )}
 
-          <div className="form-card-stack">
+          <div className="rent-grid">
             {sortedPayments.map((p) => (
-              <div className="glass-panel" key={p.id}>
-                <div className="rent-history-row">
-                  <div className="rent-thumb" aria-hidden="true">
-                    <div className="rent-thumb-inner">
-                      <RentInvoicePreview doc={docFor(p)} />
-                    </div>
+              <div className="glass-panel rent-tile" key={p.id}>
+                <div className="rent-thumb" aria-hidden="true">
+                  <div className="rent-thumb-inner">
+                    <RentInvoicePreview doc={docFor(p)} />
                   </div>
-                  <div className="rent-history-info">
-                    <div className="rent-history-title">
-                      {formatPeriod(p.periodFrom, p.periodTo) || 'Period'}
-                    </div>
-                    <div className="rent-history-meta">
-                      {p.dueDate ? `Due ${formatDay(p.dueDate)} · ` : ''}
-                      {monthsBetween(p.periodFrom, p.periodTo) > 0 ? `${monthsBetween(p.periodFrom, p.periodTo)} mo block · ` : ''}
-                      <strong>{formatCurrency(p.amount)}</strong>
-                    </div>
+                </div>
+                <div>
+                  <div className="rent-tile-title">
+                    {formatPeriod(p.periodFrom, p.periodTo) || 'Period'}
                   </div>
-                  <span className="rent-row-actions">
-                    <PaidControl
-                      paidDate={p.paymentDate}
-                      onChange={(d) => updatePayment(p.id, { paymentDate: d })}
-                    />
-                    <button
-                      className="btn-icon"
-                      onClick={() => { if (!periodDownload) setPeriodDownload(p); }}
-                      disabled={!!periodDownload}
-                      title="Download this period's invoice"
-                      aria-label={`Download invoice for ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
-                    >
-                      <Download size={16} />
-                    </button>
-                  </span>
+                  <div className="rent-tile-meta">
+                    {p.dueDate ? `Due ${formatDay(p.dueDate)}` : 'No due date'}
+                  </div>
+                  <div className="rent-tile-meta">
+                    {periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod) ? `${periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod)} · ` : ''}
+                    <strong>{formatCurrency(p.amount)}</strong>
+                  </div>
+                </div>
+                <div className="rent-tile-actions">
+                  <PaidControl
+                    paidDate={p.paymentDate}
+                    onChange={(d) => updatePayment(p.id, { paymentDate: d })}
+                  />
+                  <button
+                    className="btn-icon"
+                    onClick={() => { if (!periodDownload) setPeriodDownload(p); }}
+                    disabled={!!periodDownload}
+                    title="Download this period's invoice"
+                    aria-label={`Download invoice for ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
+                  >
+                    <Download size={16} />
+                  </button>
                 </div>
               </div>
             ))}
