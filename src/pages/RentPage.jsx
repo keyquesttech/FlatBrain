@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CalendarClock, Download, KeyRound, Landmark, Plus, RotateCcw, X } from 'lucide-react';
+import { CalendarClock, Download, KeyRound, Landmark, Pencil, RotateCcw, Save, Trash2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
@@ -61,6 +61,9 @@ function normalizeRent(r) {
     unitRent: r?.unitRent || '',
     unitPeriod: ['month', 'week', 'day'].includes(r?.unitPeriod) ? r.unitPeriod : 'month',
     payments: (Array.isArray(r?.payments) ? r.payments : []).map(normalizePayment),
+    // The one period currently being composed (or edited) in the generator
+    draftPayment: normalizePayment(r?.draftPayment ?? {}),
+    editingId: typeof r?.editingId === 'string' ? r.editingId : '',
     bankDetails: { ...DEFAULT_RENT_BANK, ...(r?.bankDetails || {}) }
   };
 }
@@ -68,8 +71,8 @@ function normalizeRent(r) {
 const pad = (n) => String(n).padStart(2, '0');
 const byPeriod = (a, b) => (a.periodFrom || '').localeCompare(b.periodFrom || '');
 
-// The next block after `last`: same length, same period total, starting
-// the month after the previous period ends, due on its first day.
+// The next block after `last`: same length, starting the month after the
+// previous period ends, due on its first day.
 function continueFrom(last) {
   const months = monthsBetween(last.periodFrom, last.periodTo);
   const [ty, tm] = String(last.periodTo || '').split('-').map(Number);
@@ -85,11 +88,12 @@ function continueFrom(last) {
   return normalizePayment({ periodFrom: from, periodTo: to, dueDate: from, amount: last.amount });
 }
 
-// Rent, shaped like Bill Splitter: the Generator holds the tenancy details
-// and the payment schedule (each row one rent period), everything saving
-// as it's typed; filling a payment date is what marks a period paid. The
-// History tab shows one invoice per period with a live thumbnail —
-// downloadable any time, markable as paid when the money lands.
+// Rent, shaped like Bill Splitter: the Generator composes ONE period at a
+// time — fill the dates (the total fills itself from the 1× period rent),
+// Save payment files it in History, and the form rolls on to the next
+// block. History shows every saved period as a tile with a live invoice
+// thumbnail; from there each one can be edited, downloaded, marked paid
+// or deleted. Filling a payment date is what marks a period paid.
 export default function RentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') === 'history' ? 'history' : 'new';
@@ -164,54 +168,100 @@ export default function RentPage() {
 
   if (!rent) return <div className="page-loading">Loading…</div>;
 
-  // Editing a row's period recomputes its total from the 1× period rent;
-  // the total stays hand-editable afterwards.
-  const updatePayment = (id, changes) => {
-    update({
-      payments: rent.payments.map((p) => {
-        if (p.id !== id) return p;
-        const next = { ...p, ...changes };
-        if ('periodFrom' in changes || 'periodTo' in changes) {
-          const auto = autoTotal(rent.unitRent, rent.unitPeriod, next.periodFrom, next.periodTo);
-          if (auto != null) next.amount = auto;
-        }
-        return next;
-      })
-    });
+  const draft = rent.draftPayment;
+  const editing = rent.editingId ? rent.payments.find((p) => p.id === rent.editingId) : null;
+
+  // Editing the draft's period recomputes its total from the 1× period
+  // rent; the total stays hand-editable afterwards.
+  const updateDraft = (changes) => {
+    const next = { ...draft, ...changes };
+    if ('periodFrom' in changes || 'periodTo' in changes) {
+      const auto = autoTotal(rent.unitRent, rent.unitPeriod, next.periodFrom, next.periodTo);
+      if (auto != null) next.amount = auto;
+    }
+    update({ draftPayment: next });
   };
 
-  // Changing the rate (or its unit) refills every period's total.
+  // Changing the rate (or its unit) refills the draft and every saved period.
   const updateRate = (changes) => {
     const merged = { ...rent, ...changes };
+    const refill = (p) => {
+      const auto = autoTotal(merged.unitRent, merged.unitPeriod, p.periodFrom, p.periodTo);
+      return auto != null ? { ...p, amount: auto } : p;
+    };
     update({
       ...changes,
-      payments: rent.payments.map((p) => {
-        const auto = autoTotal(merged.unitRent, merged.unitPeriod, p.periodFrom, p.periodTo);
-        return auto != null ? { ...p, amount: auto } : p;
-      })
+      draftPayment: refill(draft),
+      payments: rent.payments.map(refill)
     });
   };
 
-  // New rows continue the schedule: same block length as the last row,
-  // starting where its period ends, with the total filled from the rate.
-  const addPayment = () => {
-    const last = rent.payments[rent.payments.length - 1];
-    const row = last ? continueFrom(last) : normalizePayment({});
-    const auto = autoTotal(rent.unitRent, rent.unitPeriod, row.periodFrom, row.periodTo);
-    if (auto != null) row.amount = auto;
-    update({ payments: [...rent.payments, row] });
+  const updatePayment = (id, changes) => {
+    update({ payments: rent.payments.map((p) => (p.id === id ? { ...p, ...changes } : p)) });
+  };
+
+  // Save the composed period into History. A fresh save rolls the form on
+  // to the next block; updating an edited period clears the form instead.
+  const saveDraft = () => {
+    if (!draft.periodFrom || !draft.periodTo) {
+      appAlert('Pick the period dates before saving.', { title: 'Save payment' });
+      return;
+    }
+    if (editing) {
+      update({
+        payments: rent.payments.map((p) => (p.id === editing.id ? { ...draft, id: editing.id } : p)),
+        draftPayment: normalizePayment({}),
+        editingId: ''
+      });
+      appToast('Period updated in history.');
+    } else {
+      const saved = { ...draft, id: newId() };
+      const next = continueFrom(saved);
+      const auto = autoTotal(rent.unitRent, rent.unitPeriod, next.periodFrom, next.periodTo);
+      if (auto != null) next.amount = auto;
+      update({
+        payments: [...rent.payments, saved],
+        draftPayment: next
+      });
+      appToast('Period saved to history — form moved on to the next block.');
+    }
+  };
+
+  const editPayment = (p) => {
+    update({ draftPayment: normalizePayment({ ...p }), editingId: p.id });
+    setView('new');
+  };
+
+  const cancelEdit = () => {
+    update({ draftPayment: normalizePayment({}), editingId: '' });
+  };
+
+  const deletePayment = async (p) => {
+    if (!await appConfirm(`Delete the ${formatPeriod(p.periodFrom, p.periodTo) || 'selected'} period from history?`, { title: 'Delete period', okLabel: 'Delete', danger: true })) return;
+    update({
+      payments: rent.payments.filter((x) => x.id !== p.id),
+      ...(rent.editingId === p.id ? { draftPayment: normalizePayment({}), editingId: '' } : {})
+    });
+    appToast('Period deleted.');
   };
 
   const clearForm = async () => {
-    if (!await appConfirm('Reset the whole form? The tenancy details and every payment period will be cleared. Bank details are kept.', { title: 'Reset form', okLabel: 'Reset', danger: true })) return;
-    update({ lodger: '', deposit: '', startDate: '', endDate: '', unitRent: '', unitPeriod: 'month', payments: [] });
-    appToast('Form reset — bank details kept.');
+    if (!await appConfirm('Reset the form? The tenancy details and the period being composed will be cleared — saved periods and bank details are kept.', { title: 'Reset form', okLabel: 'Reset', danger: true })) return;
+    update({
+      lodger: '',
+      deposit: '',
+      startDate: '',
+      endDate: '',
+      unitRent: '',
+      unitPeriod: 'month',
+      draftPayment: normalizePayment({}),
+      editingId: ''
+    });
+    appToast('Form reset — saved periods and bank details kept.');
   };
 
   const sortedPayments = [...rent.payments].sort(byPeriod);
-  // The generator's live preview shows the invoice you'd send next: the
-  // earliest unpaid period (or the last one once everything is paid).
-  const previewPeriod = sortedPayments.find((p) => !p.paymentDate) || sortedPayments[sortedPayments.length - 1] || null;
+  const draftHasContent = draft.periodFrom || draft.periodTo || parseAmount(draft.amount) > 0;
   const docFor = (period) => ({
     lodger: rent.lodger,
     deposit: rent.deposit,
@@ -239,6 +289,10 @@ export default function RentPage() {
               <button className="btn btn-secondary" onClick={clearForm}>
                 <RotateCcw size={16} />
                 Reset form
+              </button>
+              <button className="btn btn-primary" onClick={saveDraft}>
+                <Save size={16} />
+                {editing ? 'Update payment' : 'Save payment'}
               </button>
             </div>
           </div>
@@ -299,68 +353,56 @@ export default function RentPage() {
               </CollapsibleCard>
 
               <CollapsibleCard
-                title={<span className="stat-title"><CalendarClock size={15} /> Payments</span>}
+                title={<span className="stat-title"><CalendarClock size={15} /> Payment</span>}
                 storageKey="rent-payments"
-                actions={(
-                  <button className="btn btn-primary btn-sm" onClick={addPayment}>
-                    <Plus size={16} /> Add payment
+                actions={editing ? (
+                  <button className="btn btn-secondary btn-sm" onClick={cancelEdit}>
+                    Cancel edit
                   </button>
-                )}
+                ) : undefined}
               >
                 <p className="section-desc">
-                  One row per rent period — the total fills itself from the 1× period rent and the period's length, and filling the payment date is what marks it paid.
+                  One period at a time — the total fills itself from the 1× period rent, and filling the payment date marks it paid. Save payment files it in History and rolls the form on to the next block.
                 </p>
-                {rent.payments.length === 0 && (
-                  <p className="section-desc">No payments yet — add the first period.</p>
+                {editing && (
+                  <p className="section-desc stat-detail-warn">
+                    Editing {formatPeriod(editing.periodFrom, editing.periodTo) || 'a saved period'} — Save updates it in place.
+                  </p>
                 )}
-                {rent.payments.map((p) => (
-                  <div className="rent-row" key={p.id}>
-                    <div className="rent-fields">
-                      <label className="fld">
-                        <span className="fld-label">Period from</span>
-                        <DatePicker value={p.periodFrom} onChange={(v) => updatePayment(p.id, { periodFrom: v })} placeholder="Select date" />
-                      </label>
-                      <label className="fld">
-                        <span className="fld-label">Period to</span>
-                        <DatePicker value={p.periodTo} onChange={(v) => updatePayment(p.id, { periodTo: v })} placeholder="Select date" />
-                      </label>
-                      <label className="fld">
-                        <span className="fld-label">Due date</span>
-                        <DatePicker value={p.dueDate} onChange={(v) => updatePayment(p.id, { dueDate: v })} placeholder="Select date" />
-                      </label>
-                      <label className="fld">
-                        <span className="fld-label">Period total</span>
-                        <CurrencyInput
-                          formatted
-                          value={p.amount}
-                          onChange={(e) => updatePayment(p.id, { amount: e.target.value })}
-                          aria-label="Period total"
-                        />
-                      </label>
-                      <label className="fld rent-fld-wide">
-                        <span className="fld-label">Payment date — filling it marks the period paid</span>
-                        <DatePicker value={p.paymentDate} onChange={(v) => updatePayment(p.id, { paymentDate: v })} placeholder="Not paid yet" />
-                      </label>
-                    </div>
-                    <div className="rent-row-meta">
-                      <span className="rent-period">
-                        {formatPeriod(p.periodFrom, p.periodTo) || 'Pick the period dates'}
-                        {periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod) ? ` · ${periodUnitsLabel(p.periodFrom, p.periodTo, rent.unitPeriod)} block` : ''}
-                        {p.paymentDate ? ` · paid ${formatDay(p.paymentDate)}` : ''}
-                      </span>
-                      <span className="rent-row-actions">
-                        <button
-                          className="btn-icon btn-icon-danger"
-                          onClick={() => update({ payments: rent.payments.filter((x) => x.id !== p.id) })}
-                          aria-label="Remove payment"
-                          title="Remove this payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                <div className="rent-fields">
+                  <label className="fld">
+                    <span className="fld-label">Period from</span>
+                    <DatePicker value={draft.periodFrom} onChange={(v) => updateDraft({ periodFrom: v })} placeholder="Select date" />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">Period to</span>
+                    <DatePicker value={draft.periodTo} onChange={(v) => updateDraft({ periodTo: v })} placeholder="Select date" />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">Due date</span>
+                    <DatePicker value={draft.dueDate} onChange={(v) => updateDraft({ dueDate: v })} placeholder="Select date" />
+                  </label>
+                  <label className="fld">
+                    <span className="fld-label">Period total</span>
+                    <CurrencyInput
+                      formatted
+                      value={draft.amount}
+                      onChange={(e) => updateDraft({ amount: e.target.value })}
+                      aria-label="Period total"
+                    />
+                  </label>
+                  <label className="fld rent-fld-wide">
+                    <span className="fld-label">Payment date — filling it marks the period paid</span>
+                    <DatePicker value={draft.paymentDate} onChange={(v) => updateDraft({ paymentDate: v })} placeholder="Not paid yet" />
+                  </label>
+                </div>
+                <div className="rent-row-meta">
+                  <span className="rent-period">
+                    {formatPeriod(draft.periodFrom, draft.periodTo) || 'Pick the period dates'}
+                    {periodUnitsLabel(draft.periodFrom, draft.periodTo, rent.unitPeriod) ? ` · ${periodUnitsLabel(draft.periodFrom, draft.periodTo, rent.unitPeriod)} block` : ''}
+                    {draft.paymentDate ? ` · paid ${formatDay(draft.paymentDate)}` : ''}
+                  </span>
+                </div>
               </CollapsibleCard>
 
               <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="rent-bank">
@@ -389,20 +431,20 @@ export default function RentPage() {
             </div>
 
             <div className="preview-column">
-              <RentInvoicePreview doc={docFor(previewPeriod)} />
+              <RentInvoicePreview doc={docFor(draftHasContent ? { ...draft, id: 'draft' } : null)} />
             </div>
           </div>
         </>
       ) : (
         <>
           <p className="section-desc">
-            One invoice per rent period, always up to date with the schedule — download it, or mark it paid when the money lands.
+            Every saved period as its own invoice — tap the pencil to edit it in the generator, download it, or mark it paid when the money lands.
           </p>
 
           {sortedPayments.length === 0 && (
             <div className="glass-panel">
               <p className="text-muted" style={{ margin: 0 }}>
-                No periods yet — add them on the Generator tab.
+                No periods yet — compose the first one on the Generator tab.
               </p>
             </div>
           )}
@@ -432,15 +474,33 @@ export default function RentPage() {
                     paidDate={p.paymentDate}
                     onChange={(d) => updatePayment(p.id, { paymentDate: d })}
                   />
-                  <button
-                    className="btn-icon"
-                    onClick={() => { if (!periodDownload) setPeriodDownload(p); }}
-                    disabled={!!periodDownload}
-                    title="Download this period's invoice"
-                    aria-label={`Download invoice for ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
-                  >
-                    <Download size={16} />
-                  </button>
+                  <span className="rent-row-actions">
+                    <button
+                      className="btn-icon"
+                      onClick={() => editPayment(p)}
+                      title="Edit this period in the generator"
+                      aria-label={`Edit ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      className="btn-icon"
+                      onClick={() => { if (!periodDownload) setPeriodDownload(p); }}
+                      disabled={!!periodDownload}
+                      title="Download this period's invoice"
+                      aria-label={`Download invoice for ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
+                    >
+                      <Download size={15} />
+                    </button>
+                    <button
+                      className="btn-icon btn-icon-danger"
+                      onClick={() => deletePayment(p)}
+                      title="Delete this period"
+                      aria-label={`Delete ${formatPeriod(p.periodFrom, p.periodTo) || 'this period'}`}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
                 </div>
               </div>
             ))}
