@@ -151,7 +151,7 @@ export default function UserExtrasPage({ personKey }) {
           )}
         >
           <ExtrasInputList
-            description={`Units in the pack + the total price — the price per unit is worked out automatically. % = the share you pay — e.g. 10% means you pay 10%, ${otherDisplayName} 90%.`}
+            description={`Enter the units in the pack and the total you paid — the per-unit price works itself out. The % is the share you keep: at 10%, you pay 10% and ${otherDisplayName} pays the rest.`}
             extras={extras}
             onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
             onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
@@ -162,7 +162,7 @@ export default function UserExtrasPage({ personKey }) {
         </CollapsibleCard>
 
         <CollapsibleCard title="Your notes" storageKey="fm-notes">
-          <p className="section-desc">Optional — shown on the invoice.</p>
+          <p className="section-desc">Optional — anything written here appears on the invoice.</p>
           <div className="form-group">
             <label htmlFor="flatmate-note">Note</label>
             <textarea
@@ -177,7 +177,7 @@ export default function UserExtrasPage({ personKey }) {
         </CollapsibleCard>
 
         <CollapsibleCard title={`Charged to ${otherDisplayName}`} storageKey="fm-charged-other">
-          <p className="section-desc">Everything {otherDisplayName} pays for extras this month.</p>
+          <p className="section-desc">Everything {otherDisplayName} is paying towards extras this month.</p>
           {chargedToOther.map((extra) => {
             const total = extraShares(extra).total;
             return (
@@ -195,7 +195,7 @@ export default function UserExtrasPage({ personKey }) {
         </CollapsibleCard>
 
         <CollapsibleCard title="Charged to you" storageKey="fm-charged-you">
-          <p className="section-desc">Your share of {otherDisplayName}'s items.</p>
+          <p className="section-desc">Your share of the extras {otherDisplayName} added.</p>
           {chargedToYou.map((extra) => {
             const total = extraShares(extra).total;
             return (
@@ -213,7 +213,7 @@ export default function UserExtrasPage({ personKey }) {
         </CollapsibleCard>
 
         <CollapsibleCard title="History" storageKey="fm-history">
-          <p className="section-desc">Bills per month from saved invoices.</p>
+          <p className="section-desc">Monthly bill totals from the saved invoices.</p>
           <SpendingChart history={history} />
         </CollapsibleCard>
       </div>

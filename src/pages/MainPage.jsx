@@ -412,7 +412,7 @@ export default function MainPage() {
           </div>
 
           <p className="section-desc">
-            Tap an invoice to load it into the generator. CSV exports or restores the whole history.
+            Tap an invoice to open it in the generator. Export CSV saves the whole history; Import CSV brings it back.
           </p>
 
           <InvoiceHistory
@@ -441,7 +441,7 @@ export default function MainPage() {
                   />
                 </label>
               </div>
-              <p className="section-desc">Monthly bills, stacked by bill — waived amounts excluded.</p>
+              <p className="section-desc">Each month's bills, stacked bill by bill — waived amounts left out.</p>
               <BillsBreakdownChart history={invoices} months={chartMonths} />
             </div>
           )}
