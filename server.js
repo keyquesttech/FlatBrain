@@ -187,9 +187,10 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
-// ---- Custom invoice generator: one document holding the draft (title +
-// line items + its own bank details) and the history of generated
-// invoices. Small and single-editor, so whole-document GET/PUT is enough.
+// ---- Custom invoice generator: one document holding the one-off invoice
+// being built (title + due date + line items + its own bank details).
+// Download-only by design — no history. Small and single-editor, so
+// whole-document GET/PUT is enough.
 const INVOICES_FILE = path.join(__dirname, 'invoices.json');
 
 const defaultInvoicesDoc = {
@@ -202,8 +203,7 @@ const defaultInvoicesDoc = {
     bankName: 'Your Bank',
     sortCode: '00-00-00',
     accountNumber: '00000000'
-  },
-  history: [] // [{ id, title, dueDate, items, bankDetails, total, generatedAt, paidDate }]
+  }
 };
 
 app.get('/api/invoices', (req, res) => {

@@ -12,7 +12,7 @@ const APPS = [
     to: '/billsplitter',
     icon: Receipt,
     accent: 'lime',
-    description: 'Split bills'
+    description: 'Split bills and expenses for the flat.'
   },
   {
     key: 'invoices',
@@ -20,7 +20,7 @@ const APPS = [
     to: '/invoices',
     icon: FileText,
     accent: 'pink',
-    description: 'Custom invoices — itemized, downloadable, tracked'
+    description: 'Generate custom one-off invoices.'
   },
   {
     key: 'status',
@@ -28,7 +28,7 @@ const APPS = [
     to: '/status',
     icon: Activity,
     accent: 'blue',
-    description: 'Pi temperature, CPU, memory & storage'
+    description: 'View server stats and control backups.'
   }
 ];
 
