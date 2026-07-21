@@ -104,14 +104,7 @@ export default function RebootCard() {
       storageKey="status-reboot"
       actions={(
         <div className="backup-header-actions">
-          <button
-            className={`btn btn-sm ${cfg.enabled ? 'btn-secondary' : 'btn-primary'}`}
-            onClick={() => saveConfig({ enabled: !cfg.enabled })}
-            title={cfg.enabled ? 'Stop rebooting on a schedule' : 'Start rebooting on a schedule'}
-          >
-            {cfg.enabled ? 'Turn off' : 'Turn on'}
-          </button>
-          <button className="btn btn-danger btn-sm" onClick={doRebootNow} disabled={busy}>
+          <button className="btn btn-primary btn-sm" onClick={doRebootNow} disabled={busy}>
             <Power size={16} /> {busy ? 'Rebooting…' : 'Reboot now'}
           </button>
         </div>
