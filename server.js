@@ -187,6 +187,40 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
+// ---- Rent: the tenancy details, the payment schedule and the history of
+// generated rent invoices. Single-editor, so whole-document GET/PUT. ----
+const RENT_FILE = path.join(__dirname, 'rent.json');
+
+const defaultRent = {
+  lodger: '',
+  deposit: '',
+  startDate: '',
+  endDate: '',
+  blocks: 6,
+  payments: [], // [{ id, paymentDate, periodFrom, periodTo, amount, dueDate, paid, include }]
+  bankDetails: {
+    // Rent's own account details, independent of the other apps'
+    name: 'Your Name',
+    bankName: 'Your Bank',
+    sortCode: '00-00-00',
+    accountNumber: '00000000'
+  },
+  history: [] // [{ id, title, period, items, deposit, lodger, bankDetails, total, generatedAt, paidDate }]
+};
+
+app.get('/api/rent', (req, res) => {
+  res.json(readJSON(RENT_FILE, defaultRent));
+});
+
+app.put('/api/rent', (req, res) => {
+  const rent = req.body;
+  if (!isPlainObject(rent)) {
+    return res.status(400).json({ success: false, error: 'Rent data must be an object' });
+  }
+  writeJSON(RENT_FILE, rent);
+  res.json({ success: true, rent });
+});
+
 // ---- Custom invoice generator: one document holding the one-off invoice
 // being built (title + due date + line items + its own bank details).
 // Download-only by design — no history. Small and single-editor, so

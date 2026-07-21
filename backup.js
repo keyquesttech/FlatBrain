@@ -13,8 +13,8 @@ import { historyToCSV } from './src/utils/historyCsv.js';
 // schedule survives an SD-card death, but it is NOT restored (see
 // RESTORE_FILES): it records which stick is the current backup target, and
 // an old copy could silently point automatic backups at a retired drive.
-const DATA_FILES = ['draft.json', 'history.json', 'invoices.json', 'password.txt', 'backup-config.json', 'reboot-config.json'];
-const RESTORE_FILES = ['draft.json', 'history.json', 'invoices.json', 'password.txt'];
+const DATA_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'password.txt', 'backup-config.json', 'reboot-config.json'];
+const RESTORE_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'password.txt'];
 const BACKUP_DIR_NAME = 'FlatBrainBackups';
 // Sticks used before the FlatBrain rename carry this folder; backupRoot
 // renames it in place the first time it's seen.

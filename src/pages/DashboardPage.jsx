@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, FileText, Receipt, ArrowRight } from 'lucide-react';
+import { Activity, FileText, KeyRound, Receipt, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 // FlatBrain home: the launcher for every app the flat runs. Each tile is an
@@ -13,6 +13,14 @@ const APPS = [
     icon: Receipt,
     accent: 'lime',
     description: 'Split bills and expenses for the flat.'
+  },
+  {
+    key: 'rent',
+    name: 'Rent',
+    to: '/rent',
+    icon: KeyRound,
+    accent: 'lime',
+    description: 'Track the tenancy and invoice each rent period.'
   },
   {
     key: 'invoices',

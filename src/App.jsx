@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import InvoicesPage from './pages/InvoicesPage';
 import MainPage from './pages/MainPage';
+import RentPage from './pages/RentPage';
 import ServerStatusPage from './pages/ServerStatusPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
@@ -48,6 +49,9 @@ function App() {
         <Route path="/billsplitter" element={<PasswordGate><MainPage /></PasswordGate>} />
         <Route path="/billsplitter/flatmate1" element={<PasswordGate><UserExtrasPage personKey="flatmate1" /></PasswordGate>} />
         <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="flatmate2" />} />
+
+        {/* Rent — the tenancy schedule and its per-period invoices */}
+        <Route path="/rent" element={<PasswordGate><RentPage /></PasswordGate>} />
 
         {/* Custom invoice generator — itemized invoices with a paid history */}
         <Route path="/invoices" element={<PasswordGate><InvoicesPage /></PasswordGate>} />

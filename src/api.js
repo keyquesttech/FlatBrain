@@ -35,6 +35,10 @@ export const saveInvoice = (invoice) => request('/history', jsonBody('POST', inv
 export const importHistory = (invoices) => request('/history/import', jsonBody('POST', { invoices }));
 export const deleteInvoice = (id) => request(`/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+// Rent: one document, whole-object reads and writes.
+export const getRent = () => http('/api/rent');
+export const updateRent = (rent) => http('/api/rent', jsonBody('PUT', rent));
+
 // Custom invoice generator: one document, whole-object reads and writes.
 export const getInvoicesDoc = () => http('/api/invoices');
 export const updateInvoicesDoc = (docBody) => http('/api/invoices', jsonBody('PUT', docBody));

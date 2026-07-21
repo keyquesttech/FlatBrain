@@ -659,6 +659,148 @@ p {
   overflow-wrap: anywhere;
 }
 
+/* ---------- Rent ---------- */
+/* Standalone Generator/History tabs under the header (the shared .tabs
+   pill is normally rendered inside Navigation) */
+.rent-tabs {
+  margin-bottom: 1rem;
+}
+
+.rent-row {
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+.rent-row:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0.15rem;
+}
+
+/* Labelled fields sit two-up in a grid, so the date pickers always get
+   half the card instead of being squeezed */
+.rent-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rent-fields .fld {
+  min-width: 0;
+}
+
+.rent-fields .rent-fld-wide {
+  grid-column: 1 / -1;
+}
+
+.rent-fields .picker-trigger span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right-column pickers open their calendar leftwards to stay on the card */
+.rent-fields .fld:nth-child(even) .picker-dropdown {
+  left: auto;
+  right: 0;
+}
+
+.rent-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.rent-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The auth card's checkbox style, compacted to sit inline in a meta row */
+.rent-include {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.rent-include span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rent-selected-total {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.rent-selected-total strong {
+  color: var(--lime);
+}
+
+.rent-history-title {
+  font-weight: 700;
+}
+
+.rent-history-meta {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rent-history-meta strong {
+  color: var(--lime);
+  font-weight: 700;
+}
+
+/* A paid status as a date picker: "Mark paid…" opens the calendar; once
+   dated it reads as a lime chip that stays editable */
+.paid-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paid-picker .picker-trigger {
+  width: auto;
+  padding: 8px 12px;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.paid-picker .picker-trigger-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.paid-picker.is-paid .picker-trigger {
+  border-color: rgba(212, 255, 63, 0.4);
+  background: rgba(212, 255, 63, 0.12);
+  color: var(--lime-soft);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.paid-picker-tag {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+}
+
+/* The paid control sits at a row's right edge, so its calendar opens
+   leftwards to stay over the card */
+.paid-picker .picker-dropdown {
+  left: auto;
+  right: 0;
+}
+
 /* Status pills — compact state chips used by the Backup and Reboot cards
    instead of sentence-long status labels */
 .status-pills {
