@@ -105,11 +105,11 @@ export default function ExtrasInputList({
           {/* The optional bought date lives on its own compact line, so the
               item row keeps its one-line layout on every screen */}
           <div className="extra-bought">
-            <span className="extra-bought-tag">Bought</span>
             <DatePicker
               value={extra.boughtDate || ''}
               onChange={(v) => onUpdate(extra.id, 'boughtDate', v)}
               placeholder="Add date…"
+              prefix="Bought"
             />
             {extra.boughtDate && (
               <button
