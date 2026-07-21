@@ -108,8 +108,8 @@ export default function ExtrasInputList({
             <DatePicker
               value={extra.boughtDate || ''}
               onChange={(v) => onUpdate(extra.id, 'boughtDate', v)}
-              placeholder="Add date…"
-              prefix="Bought"
+              placeholder=""
+              prefix="Bought on"
             />
             {extra.boughtDate && (
               <button
