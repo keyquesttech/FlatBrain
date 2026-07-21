@@ -107,6 +107,7 @@ export default function RentPage() {
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
   const downloadPreviewRef = useRef(null);
+  const lastDraftSaveRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,10 +205,14 @@ export default function RentPage() {
   // Save the composed period into History. A fresh save rolls the form on
   // to the next block; updating an edited period clears the form instead.
   const saveDraft = () => {
+    // A double-tap would file the rolled-on next block as well — ignore the
+    // second click of a pair.
+    if (Date.now() - lastDraftSaveRef.current < 800) return;
     if (!draft.periodFrom || !draft.periodTo) {
       appAlert('Pick the period dates before saving.', { title: 'Save payment' });
       return;
     }
+    lastDraftSaveRef.current = Date.now();
     if (editing) {
       update({
         payments: rent.payments.map((p) => (p.id === editing.id ? { ...draft, id: editing.id } : p)),

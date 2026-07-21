@@ -108,7 +108,7 @@ export default function BackupCard() {
   };
 
   const restore = async (name) => {
-    if (!await appConfirm(`Restore ${name}? FlatBrain's current data — bills, invoices, history and the password — will be replaced with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
+    if (!await appConfirm(`Restore ${name}? FlatBrain's current data — bills, invoices, rent, history and the password — will be replaced with the backup.`, { title: 'Restore backup', okLabel: 'Restore', danger: true })) return;
     setBusy('restore');
     setMessage('Restoring…');
     try {
@@ -193,7 +193,7 @@ export default function BackupCard() {
 
   return (
     <CollapsibleCard
-      title="Backup"
+      title={<span className="stat-title"><HardDrive size={15} /> Backup</span>}
       storageKey="status-backup"
       actions={
         <div className="backup-header-actions">
@@ -334,7 +334,7 @@ export default function BackupCard() {
       {tab === 'restore' && (
         <>
           <p className="section-desc">
-            Restoring swaps the live data — bills, invoices, history and the password — for the backup's files, then reloads the app. Backup settings stay as they are.
+            Restoring swaps the live data — bills, invoices, rent, history and the password — for the backup's files, then reloads the app. Backup settings stay as they are.
           </p>
           {status.backups?.length > 0 ? (
             <div className="backup-list">
