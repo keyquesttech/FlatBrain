@@ -740,6 +740,12 @@ p {
   border-color: rgba(212, 255, 63, 0.5);
 }
 
+/* Selection under way: every card becomes one big toggle */
+.rent-tile-selectable {
+  cursor: pointer;
+  user-select: none;
+}
+
 /* Bulk-select tick floating over the thumbnail's corner */
 .rent-tile-select {
   position: absolute;

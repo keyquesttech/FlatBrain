@@ -494,8 +494,18 @@ export default function RentPage() {
 
           <div className="rent-grid">
             {sortedPayments.map((p) => (
-              <div className={`glass-panel rent-tile ${selected.has(p.id) ? 'rent-tile-selected' : ''}`} key={p.id}>
-                <label className="remember-checkbox rent-tile-select" title="Select this period">
+              <div
+                className={`glass-panel rent-tile ${selected.has(p.id) ? 'rent-tile-selected' : ''} ${selected.size > 0 ? 'rent-tile-selectable' : ''}`}
+                key={p.id}
+                // Once selection has started, the whole card is a selector —
+                // the action buttons opt out below so they keep working.
+                onClick={selected.size > 0 ? () => toggleSelect(p.id) : undefined}
+              >
+                <label
+                  className="remember-checkbox rent-tile-select"
+                  title="Select this period"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={selected.has(p.id)}
@@ -520,7 +530,7 @@ export default function RentPage() {
                     <strong>{formatCurrency(p.amount)}</strong>
                   </div>
                 </div>
-                <div className="rent-tile-actions">
+                <div className="rent-tile-actions" onClick={(e) => { if (selected.size > 0) e.stopPropagation(); }}>
                   <PaidControl
                     paidDate={p.paymentDate}
                     onChange={(d) => updatePayment(p.id, { paymentDate: d })}
