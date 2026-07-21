@@ -676,15 +676,6 @@ p {
   font-weight: 700;
 }
 
-.inv-included-total {
-  margin-top: 0.75rem;
-  margin-bottom: 0;
-}
-
-.inv-included-total strong {
-  color: var(--lime);
-}
-
 .inv-row-meta {
   display: flex;
   flex-wrap: wrap;

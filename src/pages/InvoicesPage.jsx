@@ -279,11 +279,6 @@ export default function InvoicesPage() {
                     </button>
                   </div>
                 ))}
-                {doc.items.length > 0 && (
-                  <p className="section-desc inv-included-total">
-                    Invoice total: <strong>{formatCurrency(invoiceTotal)}</strong>
-                  </p>
-                )}
               </CollapsibleCard>
 
               <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="inv-bank">
