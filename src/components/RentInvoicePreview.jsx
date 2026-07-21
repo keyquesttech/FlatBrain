@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import { formatCurrency, parseAmount, round2 } from '../utils/calculations';
-import { formatDay, formatPeriod } from '../utils/dates';
+import { formatDay, formatPeriod, monthsBetween } from '../utils/dates';
 import { DEFAULT_BANK } from '../utils/defaults';
 
 // The Rent app's invoice, built from the same frame and cards as Bill
@@ -64,7 +64,10 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
             {items.map((p) => (
               <div className="due-item" key={p.id}>
                 <div className="due-line">
-                  <span>{formatPeriod(p.periodFrom, p.periodTo) || 'Period'}</span>
+                  <span>
+                    {formatPeriod(p.periodFrom, p.periodTo) || 'Period'}
+                    {monthsBetween(p.periodFrom, p.periodTo) > 0 ? ` (${monthsBetween(p.periodFrom, p.periodTo)} mo)` : ''}
+                  </span>
                   <span>{formatCurrency(p.amount)}</span>
                 </div>
                 <div className="due-item-sub">
