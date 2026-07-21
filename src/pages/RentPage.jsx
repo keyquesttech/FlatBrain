@@ -11,7 +11,7 @@ import SelectMenu from '../components/SelectMenu';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getRent, updateRent } from '../api';
 import { formatCurrency } from '../utils/calculations';
-import { formatDay, formatPeriod } from '../utils/dates';
+import { formatDay, formatPeriod, monthsBetween } from '../utils/dates';
 import { captureInvoicePng } from '../utils/invoicePng';
 import { newId } from '../utils/id';
 
@@ -305,7 +305,7 @@ export default function RentPage() {
                       <DatePicker value={p.periodTo} onChange={(v) => updatePayment(p.id, { periodTo: v })} placeholder="Select date" />
                     </label>
                     <label className="fld">
-                      <span className="fld-label">Payment total</span>
+                      <span className="fld-label">Period total</span>
                       <CurrencyInput
                         formatted
                         value={p.amount}
@@ -324,7 +324,10 @@ export default function RentPage() {
                     </label>
                   </div>
                   <div className="rent-row-meta">
-                    <span className="rent-period">{formatPeriod(p.periodFrom, p.periodTo) || 'Pick the period dates'}</span>
+                    <span className="rent-period">
+                      {formatPeriod(p.periodFrom, p.periodTo) || 'Pick the period dates'}
+                      {monthsBetween(p.periodFrom, p.periodTo) > 0 ? ` · ${monthsBetween(p.periodFrom, p.periodTo)} mo block` : ''}
+                    </span>
                     <span className="rent-row-actions">
                       <button
                         className="btn-icon btn-icon-danger"
@@ -393,6 +396,7 @@ export default function RentPage() {
                     </div>
                     <div className="rent-history-meta">
                       {p.dueDate ? `Due ${formatDay(p.dueDate)} · ` : ''}
+                      {monthsBetween(p.periodFrom, p.periodTo) > 0 ? `${monthsBetween(p.periodFrom, p.periodTo)} mo block · ` : ''}
                       <strong>{formatCurrency(p.amount)}</strong>
                       {p.paid && !p.paymentDate ? ' · paid' : ''}
                     </div>

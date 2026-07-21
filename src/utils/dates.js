@@ -15,3 +15,12 @@ export function formatPeriod(fromISO, toISO) {
   if (from && to) return `${from} – ${to}`;
   return from || to || '';
 }
+
+// How many calendar months a period spans, counting both ends' months —
+// the rent chart's "Block" column (Jul–Aug = 2). 0 when either end is unset.
+export function monthsBetween(fromISO, toISO) {
+  const [fy, fm] = String(fromISO || '').split('-').map(Number);
+  const [ty, tm] = String(toISO || '').split('-').map(Number);
+  if (!fy || !fm || !ty || !tm) return 0;
+  return Math.max(0, ty * 12 + tm - (fy * 12 + fm) + 1);
+}
