@@ -651,6 +651,14 @@ p {
   margin: 0;
 }
 
+/* Small print at the invoice's very bottom */
+.invoice-legend {
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+
 /* Status pills — compact state chips used by the Backup and Reboot cards
    instead of sentence-long status labels */
 .status-pills {

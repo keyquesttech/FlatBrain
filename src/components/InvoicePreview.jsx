@@ -261,6 +261,11 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
           </p>
         )}
+        {/* Spelled out as text — the invoice travels as a PNG, so a
+            clickable link wouldn't survive the download */}
+        <p className="invoice-legend">
+          To add items to the invoice visit http://flatbrain.local/billsplitter/flatmate2 while connected to the Wi-Fi in the flat.
+        </p>
       </div>
       </div>
     </div>
