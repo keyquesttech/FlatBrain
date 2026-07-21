@@ -17,6 +17,12 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   const issued = doc.generatedAt ? new Date(doc.generatedAt) : new Date();
   const tenancy = formatPeriod(doc.startDate, doc.endDate);
+  // Once every period on the invoice has a payment date, it renders as a
+  // receipt: PAID stamp across the card, settled footer, no due-by.
+  const isPaid = items.length > 0 && items.every((p) => p.paymentDate);
+  const paidOn = isPaid
+    ? items.map((p) => p.paymentDate).sort((a, b) => b.localeCompare(a))[0]
+    : null;
 
   return (
     <div className="invoice-frame" ref={ref} id="rent-invoice-preview">
@@ -28,6 +34,11 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
         <span className="invoice-lava invoice-lava-bubble"><span className="invoice-orb invoice-orb-bubble" /></span>
       </div>
       <div className="invoice-card">
+        {isPaid && (
+          <div className="paid-stamp" aria-hidden="true">
+            <span>PAID</span>
+          </div>
+        )}
         <div className="invoice-header">
           <h2>{doc.lodger?.trim() ? `${doc.lodger.trim()} — Rent` : 'Rent'}</h2>
           <div className="text-muted invoice-meta">
@@ -80,7 +91,7 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
 
           <div className="due-card due-card-total-grand">
             <div className="due-card-total grand-total-line">
-              <span>Total due</span>
+              <span>{isPaid ? 'Total paid' : 'Total due'}</span>
               <span className="grand-total-amount">{formatCurrency(total)}</span>
             </div>
             <div className="due-item-sub">
@@ -112,12 +123,23 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
         </div>
 
         <div className="invoice-footer">
-          <p>Thank you for keeping the rent on schedule!</p>
-          <p>Please send the total due to the account above.</p>
-          {nextUnpaid && (
-            <p className="invoice-due-date">
-              Due by: {new Date(nextUnpaid.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
-            </p>
+          {isPaid ? (
+            <>
+              <p>Paid in full — thank you!</p>
+              <p className="invoice-due-date">
+                Paid on: {new Date(paidOn + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
+              </p>
+            </>
+          ) : (
+            <>
+              <p>Thank you for keeping the rent on schedule!</p>
+              <p>Please send the total due to the account above.</p>
+              {nextUnpaid && (
+                <p className="invoice-due-date">
+                  Due by: {new Date(nextUnpaid.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

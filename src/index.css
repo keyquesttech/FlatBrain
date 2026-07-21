@@ -756,6 +756,35 @@ p {
   margin: 0;
 }
 
+/* Paid invoices become receipts: a rubber-stamp PAID across the card.
+   Plain borders + transform only, so the PNG capture renders it exactly. */
+.invoice-card {
+  position: relative;
+}
+
+.paid-stamp {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.paid-stamp span {
+  transform: rotate(-18deg);
+  border: 6px solid rgba(212, 255, 63, 0.5);
+  border-radius: 16px;
+  padding: 10px 38px;
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 12vw, 5rem);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(212, 255, 63, 0.6);
+  background: rgba(18, 18, 18, 0.22);
+}
+
 /* The read-only Period total, dressed like an input so the form reads as
    one piece — but it's computed, never typed */
 .rent-total-display {
