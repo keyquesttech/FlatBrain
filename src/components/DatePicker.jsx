@@ -8,7 +8,7 @@ const MONTH_NAMES = [
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-export default function DatePicker({ value, onChange, placeholder = 'Select due date' }) {
+export default function DatePicker({ value, onChange, placeholder = 'Select due date', prefix }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -72,6 +72,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select due 
   return (
     <div className="picker" ref={containerRef}>
       <button type="button" className={`picker-trigger ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(!isOpen)}>
+        {prefix && <span className="picker-trigger-prefix" aria-hidden="true">{prefix}</span>}
         <span>{displayValue}</span>
         <Calendar size={18} className="picker-trigger-icon" />
       </button>
