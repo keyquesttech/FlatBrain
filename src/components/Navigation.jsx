@@ -6,8 +6,10 @@ import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 
 // FlatBrain header. The brand always links home to the dashboard; app pages
 // show their app's name next to it plus that app's tabs (showTabs=false on
-// the dashboard itself).
-export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs = true, appLabel }) {
+// the dashboard itself). Apps other than Bill Splitter pass their own
+// `customTabs` [{ id, label, active, onClick }] to get the same tab pill
+// in the same place.
+export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs = true, appLabel, customTabs }) {
   const [sound, setSound] = useState(soundEnabled);
 
   const toggleSound = () => {
@@ -44,7 +46,15 @@ export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs 
         </button>
       </div>
 
-      {showTabs && (
+      {customTabs ? (
+        <nav className="tabs" aria-label="Main">
+          {customTabs.map(({ id, label, active, onClick }) => (
+            <button key={id} type="button" className={`tab ${active ? 'active' : ''}`} onClick={onClick}>
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      ) : showTabs && (
         <nav className="tabs" aria-label="Main">
           {tabs.map(({ id, to, label }) => (
             <Link key={id} to={to} className={`tab ${activeTab === id ? 'active' : ''}`} id={`nav-${id}`}>

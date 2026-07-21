@@ -660,12 +660,6 @@ p {
 }
 
 /* ---------- Rent ---------- */
-/* Standalone Generator/History tabs under the header (the shared .tabs
-   pill is normally rendered inside Navigation) */
-.rent-tabs {
-  margin-bottom: 1rem;
-}
-
 .rent-row {
   padding: 0.75rem 0;
   border-bottom: 1px dashed var(--border-soft);
@@ -719,13 +713,15 @@ p {
   gap: 8px;
 }
 
-/* The auth card's checkbox style, compacted to sit inline in a meta row */
-.rent-include {
+/* The auth card's checkbox style, compacted to sit inline in a meta row
+   (doubled selector so it outweighs .remember-checkbox's full width) */
+.rent-row-meta .rent-include {
   width: auto;
   margin-bottom: 0;
+  flex: 0 1 auto;
 }
 
-.rent-include span {
+.rent-row-meta .rent-include span {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
@@ -2366,8 +2362,10 @@ input[type="checkbox"]:focus-visible {
 }
 
 .remember-checkbox input[type="checkbox"]:checked {
-  background: linear-gradient(135deg, var(--lime), var(--pink));
-  border-color: transparent;
+  /* Same lime gradient as the primary buttons; keeping the border lime
+     (not transparent) stops the gradient fringing at the rounded corners */
+  background: linear-gradient(135deg, var(--lime), #c8ff6f);
+  border-color: var(--lime);
 }
 
 .remember-checkbox input[type="checkbox"]:checked::after {

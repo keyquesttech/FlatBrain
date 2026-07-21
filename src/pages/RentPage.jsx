@@ -257,16 +257,13 @@ export default function RentPage() {
 
   return (
     <div className="container animate-fade-in">
-      <Navigation showTabs={false} appLabel="Rent" />
-
-      <nav className="tabs rent-tabs" aria-label="Rent">
-        <button type="button" className={`tab ${view === 'new' ? 'active' : ''}`} onClick={() => setView('new')}>
-          <span>Generator</span>
-        </button>
-        <button type="button" className={`tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
-          <span>History</span>
-        </button>
-      </nav>
+      <Navigation
+        appLabel="Rent"
+        customTabs={[
+          { id: 'new', label: 'Generator', active: view === 'new', onClick: () => setView('new') },
+          { id: 'history', label: 'History', active: view === 'history', onClick: () => setView('history') }
+        ]}
+      />
 
       {view === 'new' ? (
         <>
