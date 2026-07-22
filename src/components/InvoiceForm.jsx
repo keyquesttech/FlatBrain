@@ -35,10 +35,6 @@ export default function InvoiceForm({ data, onChange }) {
     onChange({ ...data, names: { ...names, [key]: value } });
   };
 
-  const updateBank = (field, value) => {
-    onChange({ ...data, bankDetails: { ...data.bankDetails, [field]: value } });
-  };
-
   const updateBill = (id, field, value) => {
     const newBills = data.bills.map((b) =>
       b.id === id ? { ...b, [field]: value } : b
@@ -393,47 +389,12 @@ export default function InvoiceForm({ data, onChange }) {
       </CollapsibleCard>
 
       <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="bank-details">
-        <p className="section-desc">Printed at the bottom of every invoice.</p>
+        <p className="section-desc">Printed at the bottom of every invoice — picked from the Payments app's saved accounts.</p>
         <BankAccountPicker
           bankDetails={data.bankDetails}
           onPick={(bd) => onChange({ ...data, bankDetails: bd })}
+          emptyHint="No saved accounts yet — add one in the Payments app to pick it here."
         />
-        <div className="form-group">
-          <label>Name</label>
-          <input
-            type="text"
-            value={data.bankDetails.name}
-            onChange={(e) => updateBank('name', e.target.value)}
-            placeholder="Account holder name"
-          />
-        </div>
-        <div className="form-group">
-          <label>Bank Name</label>
-          <input
-            type="text"
-            value={data.bankDetails.bankName}
-            onChange={(e) => updateBank('bankName', e.target.value)}
-            placeholder="Bank name"
-          />
-        </div>
-        <div className="form-group">
-          <label>Sort Code</label>
-          <input
-            type="text"
-            value={data.bankDetails.sortCode}
-            onChange={(e) => updateBank('sortCode', e.target.value)}
-            placeholder="00-00-00"
-          />
-        </div>
-        <div className="form-group">
-          <label>Account Number</label>
-          <input
-            type="text"
-            value={data.bankDetails.accountNumber}
-            onChange={(e) => updateBank('accountNumber', e.target.value)}
-            placeholder="12345678"
-          />
-        </div>
       </CollapsibleCard>
     </div>
   );

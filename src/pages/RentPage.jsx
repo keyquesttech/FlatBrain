@@ -438,27 +438,12 @@ export default function RentPage() {
               </CollapsibleCard>
 
               <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="rent-bank">
-                <p className="section-desc">Printed on the invoice — kept separate from the other apps' account details.</p>
+                <p className="section-desc">Printed on the invoice — picked from the Payments app's saved accounts.</p>
                 <BankAccountPicker
                   bankDetails={rent.bankDetails}
                   onPick={(bd) => update({ bankDetails: bd })}
+                  emptyHint="No saved accounts yet — add one in the Payments app to pick it here."
                 />
-                {[
-                  ['name', 'Name', 'Account holder name'],
-                  ['bankName', 'Bank Name', 'Bank name'],
-                  ['sortCode', 'Sort Code', '00-00-00'],
-                  ['accountNumber', 'Account Number', '12345678']
-                ].map(([key, label, ph]) => (
-                  <div className="form-group" key={key}>
-                    <label>{label}</label>
-                    <input
-                      type="text"
-                      value={rent.bankDetails[key]}
-                      onChange={(e) => update({ bankDetails: { ...rent.bankDetails, [key]: e.target.value } })}
-                      placeholder={ph}
-                    />
-                  </div>
-                ))}
               </CollapsibleCard>
 
               {saveError && (

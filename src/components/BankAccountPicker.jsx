@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { getPayments } from '../api';
 
 // The bank accounts saved in the Payments app, shown as tappable cards.
-// Tapping one fills the host app's bank-details fields (they stay
-// editable — this copies values, it doesn't link them). Renders nothing
-// until at least one account exists, so apps look unchanged before
-// Payments is set up.
-export default function BankAccountPicker({ bankDetails, onPick }) {
+// Tapping one copies its details into the host app (it doesn't link
+// them). With no saved accounts it renders the emptyHint if given,
+// otherwise nothing — so apps with their own fields look unchanged
+// before Payments is set up.
+export default function BankAccountPicker({ bankDetails, onPick, emptyHint }) {
   const [accounts, setAccounts] = useState([]);
 
   useEffect(() => {
@@ -15,7 +15,9 @@ export default function BankAccountPicker({ bankDetails, onPick }) {
       .catch(() => {});
   }, []);
 
-  if (accounts.length === 0) return null;
+  if (accounts.length === 0) {
+    return emptyHint ? <p className="section-desc">{emptyHint}</p> : null;
+  }
 
   const isCurrent = (a) =>
     a.name === bankDetails?.name &&
@@ -43,7 +45,7 @@ export default function BankAccountPicker({ bankDetails, onPick }) {
           </button>
         ))}
       </div>
-      <p className="section-desc split-desc">Tap a card to fill the fields below — they stay editable.</p>
+      <p className="section-desc split-desc">Tap a card to use that account on the invoice.</p>
     </div>
   );
 }
