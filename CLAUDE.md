@@ -26,7 +26,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 |---|---|---|---|
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
-| Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
+| Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
 | Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; display currency picker; per-page password locks; dashboard hub-tile picker; change the shared password (`POST /api/password`, no old password needed) |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
@@ -66,7 +66,8 @@ change.
   date, × to clear). A filled payment date IS the paid marker everywhere.
 - **BankAccountPicker**: full-preview tappable account cards from
   `payments.json`; Bill Splitter and Rent bank cards are pick-only (no
-  manual inputs), the invoice generator keeps manual fields too.
+  manual inputs). The invoice generator has no picker — manual fields
+  only, cleared after every download or reset (per-invoice, not standing).
 - **Invoice PNGs**: `utils/invoicePng.js` captures a 720px clone via
   html2canvas (lazy-loaded). Invoice components share the
   `invoice-frame`/`due-card` CSS; paid invoices get the `.paid-stamp`

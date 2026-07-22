@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, FileText, Landmark, Plus, RotateCcw, X } from 'lucide-react';
 import Navigation from '../components/Navigation';
-import BankAccountPicker from '../components/BankAccountPicker';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
 import CustomInvoicePreview from '../components/CustomInvoicePreview';
@@ -15,11 +14,13 @@ import { playSuccess } from '../utils/sound';
 
 const SAVE_DEBOUNCE_MS = 600;
 
-const DEFAULT_INV_BANK = {
-  name: 'Your Name',
-  bankName: 'Your Bank',
-  sortCode: '00-00-00',
-  accountNumber: '00000000'
+// Bank details are typed fresh per invoice and cleared with the rest of
+// the form — the preview shows its placeholders until they're filled.
+const EMPTY_BANK = {
+  name: '',
+  bankName: '',
+  sortCode: '',
+  accountNumber: ''
 };
 
 // Items are Bill Splitter-style lines: description, units and the TOTAL
@@ -34,7 +35,7 @@ function normalizeDoc(d) {
       units: i.units ?? 1,
       amount: i.amount || ''
     })),
-    bankDetails: { ...DEFAULT_INV_BANK, ...(d?.bankDetails || {}) }
+    bankDetails: { ...EMPTY_BANK, ...(d?.bankDetails || {}) }
   };
 }
 
@@ -99,8 +100,9 @@ export default function InvoicesPage() {
     update({ items: [...doc.items, { id: newId(), thing: '', units: 1, amount: '' }] });
   };
 
-  // Bank details are standing settings; everything else clears.
-  const resetDoc = () => update({ title: '', dueDate: '', items: [] });
+  // Everything clears, bank details included — they're per-invoice, not
+  // standing settings, so nothing lingers after a download or reset.
+  const resetDoc = () => update({ title: '', dueDate: '', items: [], bankDetails: { ...EMPTY_BANK } });
 
   const downloadInvoice = async () => {
     if (busy) return;
@@ -124,7 +126,7 @@ export default function InvoicesPage() {
 
   const clearForm = async () => {
     if (busy) return;
-    if (!await appConfirm('Reset the invoice? Title, due date and items will be cleared. Bank details are kept.', { title: 'Reset invoice', okLabel: 'Reset', danger: true })) return;
+    if (!await appConfirm('Reset the invoice? Title, due date, items and bank details will be cleared.', { title: 'Reset invoice', okLabel: 'Reset', danger: true })) return;
     resetDoc();
   };
 
@@ -227,11 +229,7 @@ export default function InvoicesPage() {
           </CollapsibleCard>
 
           <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="inv-bank">
-            <p className="section-desc">Printed on the invoice — kept separate from Bill Splitter's account details.</p>
-            <BankAccountPicker
-              bankDetails={doc.bankDetails}
-              onPick={(bd) => update({ bankDetails: bd })}
-            />
+            <p className="section-desc">Printed on the invoice — cleared after every download or reset, so each invoice starts blank.</p>
             {[
               ['name', 'Name', 'Account holder name'],
               ['bankName', 'Bank Name', 'Bank name'],
