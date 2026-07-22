@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { login } from '../api';
 import { AUTH_SESSION_KEY, AUTH_LOCAL_KEY, PASSWORD_LOCAL_KEY } from '../utils/authStorage';
+import { isAppLocked } from '../utils/panelSettings';
 
 // One-time carry-over from the pre-FlatBrain key names, so the rename
 // doesn't log anyone out or forget a remembered password.
@@ -35,7 +36,10 @@ function persistAuth(remember) {
   }
 }
 
-export default function PasswordGate({ children }) {
+// appKey names the app for the per-app locks in Settings; an app whose
+// lock is off renders straight through. Being unlocked once still unlocks
+// every app, like it always has — the locks only pick who asks.
+export default function PasswordGate({ appKey, children }) {
   const [authed, setAuthed] = useState(isAuthed);
   const [password, setPassword] = useState(() => localStorage.getItem(PASSWORD_LOCAL_KEY) || '');
   const [remember, setRemember] = useState(() => localStorage.getItem(AUTH_LOCAL_KEY) === 'true');
@@ -67,7 +71,7 @@ export default function PasswordGate({ children }) {
     }
   };
 
-  if (authed) return children;
+  if (!isAppLocked(appKey) || authed) return children;
 
   return (
     <div className="auth-wrap animate-fade-in">

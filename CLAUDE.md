@@ -11,7 +11,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
   All data is plain JSON files in the app dir, written atomically
   (tmp + rename) and **git-ignored** — never commit or overwrite live data
   files (`draft.json`, `history.json`, `invoices.json`, `rent.json`,
-  `payments.json`, `password.txt`, `backup-config.json`,
+  `payments.json`, `settings.json`, `password.txt`, `backup-config.json`,
   `reboot-config.json`, `temp-history.json`).
 - **Frontend**: React 18 + Vite in `src/`, no chart/UI libraries — charts
   are hand-rolled SVG/divs, icons are `lucide-react@1.23` (check an icon
@@ -27,12 +27,16 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
-| Settings | `/settings` | `payments.json` (accounts key), `password.txt` | Shared bank accounts as cards; feeds every bank-details picker; change the shared password (`POST /api/password`, current password required) |
+| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; display currency picker; per-app password locks; change the shared password (`POST /api/password`, no old password needed) |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
-All pages are password-gated (`PasswordGate`, client-side, shared password
-in `password.txt`, changeable from Settings) except `/billsplitter/flatmate2`,
-which is deliberately open so it can be shared.
+Pages are password-gated (`PasswordGate`, client-side, shared password in
+`password.txt`, changeable from Settings) according to the per-app locks in
+`settings.json` (default: everything locked); `/billsplitter/flatmate2` has
+no lock — it is deliberately open so it can be shared. `settings.json` also
+holds the display currency (ISO code); `src/utils/currency.js` turns it
+into the symbol/format every amount uses, applied by `App.jsx` before the
+routes render.
 
 ## Money maths (do not break)
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { chargedBillAmount } from '../utils/calculations';
+import { currencySymbol } from '../utils/currency';
 
 const COLORS = ['#d4ff3f', '#ff5fd4', '#5fb2ff', '#ffc850', '#a78bfa', '#4bd6b6', '#ff8a5f', '#8ee06a'];
 
@@ -50,14 +51,14 @@ export default function BillsBreakdownChart({ history, months }) {
       <div className="spend-chart">
         {monthData.map((m) => (
           <div className="spend-bar-col" key={m.period}>
-            <div className="spend-bar-value">£{m.total.toFixed(0)}</div>
+            <div className="spend-bar-value">{currencySymbol()}{m.total.toFixed(0)}</div>
             <div className="spend-bar-track">
               <div className="spend-bar-stack" style={{ height: `${(m.total / max) * 100}%` }}>
                 {categories.filter((c) => m.totals[c]).map((c) => (
                   <div
                     key={c}
                     className="spend-stack-seg"
-                    title={`${c}: £${m.totals[c].toFixed(2)}`}
+                    title={`${c}: ${currencySymbol()}${m.totals[c].toFixed(2)}`}
                     style={{ height: `${(m.totals[c] / m.total) * 100}%`, background: colorFor(c) }}
                   />
                 ))}

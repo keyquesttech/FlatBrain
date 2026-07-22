@@ -2601,6 +2601,12 @@ input[type="checkbox"]:focus-visible {
   user-select: none;
 }
 
+/* App-lock rows on Settings reuse the auth card's checkbox, minus its
+   stacked-form margin — the grid gap does the spacing there. */
+.app-locks .remember-checkbox {
+  margin-bottom: 0;
+}
+
 .remember-checkbox input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;

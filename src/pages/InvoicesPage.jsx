@@ -9,6 +9,7 @@ import DatePicker from '../components/DatePicker';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getInvoicesDoc, updateInvoicesDoc } from '../api';
 import { captureInvoicePng } from '../utils/invoicePng';
+import { currencySymbol } from '../utils/currency';
 import { newId } from '../utils/id';
 import { playSuccess } from '../utils/sound';
 
@@ -182,7 +183,7 @@ export default function InvoicesPage() {
               <div className="input-row extras-row row-labels" aria-hidden="true">
                 <span className="rl-over-input">Item</span>
                 <span className="packs-input">Units</span>
-                <span className="currency-input rl-over-pill">Total £</span>
+                <span className="currency-input rl-over-pill">Total {currencySymbol()}</span>
                 <span className="row-labels-action" />
               </div>
             )}

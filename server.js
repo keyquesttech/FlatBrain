@@ -111,17 +111,14 @@ app.post('/api/login', (req, res) => {
   res.json({ success: password === getPassword() });
 });
 
-// Change the shared password (managed from Settings). Knowing the current
-// password is required, mirroring the login check. The new one is trimmed
-// like getPassword() trims the file, and written tmp+rename so a power cut
-// can't leave an empty password.txt behind.
+// Change the shared password (managed from Settings). LAN-only panel, so
+// setting a new password doesn't ask for the old one. The new one is
+// trimmed like getPassword() trims the file, and written tmp+rename so a
+// power cut can't leave an empty password.txt behind.
 app.post('/api/password', (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
-  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
-    return res.status(400).json({ success: false, error: 'Both passwords are required' });
-  }
-  if (currentPassword !== getPassword()) {
-    return res.json({ success: false, error: 'The current password is incorrect.' });
+  const { newPassword } = req.body || {};
+  if (typeof newPassword !== 'string') {
+    return res.status(400).json({ success: false, error: 'The new password is required' });
   }
   const next = newPassword.trim();
   if (next.length < 4 || next.length > 200 || /[\r\n]/.test(next)) {
@@ -234,6 +231,29 @@ app.put('/api/payments', (req, res) => {
   }
   writeJSON(PAYMENTS_FILE, payments);
   res.json({ success: true, payments });
+});
+
+// ---- Panel settings (managed by the Settings app): the display currency
+// and which apps the password gate locks. Whole-document GET/PUT; the
+// client defaults any missing lock to "locked". ----
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
+
+const defaultSettings = {
+  currency: 'GBP',
+  locks: { dashboard: true, billsplitter: true, rent: true, invoices: true, settings: true, status: true }
+};
+
+app.get('/api/settings', (req, res) => {
+  res.json(readJSON(SETTINGS_FILE, defaultSettings));
+});
+
+app.put('/api/settings', (req, res) => {
+  const settings = req.body;
+  if (!isPlainObject(settings)) {
+    return res.status(400).json({ success: false, error: 'Settings data must be an object' });
+  }
+  writeJSON(SETTINGS_FILE, settings);
+  res.json({ success: true, settings });
 });
 
 // ---- Rent: the tenancy details, the payment schedule and the history of
