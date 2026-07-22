@@ -111,6 +111,33 @@ app.post('/api/login', (req, res) => {
   res.json({ success: password === getPassword() });
 });
 
+// Change the shared password (managed from Settings). Knowing the current
+// password is required, mirroring the login check. The new one is trimmed
+// like getPassword() trims the file, and written tmp+rename so a power cut
+// can't leave an empty password.txt behind.
+app.post('/api/password', (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+    return res.status(400).json({ success: false, error: 'Both passwords are required' });
+  }
+  if (currentPassword !== getPassword()) {
+    return res.json({ success: false, error: 'The current password is incorrect.' });
+  }
+  const next = newPassword.trim();
+  if (next.length < 4 || next.length > 200 || /[\r\n]/.test(next)) {
+    return res.json({ success: false, error: 'The new password needs 4–200 characters on a single line.' });
+  }
+  try {
+    const tmp = `${PASSWORD_FILE}.tmp`;
+    fs.writeFileSync(tmp, next + '\n');
+    fs.renameSync(tmp, PASSWORD_FILE);
+  } catch (err) {
+    console.error('Error writing password file:', err);
+    return res.status(500).json({ success: false, error: 'Could not write the password file' });
+  }
+  res.json({ success: true });
+});
+
 app.get('/api/draft', (req, res) => {
   res.json(readJSON(DRAFT_FILE, defaultDraft));
 });

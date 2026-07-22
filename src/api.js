@@ -22,6 +22,9 @@ const jsonBody = (method, body) => ({
 });
 
 export const login = (password) => request('/login', jsonBody('POST', { password }));
+// Panel-level: the one shared password gates every page; Settings changes it.
+export const changePassword = (currentPassword, newPassword) =>
+  panelRequest('/password', jsonBody('POST', { currentPassword, newPassword }));
 
 export const getDraft = () => request('/draft');
 export const updateDraft = (draft) => request('/draft', jsonBody('PUT', draft));
