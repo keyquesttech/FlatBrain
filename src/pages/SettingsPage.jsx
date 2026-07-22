@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Coins, Eye, EyeOff, KeyRound, Landmark, LayoutGrid, Pencil, Save, Trash2 } from 'lucide-react';
+import { Coins, Eye, EyeOff, KeyRound, Landmark, LayoutGrid, Pencil, Save, Trash2, Users } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import SelectMenu from '../components/SelectMenu';
@@ -9,7 +9,7 @@ import { newId } from '../utils/id';
 import { syncRememberedPassword } from '../utils/authStorage';
 import { CURRENCIES, currencySymbolFor } from '../utils/currency';
 import { DEFAULT_NAMES } from '../utils/defaults';
-import { applyPanelSettings, normalizePanelSettings } from '../utils/panelSettings';
+import { applyPanelSettings, flatmateNames, normalizePanelSettings } from '../utils/panelSettings';
 
 const SAVE_DEBOUNCE_MS = 600;
 
@@ -18,23 +18,27 @@ const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
   label: `${currencySymbolFor(c.code)} ${c.name}`
 }));
 
-// Every page that can go on the custom hub, grouped by app for the
-// checkbox list. Keys match PasswordGate's pageKey per route; a ticked
-// page gets a hub tile AND opens without the password.
-const HUB_GROUPS = [
-  {
-    app: 'Bill Splitter',
-    pages: [
-      { key: 'billsplitter', label: 'Generator' },
-      { key: 'flatmate1', label: `${DEFAULT_NAMES.matias}'s page` },
-      { key: 'flatmate2', label: `${DEFAULT_NAMES.reka}'s page` }
-    ]
-  },
-  { app: 'Rent', pages: [{ key: 'rent', label: 'Rent' }] },
-  { app: 'Invoice generator', pages: [{ key: 'invoices', label: 'Invoice generator' }] },
-  { app: 'Settings', pages: [{ key: 'settings', label: 'Settings' }] },
-  { app: 'Server status', pages: [{ key: 'status', label: 'Server status' }] }
-];
+// Every page of every app, grouped for the Custom hub card's checkboxes.
+// Keys match PasswordGate's pageKey per route; a ticked page gets a hub
+// tile AND opens without the password. A function so the flatmate pages
+// carry the names from the Flatmates card, live as they're typed.
+const hubGroups = () => {
+  const names = flatmateNames();
+  return [
+    {
+      app: 'Bill Splitter',
+      pages: [
+        { key: 'billsplitter', label: 'Generator' },
+        { key: 'flatmate1', label: `${names.matias}'s page` },
+        { key: 'flatmate2', label: `${names.reka}'s page` }
+      ]
+    },
+    { app: 'Rent', pages: [{ key: 'rent', label: 'Rent page' }] },
+    { app: 'Invoice generator', pages: [{ key: 'invoices', label: 'Generator' }] },
+    { app: 'Settings', pages: [{ key: 'settings', label: 'Settings page' }] },
+    { app: 'Server status', pages: [{ key: 'status', label: 'Status page' }] }
+  ];
+};
 
 function normalizeAccount(a) {
   return {
@@ -363,6 +367,37 @@ export default function SettingsPage() {
         </CollapsibleCard>
 
         <CollapsibleCard
+          title={<span className="stat-title"><Users size={15} /> Flatmates</span>}
+          storageKey="settings-flatmates"
+        >
+          <p className="section-desc">
+            The two names every app shows — Bill Splitter tabs, invoices and the hub tiles all follow along.
+          </p>
+          <div className="rent-fields">
+            <label className="fld">
+              <span className="fld-label">Flatmate 1</span>
+              <input
+                type="text"
+                value={prefs.names.matias}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, matias: e.target.value } })}
+                placeholder={DEFAULT_NAMES.matias}
+                maxLength={40}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Flatmate 2</span>
+              <input
+                type="text"
+                value={prefs.names.reka}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, reka: e.target.value } })}
+                placeholder={DEFAULT_NAMES.reka}
+                maxLength={40}
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
           title={<span className="stat-title"><Coins size={15} /> Currency</span>}
           storageKey="settings-currency"
         >
@@ -401,23 +436,25 @@ export default function SettingsPage() {
               />
             </label>
           </div>
-          {HUB_GROUPS.map(({ app, pages }) => (
-            <div className="hub-group" key={app}>
-              <span className="fld-label hub-group-label">{app}</span>
-              <div className="rent-fields app-locks">
-                {pages.map(({ key, label }) => (
-                  <label className="remember-checkbox" key={key}>
-                    <input
-                      type="checkbox"
-                      checked={prefs.hub.tiles[key]}
-                      onChange={(e) => updatePrefs({ hub: { ...prefs.hub, tiles: { ...prefs.hub.tiles, [key]: e.target.checked } } })}
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
+          <div className="history-grid hub-group-grid">
+            {hubGroups().map(({ app, pages }) => (
+              <div className="glass-panel history-card hub-group-card" key={app}>
+                <h3 className="history-card-title">{app}</h3>
+                <div className="hub-group-pages">
+                  {pages.map(({ key, label }) => (
+                    <label className="remember-checkbox" key={key}>
+                      <input
+                        type="checkbox"
+                        checked={prefs.hub.tiles[key]}
+                        onChange={(e) => updatePrefs({ hub: { ...prefs.hub, tiles: { ...prefs.hub.tiles, [key]: e.target.checked } } })}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </CollapsibleCard>
 
         <CollapsibleCard
@@ -432,7 +469,7 @@ export default function SettingsPage() {
           <p className="section-desc">
             One shared password unlocks every locked app — change it here and let your flatmate know. Devices already unlocked stay unlocked.
           </p>
-          <div className="rent-fields">
+          <div className="rent-fields pw-fields">
             <PasswordField label="New password" value={pwNew} onChange={setPwNew} autoComplete="new-password" />
             <PasswordField label="Confirm new password" value={pwConfirm} onChange={setPwConfirm} autoComplete="new-password" />
           </div>

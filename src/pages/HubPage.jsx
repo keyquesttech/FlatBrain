@@ -1,14 +1,14 @@
 import React from 'react';
 import Navigation from '../components/Navigation';
 import AppTileGrid from '../components/AppTileGrid';
-import { PAGE_TILES } from '../utils/pageTiles';
+import { pageTiles } from '../utils/pageTiles';
 import { hubName, isOnHub } from '../utils/panelSettings';
 
 // The custom hub: the password-free landing page, reached from the lock
 // screen's Guest login. It carries the name picked in Settings and one
 // tile per page ticked onto it — those pages open without the password.
 export default function HubPage() {
-  const tiles = PAGE_TILES.filter(({ key }) => isOnHub(key));
+  const tiles = pageTiles().filter(({ key }) => isOnHub(key));
 
   return (
     <div className="container container-narrow animate-fade-in">

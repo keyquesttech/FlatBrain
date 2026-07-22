@@ -2601,22 +2601,33 @@ input[type="checkbox"]:focus-visible {
   user-select: none;
 }
 
-/* Hub-page rows on Settings reuse the auth card's checkbox, minus its
-   stacked-form margin — the grid gap does the spacing there. */
-.app-locks .remember-checkbox {
-  margin-bottom: 0;
-}
-
-/* One block per app in the Custom hub card: a small mono heading over its
-   pages' checkboxes */
-.hub-group {
+/* Custom hub card: one glass sub-card per app, its pages as checkbox
+   rows. The cards ride the responsive history grid, so phones get a
+   single column; hover stays quiet — these aren't tappable cards. */
+.hub-group-grid {
   margin-top: 14px;
 }
 
-.hub-group-label {
-  display: block;
-  text-align: left;
-  margin-bottom: 8px;
+.hub-group-card,
+.hub-group-card:hover {
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-soft);
+}
+
+.hub-group-card .history-card-title {
+  margin-bottom: 0.75rem;
+}
+
+.hub-group-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hub-group-pages .remember-checkbox {
+  margin-bottom: 0;
 }
 
 /* Guest login sits under Unlock on the lock screen */
@@ -2929,6 +2940,11 @@ input[type="checkbox"]:focus-visible {
 
 /* ---------- Mobile ---------- */
 @media (max-width: 640px) {
+  /* The eye-toggle password fields need the full width on phones */
+  .pw-fields {
+    grid-template-columns: 1fr;
+  }
+
   /* Compact navigation: less vertical space before the content */
   .nav-header {
     flex-direction: column;

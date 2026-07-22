@@ -32,10 +32,6 @@ export default function InvoiceForm({ data, onChange }) {
     onChange({ ...data, period, dueDate });
   };
 
-  const updateName = (key, value) => {
-    onChange({ ...data, names: { ...names, [key]: value } });
-  };
-
   const updateBill = (id, field, value) => {
     const newBills = data.bills.map((b) =>
       b.id === id ? { ...b, [field]: value } : b
@@ -228,28 +224,7 @@ export default function InvoiceForm({ data, onChange }) {
         </div>
       </CollapsibleCard>
 
-      <CollapsibleCard title={<span className="stat-title"><Users size={15} /> Names</span>} storageKey="names">
-        <div className="input-row">
-          <label className="fld">
-            <span className="fld-label">Flatmate 1</span>
-            <input
-              type="text"
-              value={names.matias}
-              onChange={(e) => updateName('matias', e.target.value)}
-              placeholder="Flatmate 1"
-            />
-          </label>
-          <label className="fld">
-            <span className="fld-label">Flatmate 2</span>
-            <input
-              type="text"
-              value={names.reka}
-              onChange={(e) => updateName('reka', e.target.value)}
-              placeholder="Flatmate 2"
-            />
-          </label>
-        </div>
-
+      <CollapsibleCard title={<span className="stat-title"><Users size={15} /> Bills split</span>} storageKey="names">
         <div className="form-group split-group">
           <label>Bills split</label>
           <div className="split-row">

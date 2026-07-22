@@ -11,6 +11,7 @@ import SelectMenu from '../components/SelectMenu';
 import { getDraft, updateDraft, patchDraft, resetDraft, getHistory, saveInvoice, importHistory, deleteInvoice } from '../api';
 import { calculateInvoice } from '../utils/calculations';
 import { normalizeDraft } from '../utils/defaults';
+import { flatmateNames } from '../utils/panelSettings';
 import { prefillBillsFromHistory } from '../utils/standingCharges';
 import { newId } from '../utils/id';
 import { captureInvoicePng } from '../utils/invoicePng';
@@ -51,8 +52,14 @@ export default function MainPage() {
   // can update that invoice instead of duplicating its month.
   const loadedInvoiceRef = useRef(null);
 
+  // The display names live in panel settings (Settings → Flatmates), not
+  // in the draft — every live normalize stamps them on so labels, tabs and
+  // saved history snapshots all carry the current names. History
+  // re-downloads skip this and keep the names they were saved with.
+  const withPanelNames = (draft) => ({ ...normalizeDraft(draft), names: flatmateNames() });
+
   const applyDraft = (draft) => {
-    const normalized = normalizeDraft(draft);
+    const normalized = withPanelNames(draft);
     formDataRef.current = normalized;
     setFormData(normalized);
   };
@@ -74,7 +81,7 @@ export default function MainPage() {
       getDraft().then((d) => {
         if (cancelled || savePendingRef.current) return;
         if (Date.now() - lastEditRef.current < POLL_MS) return;
-        const normalized = normalizeDraft(d);
+        const normalized = withPanelNames(d);
         if (JSON.stringify(normalized) !== JSON.stringify(formDataRef.current)) {
           formDataRef.current = normalized;
           setFormData(normalized);
@@ -282,7 +289,7 @@ export default function MainPage() {
       period: invoice.period,
       dueDate: invoice.dueDate,
       paidDate: invoice.paidDate,
-      names: invoice.names,
+      names: flatmateNames(),
       bills: invoice.bills,
       matiasExtras: invoice.matiasExtras || [],
       rekaExtras: invoice.rekaExtras || [],

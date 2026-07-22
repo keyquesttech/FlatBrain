@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getDraft, patchDraft, getHistory } from '../api';
 import { extraPercent, extraShares, formatCurrency, formatExtraLabel, mergedExtras } from '../utils/calculations';
-import { DEFAULT_NAMES } from '../utils/defaults';
+import { flatmateNames } from '../utils/panelSettings';
 import { newExtra } from '../utils/id';
 import Navigation from '../components/Navigation';
 import ExtrasInputList from '../components/ExtrasInputList';
@@ -17,12 +17,9 @@ export default function UserExtrasPage({ personKey }) {
   const fullPriceKey = `${personKey}FullPriceExtras`;
   const noteKey = `${personKey}Note`;
   const otherKey = personKey === 'matias' ? 'reka' : 'matias';
-  const flatmateLabel = personKey === 'matias' ? 'Flatmate 1' : 'Flatmate 2';
-  const otherFlatmateLabel = personKey === 'matias' ? 'Flatmate 2' : 'Flatmate 1';
   const [extras, setExtras] = useState([]);
   const [otherExtras, setOtherExtras] = useState([]);
   const [note, setNote] = useState('');
-  const [names, setNames] = useState(DEFAULT_NAMES);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +34,6 @@ export default function UserExtrasPage({ personKey }) {
       setExtras(mergedExtras(draft, personKey));
       setOtherExtras(mergedExtras(draft, otherKey));
       setNote(draft[noteKey] || '');
-      setNames({ ...DEFAULT_NAMES, ...(draft.names || {}) });
       setLoading(false);
     };
 
@@ -106,8 +102,11 @@ export default function UserExtrasPage({ personKey }) {
     saveDraftChanges({ [noteKey]: value });
   };
 
-  const otherDisplayName = names[otherKey].trim() || otherFlatmateLabel;
-  const displayName = names[personKey].trim() || flatmateLabel;
+  // Panel-wide names from Settings' Flatmates card (already fall back to
+  // the defaults, so no per-key fallback needed here).
+  const names = flatmateNames();
+  const otherDisplayName = names[otherKey];
+  const displayName = names[personKey];
 
   const fmtPct = (n) => Math.round(n * 100) / 100;
 

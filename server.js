@@ -242,6 +242,7 @@ const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 
 const defaultSettings = {
   currency: 'GBP',
+  names: { matias: '', reka: '' },
   hub: {
     name: '',
     tiles: { billsplitter: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }

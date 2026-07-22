@@ -1,7 +1,7 @@
 import React from 'react';
 import Navigation from '../components/Navigation';
 import AppTileGrid from '../components/AppTileGrid';
-import { PAGE_TILES } from '../utils/pageTiles';
+import { pageTiles } from '../utils/pageTiles';
 
 // FlatBrain home: the password-side launcher with a tile per app. The
 // guest-facing sibling is the custom hub at /hub, whose tiles are picked
@@ -16,7 +16,7 @@ export default function DashboardPage() {
         <p className="text-muted">Everything your flat runs, in one place.</p>
       </div>
 
-      <AppTileGrid tiles={PAGE_TILES.filter((t) => t.appTile)} />
+      <AppTileGrid tiles={pageTiles().filter((t) => t.appTile)} />
     </div>
   );
 }
