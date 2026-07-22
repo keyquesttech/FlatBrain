@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import InvoicesPage from './pages/InvoicesPage';
 import MainPage from './pages/MainPage';
-import PaymentsPage from './pages/PaymentsPage';
 import RentPage from './pages/RentPage';
 import ServerStatusPage from './pages/ServerStatusPage';
 import SettingsPage from './pages/SettingsPage';
@@ -57,9 +56,6 @@ function App() {
 
         {/* Custom invoice generator — itemized invoices with a paid history */}
         <Route path="/invoices" element={<PasswordGate><InvoicesPage /></PasswordGate>} />
-
-        {/* Payments — money in, money out, and the shared bank accounts */}
-        <Route path="/payments" element={<PasswordGate><PaymentsPage /></PasswordGate>} />
 
         {/* Settings — panel-wide information the apps share */}
         <Route path="/settings" element={<PasswordGate><SettingsPage /></PasswordGate>} />

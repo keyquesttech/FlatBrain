@@ -187,15 +187,13 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
-// ---- Payments: bank accounts (shared with the other apps' bank pickers)
-// plus expected money in and payments due out. Single-editor, so
-// whole-document GET/PUT. ----
+// ---- Shared bank accounts (managed by the Settings app, read by every
+// bank-details picker). The file keeps the payments name from the app
+// that introduced it; whole-document GET/PUT. ----
 const PAYMENTS_FILE = path.join(__dirname, 'payments.json');
 
 const defaultPayments = {
-  accounts: [], // [{ id, label, name, bankName, sortCode, accountNumber }]
-  incoming: [], // [{ id, thing, amount, date, accountId, paidDate }]
-  outgoing: []  // same shape — paidDate set = settled, drops out of totals
+  accounts: [] // [{ id, label, name, bankName, sortCode, accountNumber }]
 };
 
 app.get('/api/payments', (req, res) => {

@@ -874,11 +874,6 @@ p {
   display: none;
 }
 
-/* Payments: a negative net once everything clears reads as a warning */
-.sys-row-value.pay-net-negative {
-  color: var(--pink-soft);
-}
-
 /* Saved bank accounts, shown as cards like Bill Splitter's history */
 .account-grid {
   margin-top: 1rem;
