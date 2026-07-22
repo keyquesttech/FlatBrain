@@ -5,6 +5,7 @@ import DatePicker from './DatePicker';
 import ExtrasInputList from './ExtrasInputList';
 import CurrencyInput from './CurrencyInput';
 import SelectMenu from './SelectMenu';
+import BankAccountPicker from './BankAccountPicker';
 import CollapsibleCard from './CollapsibleCard';
 import { DEFAULT_NAMES } from '../utils/defaults';
 import { newExtra, newId } from '../utils/id';
@@ -393,6 +394,10 @@ export default function InvoiceForm({ data, onChange }) {
 
       <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="bank-details">
         <p className="section-desc">Printed at the bottom of every invoice.</p>
+        <BankAccountPicker
+          bankDetails={data.bankDetails}
+          onPick={(bd) => onChange({ ...data, bankDetails: bd })}
+        />
         <div className="form-group">
           <label>Name</label>
           <input

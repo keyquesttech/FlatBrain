@@ -35,6 +35,11 @@ export const saveInvoice = (invoice) => request('/history', jsonBody('POST', inv
 export const importHistory = (invoices) => request('/history/import', jsonBody('POST', { invoices }));
 export const deleteInvoice = (id) => request(`/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+// Payments: one document, whole-object reads and writes. Its saved bank
+// accounts also feed the other apps' bank-details pickers.
+export const getPayments = () => http('/api/payments');
+export const updatePayments = (payments) => http('/api/payments', jsonBody('PUT', payments));
+
 // Rent: one document, whole-object reads and writes.
 export const getRent = () => http('/api/rent');
 export const updateRent = (rent) => http('/api/rent', jsonBody('PUT', rent));

@@ -22,6 +22,7 @@ draft.json
 history.json
 invoices.json
 rent.json
+payments.json
 password.txt
 backup-config.json
 reboot-config.json
