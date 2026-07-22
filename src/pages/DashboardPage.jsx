@@ -1,11 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, FileText, KeyRound, Receipt, Settings, ArrowRight } from 'lucide-react';
+import { Activity, FileText, KeyRound, Receipt, Settings, User, UserRound, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
+import { isOnHub } from '../utils/panelSettings';
+import { DEFAULT_NAMES } from '../utils/defaults';
 
-// FlatBrain home: the launcher for every app the flat runs. Each tile is an
-// app; adding a future app = adding one entry here plus its routes.
-const APPS = [
+// FlatBrain home: the hub for every app and page the flat runs. Which
+// tiles actually show is picked in Settings (Hub tiles); locked pages
+// still ask for the password when their tile is tapped. Adding a future
+// app = one entry here plus its routes and its lock/hub keys.
+const TILES = [
   {
     key: 'billsplitter',
     name: 'Bill Splitter',
@@ -13,6 +17,22 @@ const APPS = [
     icon: Receipt,
     accent: 'lime',
     description: 'Split bills and expenses for the flat.'
+  },
+  {
+    key: 'flatmate1',
+    name: `${DEFAULT_NAMES.matias}'s bills page`,
+    to: '/billsplitter/flatmate1',
+    icon: User,
+    accent: 'lime',
+    description: 'Add extras and see this month\'s share.'
+  },
+  {
+    key: 'flatmate2',
+    name: `${DEFAULT_NAMES.reka}'s bills page`,
+    to: '/billsplitter/flatmate2',
+    icon: UserRound,
+    accent: 'lime',
+    description: 'Add extras and see this month\'s share.'
   },
   {
     key: 'rent',
@@ -49,6 +69,8 @@ const APPS = [
 ];
 
 export default function DashboardPage() {
+  const tiles = TILES.filter(({ key }) => isOnHub(key));
+
   return (
     <div className="container container-narrow animate-fade-in">
       <Navigation showTabs={false} />
@@ -59,7 +81,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="app-grid">
-        {APPS.map(({ key, name, to, icon: Icon, accent, description }) => (
+        {tiles.map(({ key, name, to, icon: Icon, accent, description }) => (
           <div className={`glass-panel app-tile app-tile-${accent}`} key={key}>
             <Link to={to} className="app-tile-main">
               <span className="app-tile-icon"><Icon size={26} /></span>
@@ -72,6 +94,12 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {tiles.length === 0 && (
+        <p className="text-muted section-desc">
+          The hub is empty — pick some tiles in Settings.
+        </p>
+      )}
     </div>
   );
 }

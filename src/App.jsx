@@ -55,26 +55,26 @@ function App() {
         <span className="underlay-grain" />
       </div>
       {settingsReady && <Routes>
-        {/* FlatBrain dashboard — the app launcher */}
-        <Route path="/" element={<PasswordGate appKey="dashboard"><DashboardPage /></PasswordGate>} />
+        {/* FlatBrain dashboard — the hub; its tiles are picked in Settings */}
+        <Route path="/" element={<PasswordGate pageKey="dashboard"><DashboardPage /></PasswordGate>} />
 
-        {/* Bill Splitter app. Password-gated by its lock except the
-            flatmate 2 page, which is deliberately always shareable. */}
-        <Route path="/billsplitter" element={<PasswordGate appKey="billsplitter"><MainPage /></PasswordGate>} />
-        <Route path="/billsplitter/flatmate1" element={<PasswordGate appKey="billsplitter"><UserExtrasPage personKey="matias" /></PasswordGate>} />
-        <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="reka" />} />
+        {/* Bill Splitter app. Every page has its own lock; flatmate 2's
+            defaults open so the page stays shareable until locked. */}
+        <Route path="/billsplitter" element={<PasswordGate pageKey="billsplitter"><MainPage /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate1" element={<PasswordGate pageKey="flatmate1"><UserExtrasPage personKey="matias" /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate2" element={<PasswordGate pageKey="flatmate2"><UserExtrasPage personKey="reka" /></PasswordGate>} />
 
         {/* Rent — the tenancy schedule and its per-period invoices */}
-        <Route path="/rent" element={<PasswordGate appKey="rent"><RentPage /></PasswordGate>} />
+        <Route path="/rent" element={<PasswordGate pageKey="rent"><RentPage /></PasswordGate>} />
 
         {/* Custom invoice generator — itemized invoices with a paid history */}
-        <Route path="/invoices" element={<PasswordGate appKey="invoices"><InvoicesPage /></PasswordGate>} />
+        <Route path="/invoices" element={<PasswordGate pageKey="invoices"><InvoicesPage /></PasswordGate>} />
 
         {/* Settings — panel-wide information the apps share */}
-        <Route path="/settings" element={<PasswordGate appKey="settings"><SettingsPage /></PasswordGate>} />
+        <Route path="/settings" element={<PasswordGate pageKey="settings"><SettingsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
-        <Route path="/status" element={<PasswordGate appKey="status"><ServerStatusPage /></PasswordGate>} />
+        <Route path="/status" element={<PasswordGate pageKey="status"><ServerStatusPage /></PasswordGate>} />
 
         {/* Legacy paths from the single-app era keep old bookmarks working */}
         <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />

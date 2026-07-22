@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Coins, Eye, EyeOff, KeyRound, Landmark, LockKeyhole, Pencil, Save, Trash2 } from 'lucide-react';
+import { Coins, Eye, EyeOff, KeyRound, Landmark, LayoutGrid, LockKeyhole, Pencil, Save, Trash2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import SelectMenu from '../components/SelectMenu';
@@ -8,6 +8,7 @@ import { changePassword, getPanelSettings, getPayments, updatePanelSettings, upd
 import { newId } from '../utils/id';
 import { syncRememberedPassword } from '../utils/authStorage';
 import { CURRENCIES, currencySymbolFor } from '../utils/currency';
+import { DEFAULT_NAMES } from '../utils/defaults';
 import { applyPanelSettings, normalizePanelSettings } from '../utils/panelSettings';
 
 const SAVE_DEBOUNCE_MS = 600;
@@ -17,16 +18,22 @@ const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
   label: `${currencySymbolFor(c.code)} ${c.name}`
 }));
 
-// The lockable apps, one checkbox each. Keys match PasswordGate's appKey
-// per route; flatmate 2's page has no lock — it is always open.
-const APP_LOCKS = [
+// Every page of the panel, one lock checkbox each. Keys match
+// PasswordGate's pageKey per route; flatmate 2's lock defaults off so the
+// shareable page stays open until someone decides otherwise.
+const PAGE_LOCKS = [
   { key: 'dashboard', label: 'Dashboard' },
-  { key: 'billsplitter', label: 'Bill Splitter' },
+  { key: 'billsplitter', label: 'Bill Splitter — generator' },
+  { key: 'flatmate1', label: `Bill Splitter — ${DEFAULT_NAMES.matias}` },
+  { key: 'flatmate2', label: `Bill Splitter — ${DEFAULT_NAMES.reka}` },
   { key: 'rent', label: 'Rent' },
   { key: 'invoices', label: 'Invoice generator' },
   { key: 'settings', label: 'Settings' },
   { key: 'status', label: 'Server status' }
 ];
+
+// The dashboard's pickable tiles — every page except the dashboard itself.
+const HUB_TILES = PAGE_LOCKS.filter(({ key }) => key !== 'dashboard');
 
 function normalizeAccount(a) {
   return {
@@ -128,8 +135,8 @@ export default function SettingsPage() {
     saveTimerRef.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   };
 
-  // Currency and app-lock changes save immediately (single taps, not
-  // typing) and apply live to the running app via applyPanelSettings.
+  // Currency, page-lock and hub-tile changes save immediately (single
+  // taps, not typing) and apply live to the app via applyPanelSettings.
   const updatePrefs = (changes) => {
     const next = { ...prefs, ...changes };
     setPrefs(next);
@@ -353,19 +360,40 @@ export default function SettingsPage() {
         </CollapsibleCard>
 
         <CollapsibleCard
-          title={<span className="stat-title"><LockKeyhole size={15} /> App locks</span>}
+          title={<span className="stat-title"><LockKeyhole size={15} /> Page locks</span>}
           storageKey="settings-app-locks"
         >
           <p className="section-desc">
-            Ticked apps ask for the shared password — untick one to leave it open on the flat's network. Flatmate 2's bills page always stays open.
+            Ticked pages ask for the shared password — untick one to leave it open on the flat's network. Unlocking any page unlocks them all on that device.
           </p>
           <div className="rent-fields app-locks">
-            {APP_LOCKS.map(({ key, label }) => (
+            {PAGE_LOCKS.map(({ key, label }) => (
               <label className="remember-checkbox" key={key}>
                 <input
                   type="checkbox"
                   checked={prefs.locks[key]}
                   onChange={(e) => updatePrefs({ locks: { ...prefs.locks, [key]: e.target.checked } })}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><LayoutGrid size={15} /> Hub tiles</span>}
+          storageKey="settings-hub-tiles"
+        >
+          <p className="section-desc">
+            The dashboard shows a tile for each ticked page — locked ones still ask for the password when tapped.
+          </p>
+          <div className="rent-fields app-locks">
+            {HUB_TILES.map(({ key, label }) => (
+              <label className="remember-checkbox" key={key}>
+                <input
+                  type="checkbox"
+                  checked={prefs.hub[key]}
+                  onChange={(e) => updatePrefs({ hub: { ...prefs.hub, [key]: e.target.checked } })}
                 />
                 <span>{label}</span>
               </label>
@@ -392,7 +420,7 @@ export default function SettingsPage() {
         </CollapsibleCard>
 
         {prefsError && (
-          <p className="section-desc stat-detail-warn">Currency or lock changes aren’t saving — check the server.</p>
+          <p className="section-desc stat-detail-warn">Currency, lock or hub changes aren’t saving — check the server.</p>
         )}
         {saveError && (
           <p className="section-desc stat-detail-warn">Changes aren’t saving — check the server.</p>
