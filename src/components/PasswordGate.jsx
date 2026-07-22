@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { login } from '../api';
 import { AUTH_SESSION_KEY, AUTH_LOCAL_KEY, PASSWORD_LOCAL_KEY } from '../utils/authStorage';
@@ -40,6 +41,7 @@ function persistAuth(remember) {
 // lock is off renders straight through. Being unlocked once still unlocks
 // every page, like it always has — the locks only pick who asks.
 export default function PasswordGate({ pageKey, children }) {
+  const navigate = useNavigate();
   const [authed, setAuthed] = useState(isAuthed);
   const [password, setPassword] = useState(() => localStorage.getItem(PASSWORD_LOCAL_KEY) || '');
   const [remember, setRemember] = useState(() => localStorage.getItem(AUTH_LOCAL_KEY) === 'true');
@@ -119,6 +121,13 @@ export default function PasswordGate({ pageKey, children }) {
           disabled={loading}
         >
           {loading ? 'Checking…' : 'Unlock'}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-block auth-guest-btn"
+          onClick={() => navigate('/hub')}
+        >
+          Guest login
         </button>
       </form>
     </div>

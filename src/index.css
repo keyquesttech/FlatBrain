@@ -2601,10 +2601,27 @@ input[type="checkbox"]:focus-visible {
   user-select: none;
 }
 
-/* App-lock rows on Settings reuse the auth card's checkbox, minus its
+/* Hub-page rows on Settings reuse the auth card's checkbox, minus its
    stacked-form margin — the grid gap does the spacing there. */
 .app-locks .remember-checkbox {
   margin-bottom: 0;
+}
+
+/* One block per app in the Custom hub card: a small mono heading over its
+   pages' checkboxes */
+.hub-group {
+  margin-top: 14px;
+}
+
+.hub-group-label {
+  display: block;
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+/* Guest login sits under Unlock on the lock screen */
+.auth-guest-btn {
+  margin-top: 0.625rem;
 }
 
 .remember-checkbox input[type="checkbox"] {
