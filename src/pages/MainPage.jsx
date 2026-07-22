@@ -265,6 +265,7 @@ export default function MainPage() {
     const loadedDraft = normalizeDraft({
       period: invoice.period,
       dueDate: invoice.dueDate,
+      paidDate: invoice.paidDate,
       names: invoice.names,
       bills: invoice.bills,
       flatmate1Extras: invoice.flatmate1Extras || [],

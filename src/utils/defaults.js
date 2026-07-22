@@ -29,6 +29,8 @@ export function normalizeDraft(draft) {
   return {
     period: draft.period || '',
     dueDate: draft.dueDate || '',
+    // A filled payment date is what marks the invoice paid (PAID stamp)
+    paidDate: draft.paidDate || '',
     names: { ...DEFAULT_NAMES, ...(draft.names || {}) },
     bills: (draft.bills || []).map(normalizeBill),
     // Extras are one list per person with a per-item percent; legacy

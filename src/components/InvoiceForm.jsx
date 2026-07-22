@@ -205,6 +205,29 @@ export default function InvoiceForm({ data, onChange }) {
             onChange={(val) => updateField('dueDate', val)}
           />
         </div>
+
+        <div className="form-group">
+          <label>Payment Date</label>
+          <div className="paydate-row">
+            <DatePicker
+              value={data.paidDate || ''}
+              onChange={(val) => updateField('paidDate', val)}
+              placeholder="Not paid yet"
+            />
+            {data.paidDate && (
+              <button
+                type="button"
+                className="btn-icon btn-icon-danger"
+                onClick={() => updateField('paidDate', '')}
+                title="Mark as not paid"
+                aria-label="Mark as not paid"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <p className="section-desc split-desc">Filling it marks the invoice paid — the PAID stamp goes on.</p>
+        </div>
       </CollapsibleCard>
 
       <CollapsibleCard title={<span className="stat-title"><Users size={15} /> Names</span>} storageKey="names">

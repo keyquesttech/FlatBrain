@@ -874,6 +874,18 @@ p {
   display: none;
 }
 
+/* Payment date + its clear button on one line */
+.paydate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paydate-row .picker {
+  flex: 1;
+  min-width: 0;
+}
+
 /* The paid row keeps card clicks from loading the invoice */
 .history-paid-row {
   display: flex;
