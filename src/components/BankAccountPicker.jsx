@@ -35,12 +35,23 @@ export default function BankAccountPicker({ bankDetails, onPick, emptyHint }) {
             key={a.id}
             className={`account-pick ${isCurrent(a) ? 'account-pick-active' : ''}`}
             onClick={() => onPick({ name: a.name, bankName: a.bankName, sortCode: a.sortCode, accountNumber: a.accountNumber })}
-            title="Fill the fields below with this account"
+            title="Use this account on the invoice"
           >
             <span className="account-pick-label">{a.label?.trim() || a.bankName?.trim() || 'Account'}</span>
-            <span className="account-pick-sub">
-              {a.bankName?.trim() || '—'}
-              {a.accountNumber ? ` · …${String(a.accountNumber).slice(-4)}` : ''}
+            <span className="account-pick-sub">{a.bankName?.trim() || '—'}</span>
+            <span className="account-pick-rows">
+              <span className="account-pick-row">
+                <span>Name</span>
+                <span>{a.name?.trim() || '—'}</span>
+              </span>
+              <span className="account-pick-row">
+                <span>Sort code</span>
+                <span>{a.sortCode?.trim() || '—'}</span>
+              </span>
+              <span className="account-pick-row">
+                <span>Account</span>
+                <span>{a.accountNumber?.trim() || '—'}</span>
+              </span>
             </span>
           </button>
         ))}

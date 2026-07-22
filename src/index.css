@@ -891,11 +891,12 @@ p {
   text-align: right;
 }
 
-/* The other apps pick an account by tapping one of these mini cards */
+/* The other apps pick an account by tapping one of these full-preview
+   cards — every detail visible before choosing */
 .account-pick-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+  gap: 10px;
 }
 
 .account-pick {
@@ -931,6 +932,34 @@ p {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--text-faint);
+}
+
+.account-pick-rows {
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.account-pick-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.74rem;
+}
+
+.account-pick-row > span:first-child {
+  color: var(--text-faint);
+}
+
+.account-pick-row > span:last-child {
+  font-family: var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 /* Payment date + its clear button on one line */
