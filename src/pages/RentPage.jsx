@@ -438,11 +438,11 @@ export default function RentPage() {
               </CollapsibleCard>
 
               <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="rent-bank">
-                <p className="section-desc">Printed on the invoice — picked from the Payments app's saved accounts.</p>
+                <p className="section-desc">Printed on the invoice — picked from the Settings app's saved accounts.</p>
                 <BankAccountPicker
                   bankDetails={rent.bankDetails}
                   onPick={(bd) => update({ bankDetails: bd })}
-                  emptyHint="No saved accounts yet — add one in the Payments app to pick it here."
+                  emptyHint="No saved accounts yet — add one in the Settings app to pick it here."
                 />
               </CollapsibleCard>
 

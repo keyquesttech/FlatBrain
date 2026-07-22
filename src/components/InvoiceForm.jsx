@@ -389,11 +389,11 @@ export default function InvoiceForm({ data, onChange }) {
       </CollapsibleCard>
 
       <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="bank-details">
-        <p className="section-desc">Printed at the bottom of every invoice — picked from the Payments app's saved accounts.</p>
+        <p className="section-desc">Printed at the bottom of every invoice — picked from the Settings app's saved accounts.</p>
         <BankAccountPicker
           bankDetails={data.bankDetails}
           onPick={(bd) => onChange({ ...data, bankDetails: bd })}
-          emptyHint="No saved accounts yet — add one in the Payments app to pick it here."
+          emptyHint="No saved accounts yet — add one in the Settings app to pick it here."
         />
       </CollapsibleCard>
     </div>

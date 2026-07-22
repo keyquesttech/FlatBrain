@@ -6,6 +6,7 @@ import MainPage from './pages/MainPage';
 import PaymentsPage from './pages/PaymentsPage';
 import RentPage from './pages/RentPage';
 import ServerStatusPage from './pages/ServerStatusPage';
+import SettingsPage from './pages/SettingsPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
 import DialogHost from './components/Dialog';
@@ -59,6 +60,9 @@ function App() {
 
         {/* Payments — money in, money out, and the shared bank accounts */}
         <Route path="/payments" element={<PasswordGate><PaymentsPage /></PasswordGate>} />
+
+        {/* Settings — panel-wide information the apps share */}
+        <Route path="/settings" element={<PasswordGate><SettingsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
         <Route path="/status" element={<PasswordGate><ServerStatusPage /></PasswordGate>} />
