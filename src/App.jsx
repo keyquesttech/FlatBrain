@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import HubPage from './pages/HubPage';
 import InvoicesPage from './pages/InvoicesPage';
@@ -13,6 +13,15 @@ import DialogHost from './components/Dialog';
 import { getPanelSettings } from './api';
 import { applyPanelSettings } from './utils/panelSettings';
 import { playAdd, playRemove, playTick } from './utils/sound';
+
+// Generator and History share the /billsplitter route (History is
+// ?view=history) but are separate hub pages — the gate key follows the
+// query, so History can sit on the hub while the generator stays locked.
+function BillSplitterGate() {
+  const [searchParams] = useSearchParams();
+  const pageKey = searchParams.get('view') === 'history' ? 'history' : 'billsplitter';
+  return <PasswordGate pageKey={pageKey}><MainPage /></PasswordGate>;
+}
 
 function App() {
   // Panel settings (currency, per-app password locks) are applied before
@@ -66,7 +75,7 @@ function App() {
 
         {/* Bill Splitter app. Pages ticked onto the hub open without the
             password; flatmate 2's starts on the hub, staying shareable. */}
-        <Route path="/billsplitter" element={<PasswordGate pageKey="billsplitter"><MainPage /></PasswordGate>} />
+        <Route path="/billsplitter" element={<BillSplitterGate />} />
         <Route path="/billsplitter/flatmate1" element={<PasswordGate pageKey="flatmate1"><UserExtrasPage personKey="matias" /></PasswordGate>} />
         <Route path="/billsplitter/flatmate2" element={<PasswordGate pageKey="flatmate2"><UserExtrasPage personKey="reka" /></PasswordGate>} />
 

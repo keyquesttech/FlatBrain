@@ -11,6 +11,7 @@ import { DEFAULT_NAMES } from './defaults.js';
 // one — so the old open link keeps working out of the box.
 const DEFAULT_TILES = {
   billsplitter: false,
+  history: false,
   flatmate1: false,
   flatmate2: true,
   rent: false,

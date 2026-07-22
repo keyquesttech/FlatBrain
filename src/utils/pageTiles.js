@@ -1,4 +1,4 @@
-import { Activity, FileText, KeyRound, Receipt, Settings, User, UserRound } from 'lucide-react';
+import { Activity, FileText, History, KeyRound, Receipt, Settings, User, UserRound } from 'lucide-react';
 import { flatmateNames } from './panelSettings.js';
 
 // Every page of the panel as a tile definition, shared by the dashboard
@@ -17,6 +17,15 @@ export function pageTiles() {
       icon: Receipt,
       accent: 'lime',
       description: 'Split bills and expenses for the flat.'
+    },
+    {
+      key: 'history',
+      appTile: false,
+      name: 'Bills history',
+      to: '/billsplitter?view=history',
+      icon: History,
+      accent: 'lime',
+      description: 'Past invoices and what got paid when.'
     },
     {
       key: 'flatmate1',

@@ -29,6 +29,7 @@ const hubGroups = () => {
       app: 'Bill Splitter',
       pages: [
         { key: 'billsplitter', label: 'Generator' },
+        { key: 'history', label: 'History' },
         { key: 'flatmate1', label: `${names.matias}'s page` },
         { key: 'flatmate2', label: `${names.reka}'s page` }
       ]

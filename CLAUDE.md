@@ -34,10 +34,12 @@ Access model: the **custom hub** (`/hub`, always open, named in Settings)
 is the guest side; every other page is password-gated (`PasswordGate`,
 client-side, shared password in `password.txt`, changeable from Settings)
 UNLESS ticked onto the hub — `hub.tiles` in `settings.json` is the whole
-access list (page keys `billsplitter`, `flatmate1`, `flatmate2`, `rent`,
-`invoices`, `settings`, `status`; `flatmate2` starts on the hub so the
-shareable link keeps working; older locks-shaped docs migrate in
-`normalizePanelSettings`). The lock screen's "Guest login" button goes to
+access list (page keys `billsplitter`, `history`, `flatmate1`,
+`flatmate2`, `rent`, `invoices`, `settings`, `status`; `flatmate2` starts
+on the hub so the shareable link keeps working; older locks-shaped docs
+migrate in `normalizePanelSettings`). History shares the `/billsplitter`
+route (`?view=history`) but gates under its own key via `BillSplitterGate`
+in `App.jsx`. The lock screen's "Guest login" button goes to
 `/hub`; `/` stays the password-side launcher. `settings.json` also holds
 the display currency (ISO code; `src/utils/currency.js` turns it into the
 symbol/format every amount uses) and the flatmate display names

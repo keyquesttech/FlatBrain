@@ -245,7 +245,7 @@ const defaultSettings = {
   names: { matias: '', reka: '' },
   hub: {
     name: '',
-    tiles: { billsplitter: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }
+    tiles: { billsplitter: false, history: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }
   }
 };
 
