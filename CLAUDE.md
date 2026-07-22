@@ -27,16 +27,19 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
-| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; display currency picker; per-app password locks; change the shared password (`POST /api/password`, no old password needed) |
+| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; display currency picker; per-page password locks; dashboard hub-tile picker; change the shared password (`POST /api/password`, no old password needed) |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
 Pages are password-gated (`PasswordGate`, client-side, shared password in
-`password.txt`, changeable from Settings) according to the per-app locks in
-`settings.json` (default: everything locked); `/billsplitter/flatmate2` has
-no lock — it is deliberately open so it can be shared. `settings.json` also
-holds the display currency (ISO code); `src/utils/currency.js` turns it
-into the symbol/format every amount uses, applied by `App.jsx` before the
-routes render.
+`password.txt`, changeable from Settings) according to the per-PAGE locks
+in `settings.json` — every route has its own lock key (`dashboard`,
+`billsplitter`, `flatmate1`, `flatmate2`, `rent`, `invoices`, `settings`,
+`status`), all defaulting locked except `flatmate2`, the deliberately
+shareable page. `settings.json` also picks which pages get dashboard hub
+tiles (`hub` key — apps on, flatmate pages off by default) and holds the
+display currency (ISO code); `src/utils/currency.js` turns it into the
+symbol/format every amount uses, applied by `App.jsx` before the routes
+render.
 
 ## Money maths (do not break)
 
