@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, RotateCcw, FileDown, FileUp } from 'lucide-react';
+import { Download, RotateCcw, FileDown, FileUp, Save } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 import Navigation from '../components/Navigation';
@@ -161,7 +161,7 @@ export default function MainPage() {
     savePendingRef.current = true;
   };
 
-  const saveToHistory = async () => {
+  const saveToHistory = async (downloaded = true) => {
     const data = formDataRef.current;
     const calc = calculateInvoice(data);
     // If this draft was loaded from a saved invoice and still covers the
@@ -212,7 +212,7 @@ export default function MainPage() {
       // or unmount, and the pending flag stops the poller clobbering the form.
       markAllPending();
     }
-    appToast(`Invoice downloaded, ${updating ? 'updated in' : 'saved to'} history — next month's bills pre-filled from recent averages.`);
+    appToast(`Invoice ${downloaded ? 'downloaded, ' : ''}${updating ? 'updated in' : 'saved to'} history — next month's bills pre-filled from recent averages.`);
   };
 
   // Single action: download the PNG first (while the invoice is still on
@@ -230,6 +230,22 @@ export default function MainPage() {
     } catch (err) {
       console.error('Error saving invoice', err);
       appAlert('The image was downloaded, but saving to history failed. Check the server and try again.', { title: 'Save failed', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Save without the PNG: same filing + reset, the download can always
+  // happen later from history.
+  const saveOnly = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await saveToHistory(false);
+      playSuccess();
+    } catch (err) {
+      console.error('Error saving invoice', err);
+      appAlert('Saving to history failed. Check the server and try again.', { title: 'Save failed', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -387,6 +403,10 @@ export default function MainPage() {
               <button className="btn btn-secondary" onClick={clearForm} disabled={busy}>
                 <RotateCcw size={16} />
                 Reset form
+              </button>
+              <button className="btn btn-secondary" onClick={saveOnly} disabled={busy}>
+                <Save size={16} />
+                Save
               </button>
               <button className="btn btn-primary" onClick={saveAndDownload} disabled={busy}>
                 <Download size={18} />
