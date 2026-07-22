@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, Landmark, Plus, Wallet, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Landmark, Pencil, Plus, Save, Trash2, Wallet, X } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
 import DatePicker from '../components/DatePicker';
 import PaidControl from '../components/PaidControl';
 import SelectMenu from '../components/SelectMenu';
+import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getPayments, updatePayments } from '../api';
 import { formatCurrency, parseAmount, round2 } from '../utils/calculations';
 import { formatDay } from '../utils/dates';
@@ -53,6 +54,9 @@ const pendingSum = (flows) => flows
 export default function PaymentsPage() {
   const [doc, setDoc] = useState(null);
   const [saveError, setSaveError] = useState(false);
+  // The account being composed (or edited) before it's saved as a card
+  const [accDraft, setAccDraft] = useState(() => normalizeAccount({}));
+  const [accEditing, setAccEditing] = useState('');
   const dataRef = useRef(null);
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
@@ -103,8 +107,35 @@ export default function PaymentsPage() {
   const updateIncoming = updateIn('incoming');
   const updateOutgoing = updateIn('outgoing');
 
-  const updateAccount = (id, changes) => {
-    update({ accounts: doc.accounts.map((a) => (a.id === id ? { ...a, ...changes } : a)) });
+  // Save the composed account as a card (or update the one being edited)
+  const saveAccount = () => {
+    if (!accDraft.label.trim() && !accDraft.bankName.trim()) {
+      appAlert('Give the account at least a label or a bank name.', { title: 'Save account' });
+      return;
+    }
+    if (accEditing && doc.accounts.some((a) => a.id === accEditing)) {
+      update({ accounts: doc.accounts.map((a) => (a.id === accEditing ? { ...accDraft, id: accEditing } : a)) });
+      appToast('Account updated.');
+    } else {
+      update({ accounts: [...doc.accounts, { ...accDraft, id: newId() }] });
+      appToast('Account saved.');
+    }
+    setAccDraft(normalizeAccount({}));
+    setAccEditing('');
+  };
+
+  const editAccount = (a) => {
+    setAccDraft(normalizeAccount(a));
+    setAccEditing(a.id);
+  };
+
+  const deleteAccount = async (a) => {
+    if (!await appConfirm(`Delete "${a.label?.trim() || a.bankName?.trim() || 'this account'}"? Apps that already copied its details keep them.`, { title: 'Delete account', okLabel: 'Delete', danger: true })) return;
+    update({ accounts: doc.accounts.filter((x) => x.id !== a.id) });
+    if (accEditing === a.id) {
+      setAccDraft(normalizeAccount({}));
+      setAccEditing('');
+    }
   };
 
   const inPending = pendingSum(doc.incoming);
@@ -218,84 +249,125 @@ export default function PaymentsPage() {
           title={<span className="stat-title"><Landmark size={15} /> Bank accounts</span>}
           storageKey="pay-accounts"
           actions={(
-            <button className="btn btn-primary btn-sm" onClick={() => update({ accounts: [...doc.accounts, normalizeAccount({})] })}>
-              <Plus size={16} /> Add account
-            </button>
+            <div className="backup-header-actions">
+              {accEditing && (
+                <button className="btn btn-secondary btn-sm" onClick={() => { setAccDraft(normalizeAccount({})); setAccEditing(''); }}>
+                  Cancel edit
+                </button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={saveAccount}>
+                <Save size={16} /> {accEditing ? 'Update account' : 'Save account'}
+              </button>
+            </div>
           )}
         >
           <p className="section-desc">
-            Saved once here, then picked from the bank-details cards of Bill Splitter, Rent and the invoice generator.
+            Fill the details and save — each account becomes a card here, ready to pick from the bank-details cards of Bill Splitter, Rent and the invoice generator.
           </p>
-          {doc.accounts.length === 0 && <p className="section-desc">No accounts yet — add the first one.</p>}
-          {doc.accounts.map((a) => (
-            <div className="rent-row" key={a.id}>
-              <div className="rent-fields">
-                <label className="fld rent-fld-wide">
-                  <span className="fld-label">Label</span>
-                  <input
-                    type="text"
-                    value={a.label}
-                    onChange={(e) => updateAccount(a.id, { label: e.target.value })}
-                    placeholder="e.g. Joint account, Monzo"
-                    maxLength={60}
-                  />
-                </label>
-                <label className="fld">
-                  <span className="fld-label">Name</span>
-                  <input
-                    type="text"
-                    value={a.name}
-                    onChange={(e) => updateAccount(a.id, { name: e.target.value })}
-                    placeholder="Account holder name"
-                    maxLength={80}
-                  />
-                </label>
-                <label className="fld">
-                  <span className="fld-label">Bank name</span>
-                  <input
-                    type="text"
-                    value={a.bankName}
-                    onChange={(e) => updateAccount(a.id, { bankName: e.target.value })}
-                    placeholder="Bank name"
-                    maxLength={80}
-                  />
-                </label>
-                <label className="fld">
-                  <span className="fld-label">Sort code</span>
-                  <input
-                    type="text"
-                    value={a.sortCode}
-                    onChange={(e) => updateAccount(a.id, { sortCode: e.target.value })}
-                    placeholder="00-00-00"
-                    maxLength={20}
-                  />
-                </label>
-                <label className="fld">
-                  <span className="fld-label">Account number</span>
-                  <input
-                    type="text"
-                    value={a.accountNumber}
-                    onChange={(e) => updateAccount(a.id, { accountNumber: e.target.value })}
-                    placeholder="12345678"
-                    maxLength={20}
-                  />
-                </label>
-              </div>
-              <div className="rent-row-meta">
-                <span className="rent-period">{a.label?.trim() || a.bankName?.trim() || 'New account'}</span>
-                <span className="rent-row-actions">
-                  <button
-                    className="btn-icon btn-icon-danger"
-                    onClick={() => update({ accounts: doc.accounts.filter((x) => x.id !== a.id) })}
-                    aria-label="Remove account"
-                    title="Remove this account"
-                  >
-                    <X size={16} />
-                  </button>
-                </span>
-              </div>
+          {accEditing && (
+            <p className="section-desc stat-detail-warn">
+              Editing "{doc.accounts.find((a) => a.id === accEditing)?.label?.trim() || 'a saved account'}" — Save updates its card.
+            </p>
+          )}
+          <div className="rent-fields">
+            <label className="fld rent-fld-wide">
+              <span className="fld-label">Label</span>
+              <input
+                type="text"
+                value={accDraft.label}
+                onChange={(e) => setAccDraft({ ...accDraft, label: e.target.value })}
+                placeholder="e.g. Joint account, Monzo"
+                maxLength={60}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Name</span>
+              <input
+                type="text"
+                value={accDraft.name}
+                onChange={(e) => setAccDraft({ ...accDraft, name: e.target.value })}
+                placeholder="Account holder name"
+                maxLength={80}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Bank name</span>
+              <input
+                type="text"
+                value={accDraft.bankName}
+                onChange={(e) => setAccDraft({ ...accDraft, bankName: e.target.value })}
+                placeholder="Bank name"
+                maxLength={80}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Sort code</span>
+              <input
+                type="text"
+                value={accDraft.sortCode}
+                onChange={(e) => setAccDraft({ ...accDraft, sortCode: e.target.value })}
+                placeholder="00-00-00"
+                maxLength={20}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Account number</span>
+              <input
+                type="text"
+                value={accDraft.accountNumber}
+                onChange={(e) => setAccDraft({ ...accDraft, accountNumber: e.target.value })}
+                placeholder="12345678"
+                maxLength={20}
+              />
+            </label>
+          </div>
+
+          {doc.accounts.length > 0 && (
+            <div className="history-grid account-grid">
+              {doc.accounts.map((a) => (
+                <div className="glass-panel history-card account-card" key={a.id}>
+                  <div className="history-card-head">
+                    <div>
+                      <h3 className="history-card-title">{a.label?.trim() || a.bankName?.trim() || 'Account'}</h3>
+                      <div className="text-muted history-card-date">{a.bankName?.trim() || '—'}</div>
+                    </div>
+                    <div className="history-card-actions">
+                      <button
+                        className="btn-icon"
+                        onClick={() => editAccount(a)}
+                        title="Edit this account"
+                        aria-label={`Edit ${a.label || 'account'}`}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        className="btn-icon btn-icon-danger"
+                        onClick={() => deleteAccount(a)}
+                        title="Delete this account"
+                        aria-label={`Delete ${a.label || 'account'}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="history-card-totals">
+                    <div className="history-total-row">
+                      <span className="text-muted">Name</span>
+                      <span className="account-card-value">{a.name?.trim() || '—'}</span>
+                    </div>
+                    <div className="history-total-row">
+                      <span className="text-muted">Sort code</span>
+                      <span className="account-card-value">{a.sortCode?.trim() || '—'}</span>
+                    </div>
+                    <div className="history-total-row">
+                      <span className="text-muted">Account</span>
+                      <span className="account-card-value">{a.accountNumber?.trim() || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </CollapsibleCard>
 
         <CollapsibleCard
