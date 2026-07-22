@@ -233,16 +233,19 @@ app.put('/api/payments', (req, res) => {
   res.json({ success: true, payments });
 });
 
-// ---- Panel settings (managed by the Settings app): the display currency,
-// which pages the password gate locks, and which pages get a dashboard
-// tile. Whole-document GET/PUT; the client normalizes missing keys
-// (flatmate 2's page defaults open — the shareable one). ----
+// ---- Panel settings (managed by the Settings app): the display currency
+// and the custom hub — its name plus the pages ticked onto it, which are
+// exactly the pages that open without the password. Whole-document
+// GET/PUT; the client normalizes missing keys and migrates docs from the
+// earlier per-page-locks shape. ----
 const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 
 const defaultSettings = {
   currency: 'GBP',
-  locks: { dashboard: true, billsplitter: true, flatmate1: true, flatmate2: false, rent: true, invoices: true, settings: true, status: true },
-  hub: { billsplitter: true, flatmate1: false, flatmate2: false, rent: true, invoices: true, settings: true, status: true }
+  hub: {
+    name: '',
+    tiles: { billsplitter: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }
+  }
 };
 
 app.get('/api/settings', (req, res) => {

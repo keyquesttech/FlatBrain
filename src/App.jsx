@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
+import HubPage from './pages/HubPage';
 import InvoicesPage from './pages/InvoicesPage';
 import MainPage from './pages/MainPage';
 import RentPage from './pages/RentPage';
@@ -55,11 +56,16 @@ function App() {
         <span className="underlay-grain" />
       </div>
       {settingsReady && <Routes>
-        {/* FlatBrain dashboard — the hub; its tiles are picked in Settings */}
+        {/* FlatBrain dashboard — the password-side launcher */}
         <Route path="/" element={<PasswordGate pageKey="dashboard"><DashboardPage /></PasswordGate>} />
 
-        {/* Bill Splitter app. Every page has its own lock; flatmate 2's
-            defaults open so the page stays shareable until locked. */}
+        {/* The custom hub — the password-free landing page; which pages
+            get tiles (and thereby open without the password) is picked in
+            Settings. Deliberately ungated. */}
+        <Route path="/hub" element={<HubPage />} />
+
+        {/* Bill Splitter app. Pages ticked onto the hub open without the
+            password; flatmate 2's starts on the hub, staying shareable. */}
         <Route path="/billsplitter" element={<PasswordGate pageKey="billsplitter"><MainPage /></PasswordGate>} />
         <Route path="/billsplitter/flatmate1" element={<PasswordGate pageKey="flatmate1"><UserExtrasPage personKey="matias" /></PasswordGate>} />
         <Route path="/billsplitter/flatmate2" element={<PasswordGate pageKey="flatmate2"><UserExtrasPage personKey="reka" /></PasswordGate>} />
