@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, FileText, Landmark, Plus, RotateCcw, X } from 'lucide-react';
 import Navigation from '../components/Navigation';
+import BankAccountPicker from '../components/BankAccountPicker';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
 import CustomInvoicePreview from '../components/CustomInvoicePreview';
@@ -226,6 +227,10 @@ export default function InvoicesPage() {
 
           <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="inv-bank">
             <p className="section-desc">Printed on the invoice — kept separate from Bill Splitter's account details.</p>
+            <BankAccountPicker
+              bankDetails={doc.bankDetails}
+              onPick={(bd) => update({ bankDetails: bd })}
+            />
             {[
               ['name', 'Name', 'Account holder name'],
               ['bankName', 'Bank Name', 'Bank name'],

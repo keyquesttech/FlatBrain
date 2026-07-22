@@ -187,6 +187,30 @@ app.delete('/api/history/:id', (req, res) => {
   res.json({ success: true, history: updated });
 });
 
+// ---- Payments: bank accounts (shared with the other apps' bank pickers)
+// plus expected money in and payments due out. Single-editor, so
+// whole-document GET/PUT. ----
+const PAYMENTS_FILE = path.join(__dirname, 'payments.json');
+
+const defaultPayments = {
+  accounts: [], // [{ id, label, name, bankName, sortCode, accountNumber }]
+  incoming: [], // [{ id, thing, amount, date, accountId, paidDate }]
+  outgoing: []  // same shape — paidDate set = settled, drops out of totals
+};
+
+app.get('/api/payments', (req, res) => {
+  res.json(readJSON(PAYMENTS_FILE, defaultPayments));
+});
+
+app.put('/api/payments', (req, res) => {
+  const payments = req.body;
+  if (!isPlainObject(payments)) {
+    return res.status(400).json({ success: false, error: 'Payments data must be an object' });
+  }
+  writeJSON(PAYMENTS_FILE, payments);
+  res.json({ success: true, payments });
+});
+
 // ---- Rent: the tenancy details, the payment schedule and the history of
 // generated rent invoices. Single-editor, so whole-document GET/PUT. ----
 const RENT_FILE = path.join(__dirname, 'rent.json');

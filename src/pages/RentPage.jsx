@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CalendarClock, Download, KeyRound, Landmark, Pencil, RotateCcw, Save, Trash2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
+import BankAccountPicker from '../components/BankAccountPicker';
 import CollapsibleCard from '../components/CollapsibleCard';
 import CurrencyInput from '../components/CurrencyInput';
 import DatePicker from '../components/DatePicker';
@@ -438,6 +439,10 @@ export default function RentPage() {
 
               <CollapsibleCard title={<span className="stat-title"><Landmark size={15} /> Bank Details</span>} storageKey="rent-bank">
                 <p className="section-desc">Printed on the invoice — kept separate from the other apps' account details.</p>
+                <BankAccountPicker
+                  bankDetails={rent.bankDetails}
+                  onPick={(bd) => update({ bankDetails: bd })}
+                />
                 {[
                   ['name', 'Name', 'Account holder name'],
                   ['bankName', 'Bank Name', 'Bank name'],

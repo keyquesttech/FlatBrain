@@ -874,6 +874,11 @@ p {
   display: none;
 }
 
+/* Payments: a negative net once everything clears reads as a warning */
+.sys-row-value.pay-net-negative {
+  color: var(--pink-soft);
+}
+
 /* Payment date + its clear button on one line */
 .paydate-row {
   display: flex;

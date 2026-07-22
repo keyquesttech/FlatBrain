@@ -181,6 +181,7 @@ git-ignored):
 - `history.json` — saved past invoices
 - `invoices.json` — the custom invoice generator's draft and history
 - `rent.json` — the Rent app's tenancy, payment schedule and invoice history
+- `payments.json` — the Payments app's bank accounts and money in/out
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
 - `reboot-config.json` — scheduled reboot settings
