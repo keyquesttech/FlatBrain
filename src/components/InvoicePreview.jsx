@@ -129,10 +129,13 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
       <div className="invoice-header">
         <h2>{periodLabel} Bills</h2>
         <div className="text-muted invoice-meta">
-          {data.paidDate && (
-            <span>Paid on: <strong>{new Date(data.paidDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</strong></span>
-          )}
           <span>Issued on: <strong>{(data.timestamp ? new Date(data.timestamp) : new Date()).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
+          {/* The meta row is space-between, so this sits at the right edge */}
+          {data.paidDate ? (
+            <span>Paid on: <strong>{new Date(data.paidDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</strong></span>
+          ) : (
+            <span>Payment due</span>
+          )}
         </div>
       </div>
 
