@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { login } from '../api';
-
-const AUTH_SESSION_KEY = 'flatbrain-authed';
-const AUTH_LOCAL_KEY = 'flatbrain-authed-remember';
-const PASSWORD_LOCAL_KEY = 'flatbrain-password';
+import { AUTH_SESSION_KEY, AUTH_LOCAL_KEY, PASSWORD_LOCAL_KEY } from '../utils/authStorage';
 
 // One-time carry-over from the pre-FlatBrain key names, so the rename
 // doesn't log anyone out or forget a remembered password.

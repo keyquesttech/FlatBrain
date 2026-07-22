@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Landmark, Pencil, Save, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Landmark, Pencil, Save, Trash2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
-import { getPayments, updatePayments } from '../api';
+import { changePassword, getPayments, updatePayments } from '../api';
 import { newId } from '../utils/id';
+import { syncRememberedPassword } from '../utils/authStorage';
 
 const SAVE_DEBOUNCE_MS = 600;
 
@@ -19,6 +20,32 @@ function normalizeAccount(a) {
   };
 }
 
+// A stacked-label password field with the login gate's show/hide eye.
+function PasswordField({ label, value, onChange, autoComplete }) {
+  const [show, setShow] = useState(false);
+  return (
+    <label className="fld">
+      <span className="fld-label">{label}</span>
+      <div className="password-input">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+        />
+        <button
+          type="button"
+          className="password-toggle-btn"
+          onClick={() => setShow(!show)}
+          aria-label={show ? 'Hide password' : 'Show password'}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </label>
+  );
+}
+
 // Settings: panel-wide information the apps share. The bank accounts live
 // in payments.json (one source of truth — the Payments app tags its
 // entries with them and every bank-details picker reads them); this page
@@ -28,6 +55,10 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState(false);
   const [accDraft, setAccDraft] = useState(() => normalizeAccount({}));
   const [accEditing, setAccEditing] = useState('');
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
   const dataRef = useRef(null);
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
@@ -95,6 +126,42 @@ export default function SettingsPage() {
   const editAccount = (a) => {
     setAccDraft(normalizeAccount(a));
     setAccEditing(a.id);
+  };
+
+  // The server re-checks the current password and rejects unusable new
+  // ones; the checks here just catch typos before the round-trip.
+  const savePassword = async () => {
+    if (pwSaving) return;
+    const next = pwNew.trim();
+    if (!pwCurrent) {
+      appAlert('Enter the current password first.', { title: 'Change password' });
+      return;
+    }
+    if (next.length < 4) {
+      appAlert('Use at least 4 characters for the new password.', { title: 'Change password' });
+      return;
+    }
+    if (next !== pwConfirm.trim()) {
+      appAlert('The new passwords don’t match.', { title: 'Change password' });
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await changePassword(pwCurrent, next);
+      if (res.success) {
+        syncRememberedPassword(next);
+        setPwCurrent('');
+        setPwNew('');
+        setPwConfirm('');
+        appToast('Password changed.');
+      } else {
+        appAlert(res.error || 'The password could not be changed.', { title: 'Change password' });
+      }
+    } catch {
+      appAlert('The password could not be changed — check the server.', { title: 'Change password' });
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   const deleteAccount = async (a) => {
@@ -234,6 +301,25 @@ export default function SettingsPage() {
               ))}
             </div>
           )}
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><KeyRound size={15} /> Password</span>}
+          storageKey="settings-password"
+          actions={(
+            <button className="btn btn-primary btn-sm" onClick={savePassword} disabled={pwSaving}>
+              <Save size={16} /> {pwSaving ? 'Changing…' : 'Change password'}
+            </button>
+          )}
+        >
+          <p className="section-desc">
+            One shared password unlocks every page — change it here and let your flatmate know. Devices already unlocked stay unlocked.
+          </p>
+          <div className="rent-fields">
+            <PasswordField label="Current password" value={pwCurrent} onChange={setPwCurrent} autoComplete="current-password" />
+            <PasswordField label="New password" value={pwNew} onChange={setPwNew} autoComplete="new-password" />
+            <PasswordField label="Confirm new password" value={pwConfirm} onChange={setPwConfirm} autoComplete="new-password" />
+          </div>
         </CollapsibleCard>
 
         {saveError && (

@@ -27,12 +27,12 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
-| Settings | `/settings` | `payments.json` (accounts key) | Shared bank accounts as cards; feeds every bank-details picker |
+| Settings | `/settings` | `payments.json` (accounts key), `password.txt` | Shared bank accounts as cards; feeds every bank-details picker; change the shared password (`POST /api/password`, current password required) |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
 All pages are password-gated (`PasswordGate`, client-side, shared password
-in `password.txt`) except `/billsplitter/flatmate2`, which is deliberately
-open so it can be shared.
+in `password.txt`, changeable from Settings) except `/billsplitter/flatmate2`,
+which is deliberately open so it can be shared.
 
 ## Money maths (do not break)
 
