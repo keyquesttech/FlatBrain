@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
+import { currencySymbol } from '../utils/currency';
 import DatePicker from './DatePicker';
 import { extraUnitPrice, formatCurrency, limitDecimals, packsOf, parseAmount } from '../utils/calculations';
 
@@ -42,7 +43,7 @@ export default function ExtrasInputList({
         <div className="input-row extras-row row-labels" aria-hidden="true">
           <span className="rl-over-input">Item</span>
           <span className="packs-input">Units</span>
-          <span className="currency-input rl-over-pill">Total £</span>
+          <span className="currency-input rl-over-pill">Total {currencySymbol()}</span>
           {percentPayer != null && <span className="percent-input">Split %</span>}
           <span className="row-labels-action" />
         </div>

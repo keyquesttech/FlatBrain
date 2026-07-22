@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import InvoicesPage from './pages/InvoicesPage';
@@ -9,9 +9,22 @@ import SettingsPage from './pages/SettingsPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
 import DialogHost from './components/Dialog';
+import { getPanelSettings } from './api';
+import { applyPanelSettings } from './utils/panelSettings';
 import { playAdd, playRemove, playTick } from './utils/sound';
 
 function App() {
+  // Panel settings (currency, per-app password locks) are applied before
+  // the routes render, so no page ever flashes the wrong currency or asks
+  // for a password it shouldn't. A failed fetch falls back to the defaults
+  // (everything locked, £) — same as before the settings doc existed.
+  const [settingsReady, setSettingsReady] = useState(false);
+  useEffect(() => {
+    getPanelSettings()
+      .then((s) => applyPanelSettings(s))
+      .catch(() => {})
+      .finally(() => setSettingsReady(true));
+  }, []);
   // One delegated listener gives every button/tab a click sound without
   // wiring each component: danger buttons fall, primary buttons rise,
   // everything else ticks. Bigger moments (save success, errors) play
@@ -41,33 +54,33 @@ function App() {
         <span className="lava lava-5"><span className="lava-blob" /></span>
         <span className="underlay-grain" />
       </div>
-      <Routes>
+      {settingsReady && <Routes>
         {/* FlatBrain dashboard — the app launcher */}
-        <Route path="/" element={<PasswordGate><DashboardPage /></PasswordGate>} />
+        <Route path="/" element={<PasswordGate appKey="dashboard"><DashboardPage /></PasswordGate>} />
 
-        {/* Bill Splitter app. Everything is password-gated except the
-            flatmate 2 page, which is deliberately shareable. */}
-        <Route path="/billsplitter" element={<PasswordGate><MainPage /></PasswordGate>} />
-        <Route path="/billsplitter/flatmate1" element={<PasswordGate><UserExtrasPage personKey="matias" /></PasswordGate>} />
+        {/* Bill Splitter app. Password-gated by its lock except the
+            flatmate 2 page, which is deliberately always shareable. */}
+        <Route path="/billsplitter" element={<PasswordGate appKey="billsplitter"><MainPage /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate1" element={<PasswordGate appKey="billsplitter"><UserExtrasPage personKey="matias" /></PasswordGate>} />
         <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="reka" />} />
 
         {/* Rent — the tenancy schedule and its per-period invoices */}
-        <Route path="/rent" element={<PasswordGate><RentPage /></PasswordGate>} />
+        <Route path="/rent" element={<PasswordGate appKey="rent"><RentPage /></PasswordGate>} />
 
         {/* Custom invoice generator — itemized invoices with a paid history */}
-        <Route path="/invoices" element={<PasswordGate><InvoicesPage /></PasswordGate>} />
+        <Route path="/invoices" element={<PasswordGate appKey="invoices"><InvoicesPage /></PasswordGate>} />
 
         {/* Settings — panel-wide information the apps share */}
-        <Route path="/settings" element={<PasswordGate><SettingsPage /></PasswordGate>} />
+        <Route path="/settings" element={<PasswordGate appKey="settings"><SettingsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
-        <Route path="/status" element={<PasswordGate><ServerStatusPage /></PasswordGate>} />
+        <Route path="/status" element={<PasswordGate appKey="status"><ServerStatusPage /></PasswordGate>} />
 
         {/* Legacy paths from the single-app era keep old bookmarks working */}
         <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />
         <Route path="/flatmate2" element={<Navigate to="/billsplitter/flatmate2" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      </Routes>}
       <DialogHost />
     </BrowserRouter>
   );

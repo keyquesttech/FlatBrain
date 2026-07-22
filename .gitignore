@@ -23,6 +23,7 @@ history.json
 invoices.json
 rent.json
 payments.json
+settings.json
 password.txt
 backup-config.json
 reboot-config.json

@@ -1,3 +1,5 @@
+import { formatMoney } from './currency.js';
+
 export function parseAmount(val) {
   const num = parseFloat(val);
   return isNaN(num) ? 0 : num;
@@ -268,13 +270,8 @@ export function calculateInvoice(data) {
   };
 }
 
-const GBP = new Intl.NumberFormat('en-GB', {
-  style: 'currency',
-  currency: 'GBP'
-});
-
 export function formatCurrency(amount) {
-  return GBP.format(parseAmount(amount));
+  return formatMoney(parseAmount(amount));
 }
 
 // Always shows the unit count and the auto-calculated per-unit price, e.g.

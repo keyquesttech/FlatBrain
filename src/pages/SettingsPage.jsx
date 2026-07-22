@@ -1,13 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Eye, EyeOff, KeyRound, Landmark, Pencil, Save, Trash2 } from 'lucide-react';
+import { Coins, Eye, EyeOff, KeyRound, Landmark, LockKeyhole, Pencil, Save, Trash2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
+import SelectMenu from '../components/SelectMenu';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
-import { changePassword, getPayments, updatePayments } from '../api';
+import { changePassword, getPanelSettings, getPayments, updatePanelSettings, updatePayments } from '../api';
 import { newId } from '../utils/id';
 import { syncRememberedPassword } from '../utils/authStorage';
+import { CURRENCIES, currencySymbolFor } from '../utils/currency';
+import { applyPanelSettings, normalizePanelSettings } from '../utils/panelSettings';
 
 const SAVE_DEBOUNCE_MS = 600;
+
+const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
+  value: c.code,
+  label: `${currencySymbolFor(c.code)} ${c.name}`
+}));
+
+// The lockable apps, one checkbox each. Keys match PasswordGate's appKey
+// per route; flatmate 2's page has no lock — it is always open.
+const APP_LOCKS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'billsplitter', label: 'Bill Splitter' },
+  { key: 'rent', label: 'Rent' },
+  { key: 'invoices', label: 'Invoice generator' },
+  { key: 'settings', label: 'Settings' },
+  { key: 'status', label: 'Server status' }
+];
 
 function normalizeAccount(a) {
   return {
@@ -55,16 +74,20 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState(false);
   const [accDraft, setAccDraft] = useState(() => normalizeAccount({}));
   const [accEditing, setAccEditing] = useState('');
-  const [pwCurrent, setPwCurrent] = useState('');
   const [pwNew, setPwNew] = useState('');
   const [pwConfirm, setPwConfirm] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
+  const [prefs, setPrefs] = useState(null);
+  const [prefsError, setPrefsError] = useState(false);
   const dataRef = useRef(null);
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    getPanelSettings()
+      .then((s) => { if (!cancelled) setPrefs(normalizePanelSettings(s)); })
+      .catch(() => {});
     getPayments()
       .then((p) => {
         if (cancelled) return;
@@ -105,7 +128,18 @@ export default function SettingsPage() {
     saveTimerRef.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   };
 
-  if (!doc) return <div className="page-loading">Loading…</div>;
+  // Currency and app-lock changes save immediately (single taps, not
+  // typing) and apply live to the running app via applyPanelSettings.
+  const updatePrefs = (changes) => {
+    const next = { ...prefs, ...changes };
+    setPrefs(next);
+    applyPanelSettings(next);
+    updatePanelSettings(next)
+      .then(() => setPrefsError(false))
+      .catch(() => setPrefsError(true));
+  };
+
+  if (!doc || !prefs) return <div className="page-loading">Loading…</div>;
 
   const saveAccount = () => {
     if (!accDraft.label.trim() && !accDraft.bankName.trim()) {
@@ -128,15 +162,11 @@ export default function SettingsPage() {
     setAccEditing(a.id);
   };
 
-  // The server re-checks the current password and rejects unusable new
-  // ones; the checks here just catch typos before the round-trip.
+  // The server rejects unusable new passwords too; the checks here just
+  // catch typos before the round-trip.
   const savePassword = async () => {
     if (pwSaving) return;
     const next = pwNew.trim();
-    if (!pwCurrent) {
-      appAlert('Enter the current password first.', { title: 'Change password' });
-      return;
-    }
     if (next.length < 4) {
       appAlert('Use at least 4 characters for the new password.', { title: 'Change password' });
       return;
@@ -147,10 +177,9 @@ export default function SettingsPage() {
     }
     setPwSaving(true);
     try {
-      const res = await changePassword(pwCurrent, next);
+      const res = await changePassword(next);
       if (res.success) {
         syncRememberedPassword(next);
-        setPwCurrent('');
         setPwNew('');
         setPwConfirm('');
         appToast('Password changed.');
@@ -304,6 +333,47 @@ export default function SettingsPage() {
         </CollapsibleCard>
 
         <CollapsibleCard
+          title={<span className="stat-title"><Coins size={15} /> Currency</span>}
+          storageKey="settings-currency"
+        >
+          <p className="section-desc">
+            Sets the symbol on every amount, invoice and chart — nothing is converted, the numbers stay as typed.
+          </p>
+          <div className="rent-fields">
+            <label className="fld rent-fld-wide">
+              <span className="fld-label">Currency</span>
+              <SelectMenu
+                value={prefs.currency}
+                onChange={(v) => updatePrefs({ currency: v })}
+                options={CURRENCY_OPTIONS}
+                width="100%"
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><LockKeyhole size={15} /> App locks</span>}
+          storageKey="settings-app-locks"
+        >
+          <p className="section-desc">
+            Ticked apps ask for the shared password — untick one to leave it open on the flat's network. Flatmate 2's bills page always stays open.
+          </p>
+          <div className="rent-fields app-locks">
+            {APP_LOCKS.map(({ key, label }) => (
+              <label className="remember-checkbox" key={key}>
+                <input
+                  type="checkbox"
+                  checked={prefs.locks[key]}
+                  onChange={(e) => updatePrefs({ locks: { ...prefs.locks, [key]: e.target.checked } })}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
           title={<span className="stat-title"><KeyRound size={15} /> Password</span>}
           storageKey="settings-password"
           actions={(
@@ -313,15 +383,17 @@ export default function SettingsPage() {
           )}
         >
           <p className="section-desc">
-            One shared password unlocks every page — change it here and let your flatmate know. Devices already unlocked stay unlocked.
+            One shared password unlocks every locked app — change it here and let your flatmate know. Devices already unlocked stay unlocked.
           </p>
           <div className="rent-fields">
-            <PasswordField label="Current password" value={pwCurrent} onChange={setPwCurrent} autoComplete="current-password" />
             <PasswordField label="New password" value={pwNew} onChange={setPwNew} autoComplete="new-password" />
             <PasswordField label="Confirm new password" value={pwConfirm} onChange={setPwConfirm} autoComplete="new-password" />
           </div>
         </CollapsibleCard>
 
+        {prefsError && (
+          <p className="section-desc stat-detail-warn">Currency or lock changes aren’t saving — check the server.</p>
+        )}
         {saveError && (
           <p className="section-desc stat-detail-warn">Changes aren’t saving — check the server.</p>
         )}

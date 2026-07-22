@@ -1,5 +1,6 @@
 import React from 'react';
 import { limitDecimals } from '../utils/calculations';
+import { currencySymbol } from '../utils/currency';
 
 // "1650.5" → "1,650.5" for display; the stored value never has commas.
 function withThousands(value) {
@@ -41,7 +42,7 @@ export default function CurrencyInput({ value, onChange, placeholder = '0.00', c
 
   return (
     <div className={`currency-input ${className}`.trim()} style={style}>
-      <span className="currency-input-prefix" aria-hidden="true">£</span>
+      <span className="currency-input-prefix" aria-hidden="true">{currencySymbol()}</span>
       <input
         placeholder={placeholder}
         inputMode="decimal"

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { calculateInvoice, formatCurrency } from '../utils/calculations';
+import { currencySymbol } from '../utils/currency';
 import { normalizeDraft } from '../utils/defaults';
 
 function monthLabel(period) {
@@ -7,9 +8,9 @@ function monthLabel(period) {
   return isNaN(d) ? period : d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' });
 }
 
-// Signed £ difference for the sub-line, penny-rounded: "+£12.40" / "−£3.10".
+// Signed difference for the sub-line, penny-rounded: "+£12.40" / "−£3.10".
 function fmtDiff(diff) {
-  if (Math.abs(diff) < 0.005) return '±£0.00';
+  if (Math.abs(diff) < 0.005) return `±${formatCurrency(0)}`;
   return `${diff > 0 ? '+' : '−'}${formatCurrency(Math.abs(diff))}`;
 }
 
@@ -74,7 +75,7 @@ export default function SpendingTrendCard({ history, currentCalc, currentPeriod 
       <div className="spend-chart trend-chart">
         {columns.map((c) => (
           <div className={`spend-bar-col${c.current ? ' trend-col-current' : ''}`} key={c.period}>
-            <div className="spend-bar-value">£{c.grand.toFixed(0)}</div>
+            <div className="spend-bar-value">{currencySymbol()}{c.grand.toFixed(0)}</div>
             <div className="spend-bar-track">
               <div className="spend-bar-stack" style={{ height: `${(c.grand / max) * 100}%` }}>
                 {c.extras > 0 && (

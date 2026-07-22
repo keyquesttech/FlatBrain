@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarClock, Landmark, Percent, Plus, Receipt, ShoppingBag, StickyNote, Users, X } from 'lucide-react';
+import { currencySymbol } from '../utils/currency';
 import MonthPicker from './MonthPicker';
 import DatePicker from './DatePicker';
 import ExtrasInputList from './ExtrasInputList';
@@ -109,7 +110,7 @@ export default function InvoiceForm({ data, onChange }) {
           <div className="input-row extras-row row-labels" aria-hidden="true">
             <span className="rl-over-input">Reason</span>
             <span className="packs-input discount-value">Value</span>
-            <span className="discount-type-select">£ / %</span>
+            <span className="discount-type-select">{currencySymbol()} / %</span>
             <span className="row-labels-action" />
           </div>
         )}
@@ -131,7 +132,7 @@ export default function InvoiceForm({ data, onChange }) {
               inputMode="decimal"
               value={discount.value}
               onChange={(e) => updateExtra(key, discount.id, 'value', limitDecimals(e.target.value))}
-              placeholder={discount.type === 'percent' ? '%' : '£'}
+              placeholder={discount.type === 'percent' ? '%' : currencySymbol()}
               aria-label="Discount value"
             />
             <div className="discount-type-select">
@@ -139,7 +140,7 @@ export default function InvoiceForm({ data, onChange }) {
                 value={discount.type}
                 onChange={(v) => updateExtra(key, discount.id, 'type', v)}
                 options={[
-                  { value: 'amount', label: '£' },
+                  { value: 'amount', label: currencySymbol() },
                   { value: 'percent', label: '%' }
                 ]}
                 width="100%"
@@ -298,7 +299,7 @@ export default function InvoiceForm({ data, onChange }) {
         {data.bills.length > 0 && (
           <div className="input-row extras-row bill-row row-labels" aria-hidden="true">
             <span className="rl-over-input">Bill</span>
-            <span className="currency-input rl-over-pill">Amount £</span>
+            <span className="currency-input rl-over-pill">Amount {currencySymbol()}</span>
             <span className="percent-input">Disc %</span>
             {billDiscountPercent(data.bills[0]) > 0 && <span className="bill-discount-select">Disc for</span>}
             <span className="row-labels-action" />
@@ -359,7 +360,7 @@ export default function InvoiceForm({ data, onChange }) {
       {renderPersonExtras('reka', 'Flatmate 2')}
 
       <CollapsibleCard title={<span className="stat-title"><Percent size={15} /> Discounts</span>} storageKey="discounts">
-        <p className="section-desc">Taken off a flatmate's final total — a fixed £ amount, or a % of it.</p>
+        <p className="section-desc">Taken off a flatmate's final total — a fixed {currencySymbol()} amount, or a % of it.</p>
         {renderPersonDiscounts('matias', 'Flatmate 1')}
         {renderPersonDiscounts('reka', 'Flatmate 2')}
       </CollapsibleCard>
