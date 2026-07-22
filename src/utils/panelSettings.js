@@ -1,4 +1,5 @@
 import { setCurrencyCode } from './currency.js';
+import { DEFAULT_NAMES } from './defaults.js';
 
 // settings.json, client side: the currency and the custom hub — a named,
 // password-free landing page at /hub. The hub's ticked pages are the whole
@@ -20,12 +21,17 @@ const DEFAULT_TILES = {
 
 let hubTiles = { ...DEFAULT_TILES };
 let hubTitle = '';
+let names = { flatmate1: '', flatmate2: '' };
 
 export function normalizePanelSettings(s) {
   const tilesIn = s?.hub?.tiles;
   const legacyLocks = s?.locks || {};
   return {
     currency: typeof s?.currency === 'string' ? s.currency : 'GBP',
+    names: {
+      flatmate1: typeof s?.names?.flatmate1 === 'string' ? s.names.flatmate1 : '',
+      flatmate2: typeof s?.names?.flatmate2 === 'string' ? s.names.flatmate2 : ''
+    },
     hub: {
       name: typeof s?.hub?.name === 'string' ? s.hub.name : '',
       tiles: Object.fromEntries(Object.keys(DEFAULT_TILES).map((k) => {
@@ -46,8 +52,19 @@ export function applyPanelSettings(s) {
   const normalized = normalizePanelSettings(s);
   hubTiles = normalized.hub.tiles;
   hubTitle = normalized.hub.name;
+  names = normalized.names;
   setCurrencyCode(normalized.currency);
   return normalized;
+}
+
+// The flatmates' display names, panel-wide (Settings' Flatmates card):
+// Navigation tabs, Bill Splitter labels, invoices and hub tiles all read
+// these. Empty falls back to the code defaults.
+export function flatmateNames() {
+  return {
+    flatmate1: names.flatmate1.trim() || DEFAULT_NAMES.flatmate1,
+    flatmate2: names.flatmate2.trim() || DEFAULT_NAMES.flatmate2
+  };
 }
 
 // PasswordGate reads this per render: hub pages are open, everything else

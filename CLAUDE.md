@@ -27,7 +27,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
-| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; display currency picker; Custom hub card (hub name + pages grouped by app); change the shared password (`POST /api/password`, no old password needed) |
+| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; Flatmates card (panel-wide display names); display currency picker; Custom hub card (hub name + pages grouped by app as glass sub-cards); change the shared password (`POST /api/password`, no old password needed) |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
 Access model: the **custom hub** (`/hub`, always open, named in Settings)
@@ -39,9 +39,13 @@ access list (page keys `billsplitter`, `flatmate1`, `flatmate2`, `rent`,
 shareable link keeps working; older locks-shaped docs migrate in
 `normalizePanelSettings`). The lock screen's "Guest login" button goes to
 `/hub`; `/` stays the password-side launcher. `settings.json` also holds
-the display currency (ISO code); `src/utils/currency.js` turns it into
-the symbol/format every amount uses, applied by `App.jsx` before the
-routes render.
+the display currency (ISO code; `src/utils/currency.js` turns it into the
+symbol/format every amount uses) and the flatmate display names
+(`flatmateNames()` in `panelSettings.js` — Navigation tabs, Bill Splitter
+labels, hub tiles and the Settings hub card all read them; live drafts get
+names stamped on in `MainPage.withPanelNames`, history snapshots keep the
+names they were saved with). All applied by `App.jsx` before the routes
+render.
 
 ## Money maths (do not break)
 
