@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, FileText, KeyRound, Receipt, Settings, ArrowRight } from 'lucide-react';
+import { Activity, FileText, KeyRound, Receipt, ScrollText, Settings, ArrowRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 // FlatBrain home: the launcher for every app the flat runs. Each tile is an
@@ -37,6 +37,14 @@ const APPS = [
     icon: Settings,
     accent: 'blue',
     description: 'Manage app settings and information used.'
+  },
+  {
+    key: 'logs',
+    name: 'Logs',
+    to: '/logs',
+    icon: ScrollText,
+    accent: 'pink',
+    description: 'Every log-in, save and change, kept on the record.'
   },
   {
     key: 'status',

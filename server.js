@@ -105,10 +105,81 @@ function getPassword() {
   return DEFAULT_PASSWORD;
 }
 
+// ---- Activity log (the Logs app) ----
+// Everything notable the server does gets an event: log-ins, saves,
+// settings, backups, reboots. Rapid repeats of the same action (the
+// debounced draft writes) coalesce into one counted event, so the log
+// stays readable and SD-card writes stay sane.
+const LOGS_FILE = path.join(__dirname, 'logs.json');
+const LOG_MAX_EVENTS = 2000;
+const LOG_COALESCE_MS = 10 * 60 * 1000;
+const LOG_RETENTION_CHOICES = [7, 30, 90, 365];
+
+function readLogs() {
+  const logs = readJSON(LOGS_FILE, null) || {};
+  return {
+    retentionDays: LOG_RETENTION_CHOICES.includes(logs.retentionDays) ? logs.retentionDays : 30,
+    events: Array.isArray(logs.events) ? logs.events : []
+  };
+}
+
+function pruneEvents(events, retentionDays) {
+  const cutoff = Date.now() - retentionDays * 86400000;
+  return events.filter((e) => (e.lastT || e.t) >= cutoff).slice(0, LOG_MAX_EVENTS);
+}
+
+function logEvent(appName, action, detail, coalesce = false) {
+  try {
+    const logs = readLogs();
+    const now = Date.now();
+    const top = logs.events[0];
+    if (coalesce && top && top.app === appName && top.action === action &&
+        (top.detail || '') === (detail || '') && now - (top.lastT || top.t) < LOG_COALESCE_MS) {
+      top.count = (top.count || 1) + 1;
+      top.lastT = now;
+    } else {
+      logs.events.unshift({ t: now, app: appName, action, ...(detail ? { detail } : {}) });
+    }
+    logs.events = pruneEvents(logs.events, logs.retentionDays);
+    writeJSON(LOGS_FILE, logs);
+  } catch (err) {
+    console.error('Error writing the activity log:', err);
+  }
+}
+
+app.get('/api/logs', (req, res) => {
+  const logs = readLogs();
+  logs.events = pruneEvents(logs.events, logs.retentionDays);
+  res.json(logs);
+});
+
+app.put('/api/logs/config', (req, res) => {
+  const days = Number(req.body?.retentionDays);
+  if (!LOG_RETENTION_CHOICES.includes(days)) {
+    return res.status(400).json({ success: false, error: 'retentionDays must be one of 7, 30, 90 or 365' });
+  }
+  const logs = readLogs();
+  logs.retentionDays = days;
+  logs.events = pruneEvents(logs.events, days);
+  writeJSON(LOGS_FILE, logs);
+  logEvent('Logs', `Retention set to ${days} days`);
+  res.json({ success: true, retentionDays: days });
+});
+
+app.delete('/api/logs', (req, res) => {
+  const logs = readLogs();
+  writeJSON(LOGS_FILE, { retentionDays: logs.retentionDays, events: [] });
+  logEvent('Logs', 'Log cleared');
+  res.json({ success: true });
+});
+
 // API Routes
 app.post('/api/login', (req, res) => {
   const { password } = req.body || {};
-  res.json({ success: password === getPassword() });
+  const success = password === getPassword();
+  // Failed attempts coalesce so a guessing spree shows as one counted line
+  logEvent('Auth', success ? 'Logged in' : 'Failed log-in attempt', undefined, !success);
+  res.json({ success });
 });
 
 app.get('/api/draft', (req, res) => {
@@ -121,6 +192,7 @@ app.put('/api/draft', (req, res) => {
     return res.status(400).json({ success: false, error: 'Draft must be an object' });
   }
   writeJSON(DRAFT_FILE, newData);
+  logEvent('Bill Splitter', 'Draft updated', undefined, true);
   res.json({ success: true, draft: newData });
 });
 
@@ -135,11 +207,13 @@ app.patch('/api/draft', (req, res) => {
   }
   const merged = { ...readJSON(DRAFT_FILE, defaultDraft), ...changes };
   writeJSON(DRAFT_FILE, merged);
+  logEvent('Bill Splitter', 'Draft updated', undefined, true);
   res.json({ success: true, draft: merged });
 });
 
 app.post('/api/draft/reset', (req, res) => {
   writeJSON(DRAFT_FILE, defaultDraft);
+  logEvent('Bill Splitter', 'Draft reset');
   res.json({ success: true, draft: defaultDraft });
 });
 
@@ -157,9 +231,11 @@ app.post('/api/history', (req, res) => {
   // (e.g. a retried request after a network hiccup). Sorted by timestamp so
   // an updated old invoice keeps its chronological place instead of jumping
   // to the top of the history.
+  const replacing = history.some((inv) => inv.id === invoice.id);
   const updated = [invoice, ...history.filter((inv) => inv.id !== invoice.id)]
     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   writeJSON(HISTORY_FILE, updated);
+  logEvent('Bill Splitter', replacing ? 'Invoice updated in history' : 'Invoice saved to history', invoice.period, true);
   res.json({ success: true, history: updated });
 });
 
@@ -177,13 +253,16 @@ app.post('/api/history/import', (req, res) => {
   valid.forEach((inv) => byId.set(inv.id, inv));
   const updated = [...byId.values()].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   writeJSON(HISTORY_FILE, updated);
+  logEvent('Bill Splitter', 'History imported from CSV', `${valid.length} invoice${valid.length === 1 ? '' : 's'}`);
   res.json({ success: true, history: updated, imported: valid.length });
 });
 
 app.delete('/api/history/:id', (req, res) => {
   const history = readJSON(HISTORY_FILE, []);
+  const gone = history.find((inv) => inv.id === req.params.id);
   const updated = history.filter(inv => inv.id !== req.params.id);
   writeJSON(HISTORY_FILE, updated);
+  logEvent('Bill Splitter', 'Invoice deleted from history', gone?.period);
   res.json({ success: true, history: updated });
 });
 
@@ -206,6 +285,7 @@ app.put('/api/payments', (req, res) => {
     return res.status(400).json({ success: false, error: 'Payments data must be an object' });
   }
   writeJSON(PAYMENTS_FILE, payments);
+  logEvent('Settings', 'Bank accounts updated', undefined, true);
   res.json({ success: true, payments });
 });
 
@@ -240,6 +320,7 @@ app.put('/api/rent', (req, res) => {
     return res.status(400).json({ success: false, error: 'Rent data must be an object' });
   }
   writeJSON(RENT_FILE, rent);
+  logEvent('Rent', 'Rent data updated', undefined, true);
   res.json({ success: true, rent });
 });
 
@@ -272,6 +353,7 @@ app.put('/api/invoices', (req, res) => {
     return res.status(400).json({ success: false, error: 'Invoices data must be an object' });
   }
   writeJSON(INVOICES_FILE, docBody);
+  logEvent('Invoice generator', 'Draft updated', undefined, true);
   res.json({ success: true, doc: docBody });
 });
 
@@ -279,7 +361,7 @@ app.put('/api/invoices', (req, res) => {
 // Panel-level: one backup covers every app's data plus the password and
 // backup settings. Lives at the bare /api/backup/* (the old
 // /api/billsplitter/backup/* path still reaches it via the prefix strip).
-const backup = createBackupManager(__dirname);
+const backup = createBackupManager(__dirname, logEvent);
 
 app.get('/api/backup/status', (req, res) => {
   try {
@@ -304,6 +386,7 @@ app.post('/api/backup/mount', (req, res) => {
   const { path: devPath } = req.body || {};
   try {
     const result = backup.selectDevice(devPath);
+    logEvent('Backup', 'Drive selected', result.device?.label);
     res.json({ success: true, ...result });
   } catch (err) {
     const status = err.message === 'Not a removable USB partition' ? 400 : 500;
@@ -329,27 +412,35 @@ app.put('/api/backup/config', (req, res) => {
     keep: Number.isInteger(body.keep) && body.keep >= 2 && body.keep <= 12 ? body.keep : cfg.keep
   };
   backup.writeConfig(updated);
+  logEvent('Backup', body.device === null ? 'Automatic backups turned off' : 'Backup settings changed', undefined, true);
   res.json({ success: true, config: updated });
 });
 
 app.post('/api/backup/run', (req, res) => {
   // Always 200: the success flag carries the outcome so the card can show
   // "drive not plugged in" instead of a generic HTTP failure.
-  res.json(backup.performBackup());
+  const result = backup.performBackup();
+  logEvent('Backup', result.success ? 'Manual backup completed' : 'Manual backup failed', result.success ? undefined : result.error);
+  res.json(result);
 });
 
 app.post('/api/backup/restore', (req, res) => {
   const { name } = req.body || {};
   try {
-    res.json(backup.restoreBackup(name));
+    const result = backup.restoreBackup(name);
+    logEvent('Backup', 'Backup restored', name);
+    res.json(result);
   } catch (err) {
+    logEvent('Backup', 'Restore failed', err.message);
     res.json({ success: false, error: err.message });
   }
 });
 
 app.post('/api/backup/eject', (req, res) => {
   try {
-    res.json(backup.ejectDevice());
+    const result = backup.ejectDevice();
+    logEvent('Backup', 'Drive ejected');
+    res.json(result);
   } catch (err) {
     res.json({ success: false, error: err.message });
   }
@@ -357,7 +448,9 @@ app.post('/api/backup/eject', (req, res) => {
 
 app.delete('/api/backup/:name', (req, res) => {
   try {
-    res.json(backup.deleteBackup(req.params.name));
+    const result = backup.deleteBackup(req.params.name);
+    logEvent('Backup', 'Backup deleted from the stick', req.params.name);
+    res.json(result);
   } catch (err) {
     res.json({ success: false, error: err.message });
   }
@@ -411,6 +504,7 @@ function performReboot(trigger) {
   cfg.lastReboot = Date.now();
   cfg.lastResult = `${trigger} reboot on ${new Date().toLocaleString('en-GB')}${note}`;
   writeJSON(REBOOT_FILE, cfg);
+  logEvent('Reboots', `${trigger} reboot`, note ? note.replace(/^ — /, '') : undefined);
   // Let the HTTP response land before the network goes away.
   setTimeout(() => {
     execFile('sudo', ['systemctl', 'reboot'], (err) => {
@@ -454,6 +548,7 @@ app.put('/api/reboot/config', (req, res) => {
     time: /^\d{1,2}:\d{2}$/.test(body.time || '') ? body.time : cfg.time
   };
   writeJSON(REBOOT_FILE, updated);
+  logEvent('Reboots', 'Reboot schedule changed', undefined, true);
   res.json({ success: true, config: updated });
 });
 

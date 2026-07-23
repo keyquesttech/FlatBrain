@@ -12,7 +12,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
   (tmp + rename) and **git-ignored** — never commit or overwrite live data
   files (`draft.json`, `history.json`, `invoices.json`, `rent.json`,
   `payments.json`, `password.txt`, `backup-config.json`,
-  `reboot-config.json`, `temp-history.json`).
+  `reboot-config.json`, `temp-history.json`, `logs.json`).
 - **Frontend**: React 18 + Vite in `src/`, no chart/UI libraries — charts
   are hand-rolled SVG/divs, icons are `lucide-react@1.23` (check an icon
   exists before using it). `dist/` **is committed** on purpose (the Pi
@@ -28,6 +28,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
 | Settings | `/settings` | `payments.json` (accounts key) | Shared bank accounts as cards; feeds every bank-details picker |
+| Logs | `/logs` | `logs.json` | Server-written activity record (log-ins, saves, backups, reboots); retention setting + filters; coalesced repeat events |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
 All pages are password-gated (`PasswordGate`, client-side, shared password
@@ -79,6 +80,10 @@ change.
 - Reboots: default weekly Sun 06:30 (after the backup slot); a due backup
   runs BEFORE any reboot; config written pre-reboot; 10-min uptime guard.
 - Temperature: sampled every 60s into `temp-history.json` (4h window).
+- Activity log: `logEvent(app, action, detail, coalesce)` in server.js —
+  instrument any new mutating route; coalesce=true for debounced saves so
+  the log doesn't flood. The header's log-out button is client-side only
+  (clears PasswordGate storage), so it never appears in the log.
 - Pi frugality: vcgencmd throttle flags cached 15s, core count read once,
   temp history on its own endpoint (`/api/system/temp-history`) so the 3s
   stats poll stays ~500 bytes.

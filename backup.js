@@ -13,7 +13,7 @@ import { historyToCSV } from './src/utils/historyCsv.js';
 // schedule survives an SD-card death, but it is NOT restored (see
 // RESTORE_FILES): it records which stick is the current backup target, and
 // an old copy could silently point automatic backups at a retired drive.
-const DATA_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'password.txt', 'backup-config.json', 'reboot-config.json', 'temp-history.json'];
+const DATA_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'password.txt', 'backup-config.json', 'reboot-config.json', 'temp-history.json', 'logs.json'];
 const RESTORE_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'password.txt'];
 const BACKUP_DIR_NAME = 'FlatBrainBackups';
 // Sticks used before the FlatBrain rename carry this folder; backupRoot
@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG = {
   lastResult: ''
 };
 
-export function createBackupManager(baseDir) {
+export function createBackupManager(baseDir, onEvent = () => {}) {
   const configFile = path.join(baseDir, 'backup-config.json');
 
   function readConfig() {
@@ -395,6 +395,7 @@ export function createBackupManager(baseDir) {
     if (cfg.lastSuccess >= due) return;
     if (Date.now() - cfg.lastAttempt < RETRY_MS) return;
     const result = performBackup();
+    onEvent('Backup', result.success ? 'Scheduled backup completed' : 'Scheduled backup failed', result.success ? undefined : result.error);
     console.log(result.success ? `Scheduled backup: ${result.target}` : `Scheduled backup failed: ${result.error}`);
   }
 

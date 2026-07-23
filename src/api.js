@@ -58,6 +58,11 @@ export const ejectBackupDevice = () => panelRequest('/backup/eject', { method: '
 export const restoreBackup = (name) => panelRequest('/backup/restore', jsonBody('POST', { name }));
 export const deleteBackup = (name) => panelRequest(`/backup/${encodeURIComponent(name)}`, { method: 'DELETE' });
 
+// Activity log (panel-level)
+export const getLogs = () => panelRequest('/logs');
+export const updateLogsConfig = (config) => panelRequest('/logs/config', jsonBody('PUT', config));
+export const clearLogs = () => panelRequest('/logs', { method: 'DELETE' });
+
 // Scheduled reboots (panel-level, like backups)
 export const getRebootStatus = () => panelRequest('/reboot/status');
 export const updateRebootConfig = (config) => panelRequest('/reboot/config', jsonBody('PUT', config));

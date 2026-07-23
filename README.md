@@ -185,6 +185,7 @@ git-ignored):
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
 - `reboot-config.json` — scheduled reboot settings
+- `logs.json` — the Logs app's activity record and retention setting
 - `temp-history.json` — the Server Status page's rolling 4-hour temperature log
 
 To back up, use the **USB Backup card** on the History page (scheduled backups
