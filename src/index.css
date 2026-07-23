@@ -233,6 +233,16 @@ p {
   max-width: 820px;
 }
 
+/* Wide header, narrow body: pages that share another page's tab row (the
+   Bill Splitter flatmate pages) keep the full-width .container so the
+   header and its tab pills sit in exactly the same spot on every page of
+   the app, while the cards below keep the single-column measure —
+   .container-narrow's 820px minus its 2rem desktop padding. */
+.content-narrow {
+  max-width: 756px;
+  margin: 0 auto;
+}
+
 .page-loading {
   padding: 4rem 2rem;
   text-align: center;

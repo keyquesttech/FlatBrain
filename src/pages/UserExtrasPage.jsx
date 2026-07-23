@@ -131,90 +131,94 @@ export default function UserExtrasPage({ personKey }) {
   if (loading) return <div className="page-loading">Loading…</div>;
 
   return (
-    <div className="container container-narrow animate-fade-in">
+    <div className="container animate-fade-in">
       <Navigation activeTab={personKey === 'matias' ? 'flatmate1' : 'flatmate2'} names={names} appLabel="Bill Splitter" />
 
-      <div className="page-header">
-        <h1>{displayName}'s Extras</h1>
-        <p className="text-muted">Things you bought sync straight to this month's invoice.</p>
-      </div>
+      {/* Full-width container above so the tab pills never move between
+          Bill Splitter pages; the content keeps the narrow measure. */}
+      <div className="content-narrow">
+        <div className="page-header">
+          <h1>{displayName}'s Extras</h1>
+          <p className="text-muted">Things you bought sync straight to this month's invoice.</p>
+        </div>
 
-      <div className="form-card-stack">
-        <CollapsibleCard
-          title={<span className="stat-title"><ShoppingBag size={15} /> {displayName}'s Extras</span>}
-          storageKey="fm-extras"
-          actions={(
-            <button className="btn btn-primary btn-sm" onClick={() => saveExtras([...extras, newExtra()])}>
-              <Plus size={16} /> Add Item
-            </button>
-          )}
-        >
-          <ExtrasInputList
-            description={`Enter the units in the pack and the total you paid — the per-unit price works itself out. The % is the share you keep: at 10%, you pay 10% and ${otherDisplayName} pays the rest.`}
-            extras={extras}
-            onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
-            onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
-            percentPayer={displayName}
-            percentOther={otherDisplayName}
-            showAddButton={false}
-          />
-        </CollapsibleCard>
-
-        <CollapsibleCard title={<span className="stat-title"><StickyNote size={15} /> Your notes</span>} storageKey="fm-notes">
-          <p className="section-desc">Optional — anything written here appears on the invoice.</p>
-          <div className="form-group">
-            <label htmlFor="flatmate-note">Note</label>
-            <textarea
-              id="flatmate-note"
-              value={note}
-              onChange={(e) => saveNote(e.target.value)}
-              placeholder="Optional note shown on the invoice"
-              rows={2}
-              maxLength={300}
+        <div className="form-card-stack">
+          <CollapsibleCard
+            title={<span className="stat-title"><ShoppingBag size={15} /> {displayName}'s Extras</span>}
+            storageKey="fm-extras"
+            actions={(
+              <button className="btn btn-primary btn-sm" onClick={() => saveExtras([...extras, newExtra()])}>
+                <Plus size={16} /> Add Item
+              </button>
+            )}
+          >
+            <ExtrasInputList
+              description={`Enter the units in the pack and the total you paid — the per-unit price works itself out. The % is the share you keep: at 10%, you pay 10% and ${otherDisplayName} pays the rest.`}
+              extras={extras}
+              onUpdate={(id, field, value) => saveExtras(extras.map((e) => (e.id === id ? { ...e, [field]: value } : e)))}
+              onRemove={(id) => saveExtras(extras.filter((e) => e.id !== id))}
+              percentPayer={displayName}
+              percentOther={otherDisplayName}
+              showAddButton={false}
             />
-          </div>
-        </CollapsibleCard>
+          </CollapsibleCard>
 
-        <CollapsibleCard title={<span className="stat-title"><ArrowRightLeft size={15} /> Charged to {otherDisplayName}</span>} storageKey="fm-charged-other">
-          <p className="section-desc">Everything {otherDisplayName} is paying towards extras this month.</p>
-          {chargedToOther.map((extra) => {
-            const total = extraShares(extra).total;
-            return (
-              <div key={extra.id} className="preview-item">
-                <div className="preview-item-main">
-                  <span>{formatExtraLabel(extra)}</span>
-                  <span>{formatCurrency(extra.share)}</span>
-                </div>
-                <div className="preview-item-sub">
-                  Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {`${extra.pct}% of ${formatCurrency(total)}`}
-                </div>
-              </div>
-            );
-          })}
-        </CollapsibleCard>
+          <CollapsibleCard title={<span className="stat-title"><StickyNote size={15} /> Your notes</span>} storageKey="fm-notes">
+            <p className="section-desc">Optional — anything written here appears on the invoice.</p>
+            <div className="form-group">
+              <label htmlFor="flatmate-note">Note</label>
+              <textarea
+                id="flatmate-note"
+                value={note}
+                onChange={(e) => saveNote(e.target.value)}
+                placeholder="Optional note shown on the invoice"
+                rows={2}
+                maxLength={300}
+              />
+            </div>
+          </CollapsibleCard>
 
-        <CollapsibleCard title={<span className="stat-title"><Receipt size={15} /> Charged to you</span>} storageKey="fm-charged-you">
-          <p className="section-desc">Your share of the extras {otherDisplayName} added.</p>
-          {chargedToYou.map((extra) => {
-            const total = extraShares(extra).total;
-            return (
-              <div key={extra.id} className="preview-item">
-                <div className="preview-item-main">
-                  <span>{formatExtraLabel(extra)}</span>
-                  <span>{formatCurrency(extra.share)}</span>
+          <CollapsibleCard title={<span className="stat-title"><ArrowRightLeft size={15} /> Charged to {otherDisplayName}</span>} storageKey="fm-charged-other">
+            <p className="section-desc">Everything {otherDisplayName} is paying towards extras this month.</p>
+            {chargedToOther.map((extra) => {
+              const total = extraShares(extra).total;
+              return (
+                <div key={extra.id} className="preview-item">
+                  <div className="preview-item-main">
+                    <span>{formatExtraLabel(extra)}</span>
+                    <span>{formatCurrency(extra.share)}</span>
+                  </div>
+                  <div className="preview-item-sub">
+                    Added by {extra.addedByYou ? 'you' : otherDisplayName} — {otherDisplayName} pays {`${extra.pct}% of ${formatCurrency(total)}`}
+                  </div>
                 </div>
-                <div className="preview-item-sub">
-                  Added by {otherDisplayName} — you pay {`${extra.pct}% of ${formatCurrency(total)}`}
-                </div>
-              </div>
-            );
-          })}
-        </CollapsibleCard>
+              );
+            })}
+          </CollapsibleCard>
 
-        <CollapsibleCard title={<span className="stat-title"><BarChart3 size={15} /> History</span>} storageKey="fm-history">
-          <p className="section-desc">Monthly bill totals from the saved invoices.</p>
-          <SpendingChart history={history} />
-        </CollapsibleCard>
+          <CollapsibleCard title={<span className="stat-title"><Receipt size={15} /> Charged to you</span>} storageKey="fm-charged-you">
+            <p className="section-desc">Your share of the extras {otherDisplayName} added.</p>
+            {chargedToYou.map((extra) => {
+              const total = extraShares(extra).total;
+              return (
+                <div key={extra.id} className="preview-item">
+                  <div className="preview-item-main">
+                    <span>{formatExtraLabel(extra)}</span>
+                    <span>{formatCurrency(extra.share)}</span>
+                  </div>
+                  <div className="preview-item-sub">
+                    Added by {otherDisplayName} — you pay {`${extra.pct}% of ${formatCurrency(total)}`}
+                  </div>
+                </div>
+              );
+            })}
+          </CollapsibleCard>
+
+          <CollapsibleCard title={<span className="stat-title"><BarChart3 size={15} /> History</span>} storageKey="fm-history">
+            <p className="section-desc">Monthly bill totals from the saved invoices.</p>
+            <SpendingChart history={history} />
+          </CollapsibleCard>
+        </div>
       </div>
     </div>
   );
