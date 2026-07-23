@@ -874,6 +874,67 @@ p {
   display: none;
 }
 
+/* ---------- Logs ---------- */
+.log-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.log-filters input[type="text"] {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+
+.log-filter-app {
+  flex: 0 1 190px;
+  min-width: 150px;
+}
+
+.log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.log-row:last-child {
+  border-bottom: none;
+}
+
+.log-time {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.log-app {
+  flex: 0 0 auto;
+}
+
+.log-text {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.log-detail {
+  color: var(--text-faint);
+}
+
+.log-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--lime);
+}
+
 /* Saved bank accounts, shown as cards like Bill Splitter's history */
 .account-grid {
   margin-top: 1rem;

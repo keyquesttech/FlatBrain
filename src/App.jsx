@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import InvoicesPage from './pages/InvoicesPage';
+import LogsPage from './pages/LogsPage';
 import MainPage from './pages/MainPage';
 import RentPage from './pages/RentPage';
 import ServerStatusPage from './pages/ServerStatusPage';
@@ -59,6 +60,9 @@ function App() {
 
         {/* Settings — panel-wide information the apps share */}
         <Route path="/settings" element={<PasswordGate><SettingsPage /></PasswordGate>} />
+
+        {/* Logs — the server's record of everything that happened */}
+        <Route path="/logs" element={<PasswordGate><LogsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
         <Route path="/status" element={<PasswordGate><ServerStatusPage /></PasswordGate>} />

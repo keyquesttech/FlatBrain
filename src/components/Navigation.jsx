@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { House, Volume2, VolumeX } from 'lucide-react';
+import { House, LogOut, Volume2, VolumeX } from 'lucide-react';
 import { DEFAULT_NAMES } from '../utils/defaults';
+import { logout } from './PasswordGate';
 import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 
 // FlatBrain header. The brand always links home to the dashboard; app pages
@@ -43,6 +44,15 @@ export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs 
           aria-pressed={sound}
         >
           {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
+        </button>
+        <button
+          type="button"
+          className="btn-icon sound-toggle"
+          onClick={logout}
+          title="Log out of FlatBrain"
+          aria-label="Log out of FlatBrain"
+        >
+          <LogOut size={17} />
         </button>
       </div>
 

@@ -20,6 +20,16 @@ try {
   });
 } catch { /* private mode — nothing to migrate */ }
 
+// Forget every stored credential and land back on the gate.
+export function logout() {
+  try {
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(AUTH_LOCAL_KEY);
+    localStorage.removeItem(PASSWORD_LOCAL_KEY);
+  } catch { /* private mode — nothing stored anyway */ }
+  window.location.href = '/';
+}
+
 function isAuthed() {
   return (
     sessionStorage.getItem(AUTH_SESSION_KEY) === 'true' ||
