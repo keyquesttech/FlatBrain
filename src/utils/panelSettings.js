@@ -16,8 +16,7 @@ const DEFAULT_TILES = {
   flatmate2: true,
   rent: false,
   invoices: false,
-  settings: false,
-  status: false
+  settings: false
 };
 
 let hubTiles = { ...DEFAULT_TILES };

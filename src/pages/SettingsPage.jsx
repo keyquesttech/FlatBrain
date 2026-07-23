@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Coins, Eye, EyeOff, KeyRound, Landmark, LayoutGrid, Pencil, Save, Trash2, Users } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
+import LogsSection from '../components/LogsSection';
 import SelectMenu from '../components/SelectMenu';
+import ServerStatusSection from '../components/ServerStatusSection';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { changePassword, getPanelSettings, getPayments, updatePanelSettings, updatePayments } from '../api';
 import { newId } from '../utils/id';
@@ -36,8 +39,7 @@ const hubGroups = () => {
     },
     { app: 'Rent', pages: [{ key: 'rent', label: 'Rent page' }] },
     { app: 'Invoice generator', pages: [{ key: 'invoices', label: 'Generator' }] },
-    { app: 'Settings', pages: [{ key: 'settings', label: 'Settings page' }] },
-    { app: 'Server status', pages: [{ key: 'status', label: 'Status page' }] }
+    { app: 'Settings', pages: [{ key: 'settings', label: 'Settings app' }] }
   ];
 };
 
@@ -78,11 +80,15 @@ function PasswordField({ label, value, onChange, autoComplete }) {
   );
 }
 
-// Settings: panel-wide information the apps share. The bank accounts live
-// in payments.json (one source of truth — the Payments app tags its
-// entries with them and every bank-details picker reads them); this page
-// is where they're managed.
+// Settings: the whole panel's controls in three views. General is the
+// flat's shared information — who lives here, the currency, the bank
+// accounts, the hub and the password. Server is the Pi itself (live
+// stats, USB backups, scheduled reboots) and Logs is the activity record;
+// /status and /logs from the standalone-app days land on those views.
 export default function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = ['server', 'logs'].includes(searchParams.get('view')) ? searchParams.get('view') : 'general';
+  const setView = (v) => setSearchParams(v === 'general' ? {} : { view: v });
   const [doc, setDoc] = useState(null);
   const [saveError, setSaveError] = useState(false);
   const [accDraft, setAccDraft] = useState(() => normalizeAccount({}));
@@ -174,8 +180,6 @@ export default function SettingsPage() {
     prefsTimerRef.current = setTimeout(flushPrefs, SAVE_DEBOUNCE_MS);
   };
 
-  if (!doc || !prefs) return <div className="page-loading">Loading…</div>;
-
   const saveAccount = () => {
     if (!accDraft.label.trim() && !accDraft.bankName.trim()) {
       appAlert('Give the account at least a label or a bank name.', { title: 'Save account' });
@@ -237,11 +241,79 @@ export default function SettingsPage() {
     }
   };
 
+  // The Server and Logs views load their own data — only General needs
+  // the settings and payments documents before it can render.
+  if (view === 'general' && (!doc || !prefs)) return <div className="page-loading">Loading…</div>;
+
   return (
     <div className="container container-narrow animate-fade-in">
-      <Navigation showTabs={false} appLabel="Settings" />
+      <Navigation
+        appLabel="Settings"
+        customTabs={[
+          { id: 'general', label: 'General', active: view === 'general', onClick: () => setView('general') },
+          { id: 'server', label: 'Server', active: view === 'server', onClick: () => setView('server') },
+          { id: 'logs', label: 'Logs', active: view === 'logs', onClick: () => setView('logs') }
+        ]}
+      />
 
+      {view === 'server' && <ServerStatusSection />}
+      {view === 'logs' && <LogsSection />}
+
+      {view === 'general' && (
       <div className="form-card-stack">
+        {/* The flat first (who and how money shows), then where money goes,
+            then access — the hub picks what's open, the password locks the rest. */}
+        <CollapsibleCard
+          title={<span className="stat-title"><Users size={15} /> Flatmates</span>}
+          storageKey="settings-flatmates"
+        >
+          <p className="section-desc">
+            The two names every app shows — Bill Splitter tabs, invoices and the hub tiles all follow along.
+          </p>
+          <div className="rent-fields">
+            <label className="fld">
+              <span className="fld-label">Flatmate 1</span>
+              <input
+                type="text"
+                value={prefs.names.flatmate1}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate1: e.target.value } })}
+                placeholder={DEFAULT_NAMES.flatmate1}
+                maxLength={40}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Flatmate 2</span>
+              <input
+                type="text"
+                value={prefs.names.flatmate2}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate2: e.target.value } })}
+                placeholder={DEFAULT_NAMES.flatmate2}
+                maxLength={40}
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><Coins size={15} /> Currency</span>}
+          storageKey="settings-currency"
+        >
+          <p className="section-desc">
+            Sets the symbol on every amount, invoice and chart — nothing is converted, the numbers stay as typed.
+          </p>
+          <div className="rent-fields">
+            <label className="fld rent-fld-wide">
+              <span className="fld-label">Currency</span>
+              <SelectMenu
+                value={prefs.currency}
+                onChange={(v) => updatePrefs({ currency: v })}
+                options={CURRENCY_OPTIONS}
+                width="100%"
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
         <CollapsibleCard
           title={<span className="stat-title"><Landmark size={15} /> Bank accounts</span>}
           storageKey="pay-accounts"
@@ -368,57 +440,6 @@ export default function SettingsPage() {
         </CollapsibleCard>
 
         <CollapsibleCard
-          title={<span className="stat-title"><Users size={15} /> Flatmates</span>}
-          storageKey="settings-flatmates"
-        >
-          <p className="section-desc">
-            The two names every app shows — Bill Splitter tabs, invoices and the hub tiles all follow along.
-          </p>
-          <div className="rent-fields">
-            <label className="fld">
-              <span className="fld-label">Flatmate 1</span>
-              <input
-                type="text"
-                value={prefs.names.flatmate1}
-                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate1: e.target.value } })}
-                placeholder={DEFAULT_NAMES.flatmate1}
-                maxLength={40}
-              />
-            </label>
-            <label className="fld">
-              <span className="fld-label">Flatmate 2</span>
-              <input
-                type="text"
-                value={prefs.names.flatmate2}
-                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate2: e.target.value } })}
-                placeholder={DEFAULT_NAMES.flatmate2}
-                maxLength={40}
-              />
-            </label>
-          </div>
-        </CollapsibleCard>
-
-        <CollapsibleCard
-          title={<span className="stat-title"><Coins size={15} /> Currency</span>}
-          storageKey="settings-currency"
-        >
-          <p className="section-desc">
-            Sets the symbol on every amount, invoice and chart — nothing is converted, the numbers stay as typed.
-          </p>
-          <div className="rent-fields">
-            <label className="fld rent-fld-wide">
-              <span className="fld-label">Currency</span>
-              <SelectMenu
-                value={prefs.currency}
-                onChange={(v) => updatePrefs({ currency: v })}
-                options={CURRENCY_OPTIONS}
-                width="100%"
-              />
-            </label>
-          </div>
-        </CollapsibleCard>
-
-        <CollapsibleCard
           title={<span className="stat-title"><LayoutGrid size={15} /> Custom hub</span>}
           storageKey="settings-custom-hub"
         >
@@ -483,6 +504,7 @@ export default function SettingsPage() {
           <p className="section-desc stat-detail-warn">Changes aren’t saving — check the server.</p>
         )}
       </div>
+      )}
     </div>
   );
 }

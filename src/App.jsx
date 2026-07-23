@@ -3,10 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-r
 import DashboardPage from './pages/DashboardPage';
 import HubPage from './pages/HubPage';
 import InvoicesPage from './pages/InvoicesPage';
-import LogsPage from './pages/LogsPage';
 import MainPage from './pages/MainPage';
 import RentPage from './pages/RentPage';
-import ServerStatusPage from './pages/ServerStatusPage';
 import SettingsPage from './pages/SettingsPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
@@ -86,14 +84,14 @@ function App() {
         {/* Custom invoice generator — itemized invoices with a paid history */}
         <Route path="/invoices" element={<PasswordGate pageKey="invoices"><InvoicesPage /></PasswordGate>} />
 
-        {/* Settings — panel-wide information the apps share */}
+        {/* Settings — panel-wide information the apps share, plus the
+            Server (Pi stats, backups, reboots) and Logs views */}
         <Route path="/settings" element={<PasswordGate pageKey="settings"><SettingsPage /></PasswordGate>} />
 
-        {/* Logs — the server's record of everything that happened */}
-        <Route path="/logs" element={<PasswordGate pageKey="logs"><LogsPage /></PasswordGate>} />
-
-        {/* Server status — live stats for the Pi this panel runs on */}
-        <Route path="/status" element={<PasswordGate pageKey="status"><ServerStatusPage /></PasswordGate>} />
+        {/* The standalone Logs and Server status apps merged into Settings —
+            their old links land on the matching view */}
+        <Route path="/logs" element={<Navigate to="/settings?view=logs" replace />} />
+        <Route path="/status" element={<Navigate to="/settings?view=server" replace />} />
 
         {/* Legacy paths from the single-app era keep old bookmarks working */}
         <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />

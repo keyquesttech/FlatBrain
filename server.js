@@ -195,9 +195,7 @@ function pageDisplayName(key) {
     flatmate2: `${flatmate2}'s bills page`,
     rent: 'Rent page',
     invoices: 'Invoice generator page',
-    settings: 'Settings page',
-    logs: 'Logs page',
-    status: 'Server status page'
+    settings: 'Settings page'
   };
   return Object.prototype.hasOwnProperty.call(names, key) ? names[key] : null;
 }
@@ -373,7 +371,7 @@ const defaultSettings = {
   names: { flatmate1: '', flatmate2: '' },
   hub: {
     name: '',
-    tiles: { billsplitter: false, history: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }
+    tiles: { billsplitter: false, history: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false }
   }
 };
 

@@ -1,4 +1,4 @@
-import { Activity, FileText, History, KeyRound, Receipt, ScrollText, Settings, User, UserRound } from 'lucide-react';
+import { FileText, History, KeyRound, Receipt, Settings, User, UserRound } from 'lucide-react';
 import { flatmateNames } from './panelSettings.js';
 
 // Every page of the panel as a tile definition, shared by the dashboard
@@ -70,25 +70,7 @@ export function pageTiles() {
       to: '/settings',
       icon: Settings,
       accent: 'blue',
-      description: 'Manage app settings and information used.'
-    },
-    {
-      key: 'logs',
-      appTile: true,
-      name: 'Logs',
-      to: '/logs',
-      icon: ScrollText,
-      accent: 'pink',
-      description: 'Every log-in, save and change, kept on the record.'
-    },
-    {
-      key: 'status',
-      appTile: true,
-      name: 'Server status',
-      to: '/status',
-      icon: Activity,
-      accent: 'blue',
-      description: 'View server stats and control backups.'
+      description: 'App settings, the activity log and server controls.'
     }
   ];
 }

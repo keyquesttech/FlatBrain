@@ -27,18 +27,17 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
-| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; Flatmates card (panel-wide display names); display currency picker; Custom hub card (hub name + pages grouped by app as glass sub-cards); change the shared password (`POST /api/password`, no old password needed) |
-| Logs | `/logs` | `logs.json` | Server-written activity record (log-ins/log-outs incl. failed attempts and guest visits — each named with the page it happened on — saves, backups, reboots); retention setting + filters; coalesced repeat events |
-| Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
+| Settings | `/settings` — General, Server (`?view=server`), Logs (`?view=logs`) views; old `/status` and `/logs` redirect to their views | `payments.json` (accounts key), `settings.json`, `password.txt`, `logs.json`, `temp-history.json`, configs | General: Flatmates card (panel-wide display names), display currency picker, shared bank accounts as cards, Custom hub card (hub name + pages grouped by app as glass sub-cards), change the shared password (`POST /api/password`, no old password needed). Server view: Pi stats + 4h temp graph, USB backup card, scheduled reboots. Logs view: server-written activity record (log-ins/log-outs incl. failed attempts and guest visits — each named with the page it happened on — saves, backups, reboots), retention setting + filters, coalesced repeat events |
 
 Access model: the **custom hub** (`/hub`, always open, named in Settings)
 is the guest side; every other page is password-gated (`PasswordGate`,
 client-side, shared password in `password.txt`, changeable from Settings)
 UNLESS ticked onto the hub — `hub.tiles` in `settings.json` is the whole
 access list (page keys `billsplitter`, `history`, `flatmate1`,
-`flatmate2`, `rent`, `invoices`, `settings`, `status`; `flatmate2` starts
+`flatmate2`, `rent`, `invoices`, `settings`; `flatmate2` starts
 on the hub so the shareable link keeps working; older locks-shaped docs
-migrate in `normalizePanelSettings`). History shares the `/billsplitter`
+migrate in `normalizePanelSettings`, which also drops the retired
+`status` key — the Server view now gates under `settings`). History shares the `/billsplitter`
 route (`?view=history`) but gates under its own key via `BillSplitterGate`
 in `App.jsx`. The lock screen's "Guest login" button goes to
 `/hub`; `/` stays the password-side launcher. `settings.json` also holds

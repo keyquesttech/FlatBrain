@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, Cpu, HardDrive, MemoryStick, Thermometer } from 'lucide-react';
-import BackupCard from '../components/BackupCard';
-import CollapsibleCard from '../components/CollapsibleCard';
-import RebootCard from '../components/RebootCard';
-import Navigation from '../components/Navigation';
+import BackupCard from './BackupCard';
+import CollapsibleCard from './CollapsibleCard';
+import RebootCard from './RebootCard';
 
 const POLL_MS = 3000;
 // The graph only gains a point a minute, so its data refreshes on its own
@@ -156,10 +155,12 @@ function TempChart({ history }) {
   );
 }
 
-// Live host stats for the Pi FlatBrain runs on, polled every few seconds.
-// CPU usage is measured by the server between polls, so the first reading
-// can be null for an instant and the meters settle after one interval.
-export default function ServerStatusPage() {
+// The Server view of the Settings app: live host stats for the Pi FlatBrain
+// runs on, the whole-panel USB backup card and scheduled reboots. CPU usage
+// is measured by the server between polls, so the first reading can be null
+// for an instant and the meters settle after one interval. Mounted only
+// while its tab is open, so the fast poll stops when you switch away.
+export default function ServerStatusSection() {
   const [stats, setStats] = useState(null);
   const [tempHistory, setTempHistory] = useState([]);
   const [offline, setOffline] = useState(false);
@@ -194,16 +195,12 @@ export default function ServerStatusPage() {
   const throttle = throttleSummary(stats?.throttled);
 
   return (
-    <div className="container container-narrow animate-fade-in">
-      <Navigation showTabs={false} appLabel="Server Status" />
-
-      <div className="page-header">
-        <h1>Server Status</h1>
-        <p className="text-muted">
-          {offline ? 'Can’t reach the server — showing the last reading.'
-            : stats?.model || 'Reading host stats…'}
+    <>
+      {offline && stats && (
+        <p className="section-desc stat-detail-warn">
+          Can’t reach the server — showing the last reading.
         </p>
-      </div>
+      )}
 
       {stats && (
         <>
@@ -286,6 +283,6 @@ export default function ServerStatusPage() {
           </p>
         </div>
       )}
-    </div>
+    </>
   );
 }
