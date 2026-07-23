@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
-import { login } from '../api';
-import { AUTH_SESSION_KEY, AUTH_LOCAL_KEY, PASSWORD_LOCAL_KEY } from '../utils/authStorage';
+import { guestLogin, login, logLogout } from '../api';
+import { AUTH_SESSION_KEY, AUTH_LOCAL_KEY, PASSWORD_LOCAL_KEY, isAuthed } from '../utils/authStorage';
 import { isPageLocked } from '../utils/panelSettings';
 
 // One-time carry-over from the pre-FlatBrain key names, so the rename
@@ -19,21 +19,17 @@ try {
   });
 } catch { /* private mode — nothing to migrate */ }
 
-// Forget every stored credential and land back on the gate.
+// Forget every stored credential and land back on the gate. The beacon
+// goes first so the log records the log-out; clearing storage stays
+// client-side and works even if the beacon is lost.
 export function logout() {
+  logLogout();
   try {
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     localStorage.removeItem(AUTH_LOCAL_KEY);
     localStorage.removeItem(PASSWORD_LOCAL_KEY);
   } catch { /* private mode — nothing stored anyway */ }
   window.location.href = '/';
-}
-
-function isAuthed() {
-  return (
-    sessionStorage.getItem(AUTH_SESSION_KEY) === 'true' ||
-    localStorage.getItem(AUTH_LOCAL_KEY) === 'true'
-  );
 }
 
 function persistAuth(remember) {
@@ -59,13 +55,20 @@ export default function PasswordGate({ pageKey, children }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // A hub-open page rendering in a browser that isn't logged in is a
+  // guest log-in — put it on the record (the server coalesces repeats).
+  const open = !isPageLocked(pageKey);
+  useEffect(() => {
+    if (open && !isAuthed()) guestLogin(pageKey);
+  }, [open, pageKey]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
     setError('');
     try {
-      const res = await login(password);
+      const res = await login(password, pageKey);
       if (res.success) {
         persistAuth(remember);
         if (remember) {
@@ -83,7 +86,7 @@ export default function PasswordGate({ pageKey, children }) {
     }
   };
 
-  if (!isPageLocked(pageKey) || authed) return children;
+  if (open || authed) return children;
 
   return (
     <div className="auth-wrap animate-fade-in">
@@ -135,7 +138,10 @@ export default function PasswordGate({ pageKey, children }) {
         <button
           type="button"
           className="btn btn-secondary btn-block auth-guest-btn"
-          onClick={() => navigate('/hub')}
+          onClick={() => {
+            guestLogin(pageKey, true); // which lock screen they came from
+            navigate('/hub');
+          }}
         >
           Guest login
         </button>

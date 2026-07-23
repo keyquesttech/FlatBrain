@@ -21,7 +21,20 @@ const jsonBody = (method, body) => ({
   body: JSON.stringify(body)
 });
 
-export const login = (password) => request('/login', jsonBody('POST', { password }));
+// page is the gate's pageKey, so the log can say where the log-in happened
+export const login = (password, page) => request('/login', jsonBody('POST', { password, page }));
+// Guest log-in beacon: the lock screen's Guest login button (viaGate) and
+// password-free pages opening in a browser that isn't logged in. Fire-and-
+// forget — a lost beacon must never get in the way of browsing.
+export const guestLogin = (page, viaGate = false) =>
+  request('/login/guest', jsonBody('POST', { page, viaGate })).catch(() => {});
+// Log-out stays client-side (clearing the gate's storage) — this beacon
+// just puts it on the record; keepalive lets it outlive the navigation.
+export const logLogout = () => {
+  try {
+    fetch('/api/logout', { method: 'POST', keepalive: true }).catch(() => {});
+  } catch { /* never block logging out */ }
+};
 // Panel-level: the one shared password gates the locked apps; Settings
 // changes it (no old password needed — it's a LAN-only panel).
 export const changePassword = (newPassword) =>
@@ -32,11 +45,14 @@ export const changePassword = (newPassword) =>
 export const getPanelSettings = () => panelRequest('/settings');
 export const updatePanelSettings = (settings) => panelRequest('/settings', jsonBody('PUT', settings));
 
+// from names the page doing the save (billsplitter / flatmate1 /
+// flatmate2) so the activity log can say where the edit came from.
+const fromQuery = (from) => (from ? `?from=${encodeURIComponent(from)}` : '');
 export const getDraft = () => request('/draft');
-export const updateDraft = (draft) => request('/draft', jsonBody('PUT', draft));
+export const updateDraft = (draft, from) => request(`/draft${fromQuery(from)}`, jsonBody('PUT', draft));
 // Partial update: only the keys sent are replaced; the server merges them
 // into the current draft atomically.
-export const patchDraft = (changes) => request('/draft', jsonBody('PATCH', changes));
+export const patchDraft = (changes, from) => request(`/draft${fromQuery(from)}`, jsonBody('PATCH', changes));
 export const resetDraft = () => request('/draft/reset', { method: 'POST' });
 
 export const getHistory = () => request('/history');

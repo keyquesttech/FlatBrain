@@ -28,7 +28,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
 | Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; Flatmates card (panel-wide display names); display currency picker; Custom hub card (hub name + pages grouped by app as glass sub-cards); change the shared password (`POST /api/password`, no old password needed) |
-| Logs | `/logs` | `logs.json` | Server-written activity record (log-ins, saves, backups, reboots); retention setting + filters; coalesced repeat events |
+| Logs | `/logs` | `logs.json` | Server-written activity record (log-ins/log-outs incl. failed attempts and guest visits — each named with the page it happened on — saves, backups, reboots); retention setting + filters; coalesced repeat events |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
 Access model: the **custom hub** (`/hub`, always open, named in Settings)
@@ -92,14 +92,22 @@ change.
 
 - Backup: every minute check, weekly default, retries every 30 min; copies
   ALL data files to the `FLATBRAIN` USB stick (sudo-mount fallback at
-  `/media/flatbrain-backup`); restore validates JSON shapes first.
+  `/media/flatbrain-backup`); restore validates JSON shapes first and puts
+  back the apps' data, the password and `logs.json` (device-side state —
+  backup/reboot configs, temp history — is backed up but never restored).
 - Reboots: default weekly Sun 06:30 (after the backup slot); a due backup
   runs BEFORE any reboot; config written pre-reboot; 10-min uptime guard.
 - Temperature: sampled every 60s into `temp-history.json` (4h window).
 - Activity log: `logEvent(app, action, detail, coalesce)` in server.js —
   instrument any new mutating route; coalesce=true for debounced saves so
-  the log doesn't flood. The header's log-out button is client-side only
-  (clears PasswordGate storage), so it never appears in the log.
+  the log doesn't flood. Auth events name their page via `pageDisplayName`
+  (server-side map, so clients can't inject log text): the gate sends its
+  pageKey with the password, guest entries beacon `POST /api/login/guest`
+  (lock screen's Guest button, plus PasswordGate/HubPage whenever an
+  unauthed browser opens a hub-open page), draft saves carry `?from=` to
+  say which page edited. The header's log-out still clears PasswordGate
+  storage client-side but beacons `POST /api/logout` (keepalive) first so
+  it lands in the log.
 - Pi frugality: vcgencmd throttle flags cached 15s, core count read once,
   temp history on its own endpoint (`/api/system/temp-history`) so the 3s
   stats poll stays ~500 bytes.

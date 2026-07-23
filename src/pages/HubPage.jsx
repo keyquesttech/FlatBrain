@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import AppTileGrid from '../components/AppTileGrid';
+import { guestLogin } from '../api';
+import { isAuthed } from '../utils/authStorage';
 import { pageTiles } from '../utils/pageTiles';
 import { hubName, isOnHub } from '../utils/panelSettings';
 
@@ -9,6 +11,12 @@ import { hubName, isOnHub } from '../utils/panelSettings';
 // tile per page ticked onto it — those pages open without the password.
 export default function HubPage() {
   const tiles = pageTiles().filter(({ key }) => isOnHub(key));
+
+  // Opening the hub without being logged in is a guest log-in — the
+  // server puts it on the record, coalescing repeat visits.
+  useEffect(() => {
+    if (!isAuthed()) guestLogin('hub');
+  }, []);
 
   return (
     <div className="container container-narrow animate-fade-in">

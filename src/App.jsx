@@ -90,7 +90,7 @@ function App() {
         <Route path="/settings" element={<PasswordGate pageKey="settings"><SettingsPage /></PasswordGate>} />
 
         {/* Logs — the server's record of everything that happened */}
-        <Route path="/logs" element={<PasswordGate><LogsPage /></PasswordGate>} />
+        <Route path="/logs" element={<PasswordGate pageKey="logs"><LogsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
         <Route path="/status" element={<PasswordGate pageKey="status"><ServerStatusPage /></PasswordGate>} />

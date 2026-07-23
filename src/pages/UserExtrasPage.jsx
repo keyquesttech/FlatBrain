@@ -74,7 +74,7 @@ export default function UserExtrasPage({ personKey }) {
     const changes = pendingRef.current;
     if (Object.keys(changes).length === 0) return;
     pendingRef.current = {};
-    patchDraft(changes).catch(() => {
+    patchDraft(changes, personKey === 'matias' ? 'flatmate1' : 'flatmate2').catch(() => {
       pendingRef.current = { ...changes, ...pendingRef.current };
     });
   };

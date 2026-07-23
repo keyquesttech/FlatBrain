@@ -174,12 +174,57 @@ app.delete('/api/logs', (req, res) => {
 });
 
 // API Routes
+
+// Where an auth event happened, in the panel's own words — the log detail
+// for log-ins and guest visits. The flatmate pages and the hub carry the
+// display names picked in Settings, read fresh so renames show up in new
+// lines. Unknown keys give no detail, so nothing a client sends can put
+// arbitrary text in the log.
+function pageDisplayName(key) {
+  if (typeof key !== 'string') return null;
+  const s = readJSON(SETTINGS_FILE, defaultSettings);
+  const matias = (typeof s?.names?.matias === 'string' && s.names.matias.trim()) || 'Matias';
+  const reka = (typeof s?.names?.reka === 'string' && s.names.reka.trim()) || 'Réka';
+  const hub = (typeof s?.hub?.name === 'string' && s.hub.name.trim()) || 'FlatBrain';
+  const names = {
+    dashboard: 'Dashboard',
+    hub: `${hub} hub`,
+    billsplitter: 'Bill Splitter page',
+    history: 'Bills history page',
+    flatmate1: `${matias}'s bills page`,
+    flatmate2: `${reka}'s bills page`,
+    rent: 'Rent page',
+    invoices: 'Invoice generator page',
+    settings: 'Settings page',
+    logs: 'Logs page',
+    status: 'Server status page'
+  };
+  return Object.prototype.hasOwnProperty.call(names, key) ? names[key] : null;
+}
+
 app.post('/api/login', (req, res) => {
-  const { password } = req.body || {};
+  const { password, page } = req.body || {};
   const success = password === getPassword();
   // Failed attempts coalesce so a guessing spree shows as one counted line
-  logEvent('Auth', success ? 'Logged in' : 'Failed log-in attempt', undefined, !success);
+  logEvent('Auth', success ? 'Logged in' : 'Failed log-in attempt', pageDisplayName(page) || undefined, !success);
   res.json({ success });
+});
+
+// Guest log-ins: the lock screen's Guest login button (viaGate) and any
+// password-free page opening in a browser that isn't logged in. Coalesced
+// so a guest browsing around shows as a few counted lines, not a flood.
+app.post('/api/login/guest', (req, res) => {
+  const { page, viaGate } = req.body || {};
+  const name = pageDisplayName(page);
+  logEvent('Auth', 'Guest log-in', name ? (viaGate ? `${name} lock screen` : name) : undefined, true);
+  res.json({ success: true });
+});
+
+// Logging out is client-side (the button clears the gate's storage) —
+// this beacon exists purely so the log shows it happened.
+app.post('/api/logout', (req, res) => {
+  logEvent('Auth', 'Logged out');
+  res.json({ success: true });
 });
 
 // Change the shared password (managed from Settings). LAN-only panel, so
@@ -217,7 +262,9 @@ app.put('/api/draft', (req, res) => {
     return res.status(400).json({ success: false, error: 'Draft must be an object' });
   }
   writeJSON(DRAFT_FILE, newData);
-  logEvent('Bill Splitter', 'Draft updated', undefined, true);
+  // ?from= names the page that saved (generator or a flatmate page), so
+  // the log says who was editing; different pages coalesce separately.
+  logEvent('Bill Splitter', 'Draft updated', pageDisplayName(req.query.from) || undefined, true);
   res.json({ success: true, draft: newData });
 });
 
@@ -232,7 +279,7 @@ app.patch('/api/draft', (req, res) => {
   }
   const merged = { ...readJSON(DRAFT_FILE, defaultDraft), ...changes };
   writeJSON(DRAFT_FILE, merged);
-  logEvent('Bill Splitter', 'Draft updated', undefined, true);
+  logEvent('Bill Splitter', 'Draft updated', pageDisplayName(req.query.from) || undefined, true);
   res.json({ success: true, draft: merged });
 });
 
@@ -339,8 +386,18 @@ app.put('/api/settings', (req, res) => {
   if (!isPlainObject(settings)) {
     return res.status(400).json({ success: false, error: 'Settings data must be an object' });
   }
+  // Name what changed so the log line says more than "updated" — compare
+  // section by section against the doc being replaced.
+  const prev = readJSON(SETTINGS_FILE, defaultSettings);
+  const diff = (a, b) => JSON.stringify(a) !== JSON.stringify(b);
+  const changed = [
+    diff(prev.currency, settings.currency) && 'currency',
+    diff(prev.names, settings.names) && 'flatmate names',
+    diff(prev.hub?.name, settings.hub?.name) && 'hub name',
+    diff(prev.hub?.tiles, settings.hub?.tiles) && 'hub pages'
+  ].filter(Boolean).join(', ');
   writeJSON(SETTINGS_FILE, settings);
-  logEvent('Settings', 'Panel settings updated', undefined, true);
+  logEvent('Settings', 'Panel settings updated', changed || undefined, true);
   res.json({ success: true, settings });
 });
 

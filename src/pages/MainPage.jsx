@@ -118,7 +118,7 @@ export default function MainPage() {
     if ('matiasExtras' in changes) changes.matiasFullPriceExtras = [];
     if ('rekaExtras' in changes) changes.rekaFullPriceExtras = [];
     try {
-      await patchDraft(changes);
+      await patchDraft(changes, 'billsplitter');
       // Only mark clean if nothing changed while the request was in flight;
       // newer edits already re-queued keys and scheduled another flush.
       if (editSeqRef.current === seq) {
@@ -212,7 +212,7 @@ export default function MainPage() {
     };
     applyDraft(nextDraft);
     try {
-      await updateDraft(nextDraft);
+      await updateDraft(nextDraft, 'billsplitter');
     } catch {
       // The invoice IS saved — don't surface this as a save failure. Queue
       // the whole draft like any edit; it retries on the next change, poll
@@ -387,7 +387,7 @@ export default function MainPage() {
       applyDraft(nextDraft);
       // Same as after a save: a failed settings write isn't a failed reset.
       try {
-        await updateDraft(nextDraft);
+        await updateDraft(nextDraft, 'billsplitter');
       } catch {
         markAllPending();
       }
