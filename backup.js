@@ -14,7 +14,11 @@ import { historyToCSV } from './src/utils/historyCsv.js';
 // RESTORE_FILES): it records which stick is the current backup target, and
 // an old copy could silently point automatic backups at a retired drive.
 const DATA_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'settings.json', 'password.txt', 'backup-config.json', 'reboot-config.json', 'temp-history.json', 'logs.json'];
-const RESTORE_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'settings.json', 'password.txt'];
+// What a restore puts back: the apps' data, the password and the activity
+// log. Device-side state (backup target, reboot schedule, rolling temp
+// history) is backed up for reference but stays out of restores — see the
+// backup-config note above.
+const RESTORE_FILES = ['draft.json', 'history.json', 'invoices.json', 'rent.json', 'payments.json', 'settings.json', 'password.txt', 'logs.json'];
 const BACKUP_DIR_NAME = 'FlatBrainBackups';
 // Sticks used before the FlatBrain rename carry this folder; backupRoot
 // renames it in place the first time it's seen.
@@ -265,7 +269,7 @@ export function createBackupManager(baseDir, onEvent = () => {}) {
   }
 
   // Restore FlatBrain's data files from one backup folder on the stick.
-  // Both JSON files are validated before anything is touched, and each
+  // Every JSON file is validated before anything is touched, and each
   // file is swapped in atomically (tmp + rename), so a bad or half-copied
   // backup can never corrupt the live data.
   function restoreBackup(name) {
@@ -296,9 +300,10 @@ export function createBackupManager(baseDir, onEvent = () => {}) {
         } catch {
           throw new Error(`${file} in this backup is corrupted — not restoring anything`);
         }
-        const ok = file === 'history.json'
-          ? Array.isArray(parsed)
-          : parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
+        const isObj = parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
+        const ok = file === 'history.json' ? Array.isArray(parsed)
+          : file === 'logs.json' ? isObj && Array.isArray(parsed.events)
+          : isObj;
         if (!ok) throw new Error(`${file} in this backup has the wrong shape — not restoring anything`);
       }
       staged.push([file, content]);
