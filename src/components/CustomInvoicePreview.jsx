@@ -21,7 +21,16 @@ function itemLabel(i) {
 }
 
 const CustomInvoicePreview = forwardRef(({ doc }, ref) => {
-  const bankDetails = { ...DEFAULT_BANK, ...(doc.bankDetails || {}) };
+  // Per-field fallback (not a spread): the form clears bank details to
+  // empty strings after every download, and empties should show the
+  // placeholders, not blank lines.
+  const bd = doc.bankDetails || {};
+  const bankDetails = {
+    name: bd.name?.trim() || DEFAULT_BANK.name,
+    bankName: bd.bankName?.trim() || DEFAULT_BANK.bankName,
+    sortCode: bd.sortCode?.trim() || DEFAULT_BANK.sortCode,
+    accountNumber: bd.accountNumber?.trim() || DEFAULT_BANK.accountNumber
+  };
   const items = doc.items || [];
   const total = items.reduce((sum, i) => round2(sum + round2(parseAmount(i.amount))), 0);
   const issued = doc.generatedAt ? new Date(doc.generatedAt) : new Date();

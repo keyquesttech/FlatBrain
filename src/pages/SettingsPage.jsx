@@ -1,12 +1,45 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Landmark, Pencil, Save, Trash2 } from 'lucide-react';
+import { Coins, Eye, EyeOff, KeyRound, Landmark, LayoutGrid, Pencil, Save, Trash2, Users } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import CollapsibleCard from '../components/CollapsibleCard';
+import SelectMenu from '../components/SelectMenu';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
-import { getPayments, updatePayments } from '../api';
+import { changePassword, getPanelSettings, getPayments, updatePanelSettings, updatePayments } from '../api';
 import { newId } from '../utils/id';
+import { syncRememberedPassword } from '../utils/authStorage';
+import { CURRENCIES, currencySymbolFor } from '../utils/currency';
+import { DEFAULT_NAMES } from '../utils/defaults';
+import { applyPanelSettings, flatmateNames, normalizePanelSettings } from '../utils/panelSettings';
 
 const SAVE_DEBOUNCE_MS = 600;
+
+const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
+  value: c.code,
+  label: `${currencySymbolFor(c.code)} ${c.name}`
+}));
+
+// Every page of every app, grouped for the Custom hub card's checkboxes.
+// Keys match PasswordGate's pageKey per route; a ticked page gets a hub
+// tile AND opens without the password. A function so the flatmate pages
+// carry the names from the Flatmates card, live as they're typed.
+const hubGroups = () => {
+  const names = flatmateNames();
+  return [
+    {
+      app: 'Bill Splitter',
+      pages: [
+        { key: 'billsplitter', label: 'Generator' },
+        { key: 'history', label: 'History' },
+        { key: 'flatmate1', label: `${names.flatmate1}'s page` },
+        { key: 'flatmate2', label: `${names.flatmate2}'s page` }
+      ]
+    },
+    { app: 'Rent', pages: [{ key: 'rent', label: 'Rent page' }] },
+    { app: 'Invoice generator', pages: [{ key: 'invoices', label: 'Generator' }] },
+    { app: 'Settings', pages: [{ key: 'settings', label: 'Settings page' }] },
+    { app: 'Server status', pages: [{ key: 'status', label: 'Status page' }] }
+  ];
+};
 
 function normalizeAccount(a) {
   return {
@@ -19,6 +52,32 @@ function normalizeAccount(a) {
   };
 }
 
+// A stacked-label password field with the login gate's show/hide eye.
+function PasswordField({ label, value, onChange, autoComplete }) {
+  const [show, setShow] = useState(false);
+  return (
+    <label className="fld">
+      <span className="fld-label">{label}</span>
+      <div className="password-input">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+        />
+        <button
+          type="button"
+          className="password-toggle-btn"
+          onClick={() => setShow(!show)}
+          aria-label={show ? 'Hide password' : 'Show password'}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </label>
+  );
+}
+
 // Settings: panel-wide information the apps share. The bank accounts live
 // in payments.json (one source of truth — the Payments app tags its
 // entries with them and every bank-details picker reads them); this page
@@ -28,12 +87,27 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState(false);
   const [accDraft, setAccDraft] = useState(() => normalizeAccount({}));
   const [accEditing, setAccEditing] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [prefs, setPrefs] = useState(null);
+  const [prefsError, setPrefsError] = useState(false);
   const dataRef = useRef(null);
   const saveTimerRef = useRef(null);
   const pendingRef = useRef(false);
+  const prefsRef = useRef(null);
+  const prefsTimerRef = useRef(null);
+  const prefsPendingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    getPanelSettings()
+      .then((s) => {
+        if (cancelled) return;
+        prefsRef.current = normalizePanelSettings(s);
+        setPrefs(prefsRef.current);
+      })
+      .catch(() => {});
     getPayments()
       .then((p) => {
         if (cancelled) return;
@@ -48,6 +122,8 @@ export default function SettingsPage() {
       cancelled = true;
       clearTimeout(saveTimerRef.current);
       if (pendingRef.current) flushSave();
+      clearTimeout(prefsTimerRef.current);
+      if (prefsPendingRef.current) flushPrefs();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -74,7 +150,31 @@ export default function SettingsPage() {
     saveTimerRef.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   };
 
-  if (!doc) return <div className="page-loading">Loading…</div>;
+  const flushPrefs = async () => {
+    prefsPendingRef.current = false;
+    try {
+      await updatePanelSettings(prefsRef.current);
+      setPrefsError(false);
+    } catch {
+      prefsPendingRef.current = true;
+      setPrefsError(true);
+    }
+  };
+
+  // Currency and hub changes apply to the running app instantly via
+  // applyPanelSettings; the write is debounced because the hub name is
+  // typed, not tapped.
+  const updatePrefs = (changes) => {
+    const next = { ...prefsRef.current, ...changes };
+    prefsRef.current = next;
+    setPrefs(next);
+    applyPanelSettings(next);
+    prefsPendingRef.current = true;
+    clearTimeout(prefsTimerRef.current);
+    prefsTimerRef.current = setTimeout(flushPrefs, SAVE_DEBOUNCE_MS);
+  };
+
+  if (!doc || !prefs) return <div className="page-loading">Loading…</div>;
 
   const saveAccount = () => {
     if (!accDraft.label.trim() && !accDraft.bankName.trim()) {
@@ -95,6 +195,37 @@ export default function SettingsPage() {
   const editAccount = (a) => {
     setAccDraft(normalizeAccount(a));
     setAccEditing(a.id);
+  };
+
+  // The server rejects unusable new passwords too; the checks here just
+  // catch typos before the round-trip.
+  const savePassword = async () => {
+    if (pwSaving) return;
+    const next = pwNew.trim();
+    if (next.length < 4) {
+      appAlert('Use at least 4 characters for the new password.', { title: 'Change password' });
+      return;
+    }
+    if (next !== pwConfirm.trim()) {
+      appAlert('The new passwords don’t match.', { title: 'Change password' });
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await changePassword(next);
+      if (res.success) {
+        syncRememberedPassword(next);
+        setPwNew('');
+        setPwConfirm('');
+        appToast('Password changed.');
+      } else {
+        appAlert(res.error || 'The password could not be changed.', { title: 'Change password' });
+      }
+    } catch {
+      appAlert('The password could not be changed — check the server.', { title: 'Change password' });
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   const deleteAccount = async (a) => {
@@ -236,6 +367,118 @@ export default function SettingsPage() {
           )}
         </CollapsibleCard>
 
+        <CollapsibleCard
+          title={<span className="stat-title"><Users size={15} /> Flatmates</span>}
+          storageKey="settings-flatmates"
+        >
+          <p className="section-desc">
+            The two names every app shows — Bill Splitter tabs, invoices and the hub tiles all follow along.
+          </p>
+          <div className="rent-fields">
+            <label className="fld">
+              <span className="fld-label">Flatmate 1</span>
+              <input
+                type="text"
+                value={prefs.names.flatmate1}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate1: e.target.value } })}
+                placeholder={DEFAULT_NAMES.flatmate1}
+                maxLength={40}
+              />
+            </label>
+            <label className="fld">
+              <span className="fld-label">Flatmate 2</span>
+              <input
+                type="text"
+                value={prefs.names.flatmate2}
+                onChange={(e) => updatePrefs({ names: { ...prefs.names, flatmate2: e.target.value } })}
+                placeholder={DEFAULT_NAMES.flatmate2}
+                maxLength={40}
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><Coins size={15} /> Currency</span>}
+          storageKey="settings-currency"
+        >
+          <p className="section-desc">
+            Sets the symbol on every amount, invoice and chart — nothing is converted, the numbers stay as typed.
+          </p>
+          <div className="rent-fields">
+            <label className="fld rent-fld-wide">
+              <span className="fld-label">Currency</span>
+              <SelectMenu
+                value={prefs.currency}
+                onChange={(v) => updatePrefs({ currency: v })}
+                options={CURRENCY_OPTIONS}
+                width="100%"
+              />
+            </label>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><LayoutGrid size={15} /> Custom hub</span>}
+          storageKey="settings-custom-hub"
+        >
+          <p className="section-desc">
+            The password-free landing page at /hub — Guest login on the lock screen leads there. Ticked pages get a hub tile and open without the password; everything else stays locked.
+          </p>
+          <div className="rent-fields">
+            <label className="fld rent-fld-wide">
+              <span className="fld-label">Hub name</span>
+              <input
+                type="text"
+                value={prefs.hub.name}
+                onChange={(e) => updatePrefs({ hub: { ...prefs.hub, name: e.target.value } })}
+                placeholder="FlatBrain"
+                maxLength={40}
+              />
+            </label>
+          </div>
+          <div className="history-grid hub-group-grid">
+            {hubGroups().map(({ app, pages }) => (
+              <div className="glass-panel history-card hub-group-card" key={app}>
+                <h3 className="history-card-title">{app}</h3>
+                <div className="hub-group-pages">
+                  {pages.map(({ key, label }) => (
+                    <label className="remember-checkbox" key={key}>
+                      <input
+                        type="checkbox"
+                        checked={prefs.hub.tiles[key]}
+                        onChange={(e) => updatePrefs({ hub: { ...prefs.hub, tiles: { ...prefs.hub.tiles, [key]: e.target.checked } } })}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title={<span className="stat-title"><KeyRound size={15} /> Password</span>}
+          storageKey="settings-password"
+          actions={(
+            <button className="btn btn-primary btn-sm" onClick={savePassword} disabled={pwSaving}>
+              <Save size={16} /> {pwSaving ? 'Changing…' : 'Change password'}
+            </button>
+          )}
+        >
+          <p className="section-desc">
+            One shared password unlocks every locked app — change it here and let your flatmate know. Devices already unlocked stay unlocked.
+          </p>
+          <div className="rent-fields pw-fields">
+            <PasswordField label="New password" value={pwNew} onChange={setPwNew} autoComplete="new-password" />
+            <PasswordField label="Confirm new password" value={pwConfirm} onChange={setPwConfirm} autoComplete="new-password" />
+          </div>
+        </CollapsibleCard>
+
+        {prefsError && (
+          <p className="section-desc stat-detail-warn">Currency or hub changes aren’t saving — check the server.</p>
+        )}
         {saveError && (
           <p className="section-desc stat-detail-warn">Changes aren’t saving — check the server.</p>
         )}

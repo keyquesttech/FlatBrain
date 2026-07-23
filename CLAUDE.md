@@ -11,7 +11,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
   All data is plain JSON files in the app dir, written atomically
   (tmp + rename) and **git-ignored** — never commit or overwrite live data
   files (`draft.json`, `history.json`, `invoices.json`, `rent.json`,
-  `payments.json`, `password.txt`, `backup-config.json`,
+  `payments.json`, `settings.json`, `password.txt`, `backup-config.json`,
   `reboot-config.json`, `temp-history.json`, `logs.json`).
 - **Frontend**: React 18 + Vite in `src/`, no chart/UI libraries — charts
   are hand-rolled SVG/divs, icons are `lucide-react@1.23` (check an icon
@@ -26,14 +26,29 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 |---|---|---|---|
 | Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
-| Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history) |
-| Settings | `/settings` | `payments.json` (accounts key) | Shared bank accounts as cards; feeds every bank-details picker |
+| Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
+| Settings | `/settings` | `payments.json` (accounts key), `settings.json`, `password.txt` | Shared bank accounts as cards; Flatmates card (panel-wide display names); display currency picker; Custom hub card (hub name + pages grouped by app as glass sub-cards); change the shared password (`POST /api/password`, no old password needed) |
 | Logs | `/logs` | `logs.json` | Server-written activity record (log-ins, saves, backups, reboots); retention setting + filters; coalesced repeat events |
 | Server status | `/status` | `temp-history.json`, configs | Pi stats + 4h temp graph, USB backup card, scheduled reboots |
 
-All pages are password-gated (`PasswordGate`, client-side, shared password
-in `password.txt`) except `/billsplitter/flatmate2`, which is deliberately
-open so it can be shared.
+Access model: the **custom hub** (`/hub`, always open, named in Settings)
+is the guest side; every other page is password-gated (`PasswordGate`,
+client-side, shared password in `password.txt`, changeable from Settings)
+UNLESS ticked onto the hub — `hub.tiles` in `settings.json` is the whole
+access list (page keys `billsplitter`, `history`, `flatmate1`,
+`flatmate2`, `rent`, `invoices`, `settings`, `status`; `flatmate2` starts
+on the hub so the shareable link keeps working; older locks-shaped docs
+migrate in `normalizePanelSettings`). History shares the `/billsplitter`
+route (`?view=history`) but gates under its own key via `BillSplitterGate`
+in `App.jsx`. The lock screen's "Guest login" button goes to
+`/hub`; `/` stays the password-side launcher. `settings.json` also holds
+the display currency (ISO code; `src/utils/currency.js` turns it into the
+symbol/format every amount uses) and the flatmate display names
+(`flatmateNames()` in `panelSettings.js` — Navigation tabs, Bill Splitter
+labels, hub tiles and the Settings hub card all read them; live drafts get
+names stamped on in `MainPage.withPanelNames`, history snapshots keep the
+names they were saved with). All applied by `App.jsx` before the routes
+render.
 
 ## Money maths (do not break)
 
@@ -60,7 +75,8 @@ change.
   date, × to clear). A filled payment date IS the paid marker everywhere.
 - **BankAccountPicker**: full-preview tappable account cards from
   `payments.json`; Bill Splitter and Rent bank cards are pick-only (no
-  manual inputs), the invoice generator keeps manual fields too.
+  manual inputs). The invoice generator has no picker — manual fields
+  only, cleared after every download or reset (per-invoice, not standing).
 - **Invoice PNGs**: `utils/invoicePng.js` captures a 720px clone via
   html2canvas (lazy-loaded). Invoice components share the
   `invoice-frame`/`due-card` CSS; paid invoices get the `.paid-stamp`

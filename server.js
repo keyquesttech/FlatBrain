@@ -182,6 +182,31 @@ app.post('/api/login', (req, res) => {
   res.json({ success });
 });
 
+// Change the shared password (managed from Settings). LAN-only panel, so
+// setting a new password doesn't ask for the old one. The new one is
+// trimmed like getPassword() trims the file, and written tmp+rename so a
+// power cut can't leave an empty password.txt behind.
+app.post('/api/password', (req, res) => {
+  const { newPassword } = req.body || {};
+  if (typeof newPassword !== 'string') {
+    return res.status(400).json({ success: false, error: 'The new password is required' });
+  }
+  const next = newPassword.trim();
+  if (next.length < 4 || next.length > 200 || /[\r\n]/.test(next)) {
+    return res.json({ success: false, error: 'The new password needs 4–200 characters on a single line.' });
+  }
+  try {
+    const tmp = `${PASSWORD_FILE}.tmp`;
+    fs.writeFileSync(tmp, next + '\n');
+    fs.renameSync(tmp, PASSWORD_FILE);
+  } catch (err) {
+    console.error('Error writing password file:', err);
+    return res.status(500).json({ success: false, error: 'Could not write the password file' });
+  }
+  logEvent('Settings', 'Password changed');
+  res.json({ success: true });
+});
+
 app.get('/api/draft', (req, res) => {
   res.json(readJSON(DRAFT_FILE, defaultDraft));
 });
@@ -287,6 +312,36 @@ app.put('/api/payments', (req, res) => {
   writeJSON(PAYMENTS_FILE, payments);
   logEvent('Settings', 'Bank accounts updated', undefined, true);
   res.json({ success: true, payments });
+});
+
+// ---- Panel settings (managed by the Settings app): the display currency
+// and the custom hub — its name plus the pages ticked onto it, which are
+// exactly the pages that open without the password. Whole-document
+// GET/PUT; the client normalizes missing keys and migrates docs from the
+// earlier per-page-locks shape. ----
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
+
+const defaultSettings = {
+  currency: 'GBP',
+  names: { flatmate1: '', flatmate2: '' },
+  hub: {
+    name: '',
+    tiles: { billsplitter: false, history: false, flatmate1: false, flatmate2: true, rent: false, invoices: false, settings: false, status: false }
+  }
+};
+
+app.get('/api/settings', (req, res) => {
+  res.json(readJSON(SETTINGS_FILE, defaultSettings));
+});
+
+app.put('/api/settings', (req, res) => {
+  const settings = req.body;
+  if (!isPlainObject(settings)) {
+    return res.status(400).json({ success: false, error: 'Settings data must be an object' });
+  }
+  writeJSON(SETTINGS_FILE, settings);
+  logEvent('Settings', 'Panel settings updated', undefined, true);
+  res.json({ success: true, settings });
 });
 
 // ---- Rent: the tenancy details, the payment schedule and the history of

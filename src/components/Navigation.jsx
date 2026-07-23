@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { House, LogOut, Volume2, VolumeX } from 'lucide-react';
-import { DEFAULT_NAMES } from '../utils/defaults';
+import { flatmateNames } from '../utils/panelSettings';
 import { logout } from './PasswordGate';
 import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 
@@ -10,7 +10,7 @@ import { soundEnabled, setSoundEnabled, playTick } from '../utils/sound';
 // the dashboard itself). Apps other than Bill Splitter pass their own
 // `customTabs` [{ id, label, active, onClick }] to get the same tab pill
 // in the same place.
-export default function Navigation({ activeTab, names = DEFAULT_NAMES, showTabs = true, appLabel, customTabs }) {
+export default function Navigation({ activeTab, names = flatmateNames(), showTabs = true, appLabel, customTabs }) {
   const [sound, setSound] = useState(soundEnabled);
 
   const toggleSound = () => {

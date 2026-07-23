@@ -285,7 +285,7 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
         {/* Spelled out as text — the invoice travels as a PNG, so a
             clickable link wouldn't survive the download */}
         <p className="invoice-legend">
-          To add items to the invoice visit <strong><em>http://flatbrain.local/billsplitter/flatmate2</em></strong> while connected to the Wi-Fi in the flat.
+          To add items to the invoice visit <strong>http://flatbrain.local</strong> while connected to the Wi-Fi in the flat.
         </p>
       </div>
       </div>

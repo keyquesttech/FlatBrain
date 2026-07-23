@@ -1,5 +1,6 @@
 import React from 'react';
 import { chargedBillAmount } from '../utils/calculations';
+import { currencySymbol } from '../utils/currency';
 
 // Sums what was actually paid: 'All'-discounted portions are excluded,
 // portions discounted for one flatmate were still charged (to the other).
@@ -37,7 +38,7 @@ export default function SpendingChart({ history }) {
     <div className="spend-chart">
       {points.map((p) => (
         <div className="spend-bar-col" key={p.period}>
-          <div className="spend-bar-value">£{p.value.toFixed(0)}</div>
+          <div className="spend-bar-value">{currencySymbol()}{p.value.toFixed(0)}</div>
           <div className="spend-bar-track">
             <div className="spend-bar-fill" style={{ height: `${(p.value / max) * 100}%` }} />
           </div>

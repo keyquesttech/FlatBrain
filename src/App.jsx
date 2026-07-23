@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
+import HubPage from './pages/HubPage';
 import InvoicesPage from './pages/InvoicesPage';
 import LogsPage from './pages/LogsPage';
 import MainPage from './pages/MainPage';
@@ -10,9 +11,31 @@ import SettingsPage from './pages/SettingsPage';
 import UserExtrasPage from './pages/UserExtrasPage';
 import PasswordGate from './components/PasswordGate';
 import DialogHost from './components/Dialog';
+import { getPanelSettings } from './api';
+import { applyPanelSettings } from './utils/panelSettings';
 import { playAdd, playRemove, playTick } from './utils/sound';
 
+// Generator and History share the /billsplitter route (History is
+// ?view=history) but are separate hub pages — the gate key follows the
+// query, so History can sit on the hub while the generator stays locked.
+function BillSplitterGate() {
+  const [searchParams] = useSearchParams();
+  const pageKey = searchParams.get('view') === 'history' ? 'history' : 'billsplitter';
+  return <PasswordGate pageKey={pageKey}><MainPage /></PasswordGate>;
+}
+
 function App() {
+  // Panel settings (currency, per-app password locks) are applied before
+  // the routes render, so no page ever flashes the wrong currency or asks
+  // for a password it shouldn't. A failed fetch falls back to the defaults
+  // (everything locked, £) — same as before the settings doc existed.
+  const [settingsReady, setSettingsReady] = useState(false);
+  useEffect(() => {
+    getPanelSettings()
+      .then((s) => applyPanelSettings(s))
+      .catch(() => {})
+      .finally(() => setSettingsReady(true));
+  }, []);
   // One delegated listener gives every button/tab a click sound without
   // wiring each component: danger buttons fall, primary buttons rise,
   // everything else ticks. Bigger moments (save success, errors) play
@@ -42,36 +65,41 @@ function App() {
         <span className="lava lava-5"><span className="lava-blob" /></span>
         <span className="underlay-grain" />
       </div>
-      <Routes>
-        {/* FlatBrain dashboard — the app launcher */}
-        <Route path="/" element={<PasswordGate><DashboardPage /></PasswordGate>} />
+      {settingsReady && <Routes>
+        {/* FlatBrain dashboard — the password-side launcher */}
+        <Route path="/" element={<PasswordGate pageKey="dashboard"><DashboardPage /></PasswordGate>} />
 
-        {/* Bill Splitter app. Everything is password-gated except the
-            flatmate 2 page, which is deliberately shareable. */}
-        <Route path="/billsplitter" element={<PasswordGate><MainPage /></PasswordGate>} />
-        <Route path="/billsplitter/flatmate1" element={<PasswordGate><UserExtrasPage personKey="flatmate1" /></PasswordGate>} />
-        <Route path="/billsplitter/flatmate2" element={<UserExtrasPage personKey="flatmate2" />} />
+        {/* The custom hub — the password-free landing page; which pages
+            get tiles (and thereby open without the password) is picked in
+            Settings. Deliberately ungated. */}
+        <Route path="/hub" element={<HubPage />} />
+
+        {/* Bill Splitter app. Pages ticked onto the hub open without the
+            password; flatmate 2's starts on the hub, staying shareable. */}
+        <Route path="/billsplitter" element={<BillSplitterGate />} />
+        <Route path="/billsplitter/flatmate1" element={<PasswordGate pageKey="flatmate1"><UserExtrasPage personKey="flatmate1" /></PasswordGate>} />
+        <Route path="/billsplitter/flatmate2" element={<PasswordGate pageKey="flatmate2"><UserExtrasPage personKey="flatmate2" /></PasswordGate>} />
 
         {/* Rent — the tenancy schedule and its per-period invoices */}
-        <Route path="/rent" element={<PasswordGate><RentPage /></PasswordGate>} />
+        <Route path="/rent" element={<PasswordGate pageKey="rent"><RentPage /></PasswordGate>} />
 
         {/* Custom invoice generator — itemized invoices with a paid history */}
-        <Route path="/invoices" element={<PasswordGate><InvoicesPage /></PasswordGate>} />
+        <Route path="/invoices" element={<PasswordGate pageKey="invoices"><InvoicesPage /></PasswordGate>} />
 
         {/* Settings — panel-wide information the apps share */}
-        <Route path="/settings" element={<PasswordGate><SettingsPage /></PasswordGate>} />
+        <Route path="/settings" element={<PasswordGate pageKey="settings"><SettingsPage /></PasswordGate>} />
 
         {/* Logs — the server's record of everything that happened */}
         <Route path="/logs" element={<PasswordGate><LogsPage /></PasswordGate>} />
 
         {/* Server status — live stats for the Pi this panel runs on */}
-        <Route path="/status" element={<PasswordGate><ServerStatusPage /></PasswordGate>} />
+        <Route path="/status" element={<PasswordGate pageKey="status"><ServerStatusPage /></PasswordGate>} />
 
         {/* Legacy paths from the single-app era keep old bookmarks working */}
         <Route path="/flatmate1" element={<Navigate to="/billsplitter/flatmate1" replace />} />
         <Route path="/flatmate2" element={<Navigate to="/billsplitter/flatmate2" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      </Routes>}
       <DialogHost />
     </BrowserRouter>
   );

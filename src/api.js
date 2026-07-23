@@ -22,6 +22,15 @@ const jsonBody = (method, body) => ({
 });
 
 export const login = (password) => request('/login', jsonBody('POST', { password }));
+// Panel-level: the one shared password gates the locked apps; Settings
+// changes it (no old password needed — it's a LAN-only panel).
+export const changePassword = (newPassword) =>
+  panelRequest('/password', jsonBody('POST', { newPassword }));
+
+// Panel settings (settings.json, managed in Settings): display currency +
+// which apps the password gate locks. Whole-document GET/PUT.
+export const getPanelSettings = () => panelRequest('/settings');
+export const updatePanelSettings = (settings) => panelRequest('/settings', jsonBody('PUT', settings));
 
 export const getDraft = () => request('/draft');
 export const updateDraft = (draft) => request('/draft', jsonBody('PUT', draft));
