@@ -200,6 +200,41 @@ if [ -n "$APP_HOSTNAME" ]; then
   fi
 fi
 
+# ----- 6. Keep the .local name reliable --------------------------------------
+# Wifi power saving lets the radio doze between beacons and drop multicast
+# packets — the classic cause of a flaky .local name when the Pi runs on
+# wifi. Keep the radio awake (harmless when on ethernet). NetworkManager is
+# the stack on Raspberry Pi OS Bookworm+; older dhcpcd setups skip this.
+if [ -d /etc/NetworkManager ]; then
+  echo "==> Disabling wifi power saving (keeps mDNS reliable on wifi)..."
+  mkdir -p /etc/NetworkManager/conf.d
+  cat > /etc/NetworkManager/conf.d/flatbrain-wifi-powersave-off.conf <<'EOF'
+# Installed by FlatBrain: wifi power saving drops multicast (mDNS) packets,
+# which makes the .local hostname unreliable when the Pi is on wifi.
+# 2 = disable power saving.
+[connection]
+wifi.powersave = 2
+EOF
+  systemctl try-reload-or-restart NetworkManager 2>/dev/null || true
+fi
+
+# Advertise the panel itself (not just the hostname) over mDNS/DNS-SD, so
+# network-browser apps list it with the right port straight away. Avahi
+# watches this directory and picks the file up without a restart.
+echo "==> Publishing the panel as an mDNS service..."
+mkdir -p /etc/avahi/services
+cat > /etc/avahi/services/flatbrain.service <<EOF
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">FlatBrain on %h</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>$PORT</port>
+  </service>
+</service-group>
+EOF
+
 # ----- Done ------------------------------------------------------------------
 PORT_SUFFIX=""
 if [ "$PORT" != "80" ]; then PORT_SUFFIX=":$PORT"; fi
