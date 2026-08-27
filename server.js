@@ -792,6 +792,22 @@ function readThrottled() {
 // the whole os.cpus() array on every poll.
 const CPU_CORES = os.cpus().length;
 
+// LAN addresses for the System card. The .local name relies on mDNS support
+// in the visiting device, so the page also shows the raw IPs — the fallback
+// that works from anything (notably Android browsers, which often can't
+// resolve .local names).
+function lanAddresses() {
+  const out = [];
+  for (const [name, addrs] of Object.entries(os.networkInterfaces())) {
+    for (const a of addrs || []) {
+      if ((a.family === 'IPv4' || a.family === 4) && !a.internal) {
+        out.push({ if: name, ip: a.address });
+      }
+    }
+  }
+  return out;
+}
+
 // Polled every few seconds by the dashboard's Server Status page. Lives at
 // /api/system/* — panel-level, not part of any app's namespace. The 4-hour
 // temperature history is deliberately NOT in here: it only gains a point a
@@ -801,6 +817,7 @@ app.get('/api/system/stats', async (req, res) => {
   const freqRaw = readSysFile('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq');
   res.json({
     hostname: os.hostname(),
+    addresses: lanAddresses(),
     // device-tree strings are NUL-terminated; strip that before serving
     model: readSysFile('/proc/device-tree/model')?.replaceAll('\0', '') || null,
     kernel: os.release(),
@@ -858,6 +875,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 80;
-app.listen(PORT, '0.0.0.0', () => {
+// Dual-stack listen: Avahi advertises the Pi's IPv6 addresses alongside IPv4,
+// so a client that picks the AAAA record must find the server there too. '::'
+// accepts both families; a kernel with IPv6 disabled falls back to IPv4-only.
+app.listen(PORT, '::', () => {
   console.log(`Server listening on port ${PORT} (http://flatbrain.local)`);
+}).on('error', (err) => {
+  if (err.code !== 'EAFNOSUPPORT' && err.code !== 'EADDRNOTAVAIL') throw err;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT}, IPv4 only (http://flatbrain.local)`);
+  });
 });

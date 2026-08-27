@@ -44,6 +44,13 @@ const cardTitle = (Icon, text) => (
   <span className="stat-title"><Icon size={15} /> {text}</span>
 );
 
+// Human name for a network interface — answers "which connection is this IP on?"
+function ifLabel(name) {
+  if (/^(eth|en)/.test(name)) return 'Ethernet IP';
+  if (/^wl/.test(name)) return 'Wi-Fi IP';
+  return `${name} IP`;
+}
+
 function StatBody({ value, hot, percent, detail, detailWarn }) {
   return (
     <>
@@ -256,6 +263,13 @@ export default function ServerStatusSection() {
           <div className="form-card-stack">
             <CollapsibleCard title={cardTitle(Activity, 'System')} storageKey="status-system">
               <div className="sys-rows">
+                <div className="sys-row"><span className="sys-row-label">Address</span><span className="sys-row-value">http://{stats.hostname}.local</span></div>
+                {(stats.addresses || []).map((a) => (
+                  <div className="sys-row" key={`${a.if}-${a.ip}`}>
+                    <span className="sys-row-label">{ifLabel(a.if)}</span>
+                    <span className="sys-row-value">http://{a.ip}</span>
+                  </div>
+                ))}
                 <div className="sys-row"><span className="sys-row-label">Hostname</span><span className="sys-row-value">{stats.hostname}</span></div>
                 {stats.model && (
                   <div className="sys-row"><span className="sys-row-label">Board</span><span className="sys-row-value">{stats.model}</span></div>
@@ -265,6 +279,9 @@ export default function ServerStatusSection() {
                 <div className="sys-row"><span className="sys-row-label">Load average</span><span className="sys-row-value">{cpu.load.join(' · ')}</span></div>
                 <div className="sys-row"><span className="sys-row-label">Node</span><span className="sys-row-value">{stats.node}</span></div>
               </div>
+              <p className="stat-detail" style={{ marginBottom: 0 }}>
+                The .local address needs mDNS on the visiting device — the direct IP works from anything, Android included.
+              </p>
             </CollapsibleCard>
 
             {/* Whole-panel USB backups live here — server care, not any one app's */}
