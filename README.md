@@ -9,15 +9,19 @@ as apps under one domain:
 |---|---|---|
 | **Dashboard** | `/` | The launcher — every app as a tile |
 | **Bill Splitter** | `/billsplitter` | Split monthly bills and shared purchases, generate invoice images |
-| *(more soon)* | `/…` | Each future app is just a new route + API namespace |
+| **Rent** | `/rent` | Tenancy details, per-period payment schedule and rent invoices |
+| **Invoice generator** | `/invoices` | One-off custom invoices, download-only |
+| **Custom hub** | `/hub` | The password-free landing page — shows whichever pages you open up |
+| **Settings** | `/settings` | Flatmate names, currency, shared bank accounts, hub, password — plus Server (stats, USB backups, reboots) and Logs views |
 
-- **Frontend:** React 19 + Vite (one SPA for all apps, dark "neon" design,
+- **Frontend:** React 18 + Vite (one SPA for all apps, dark "neon" design,
   lava-lamp ambience, in-app dialogs and UI sounds)
 - **Backend:** one Express server that stores data in plain JSON files (no
   database); each app's API lives under `/api/<app>/…`
-- **Auth:** the dashboard and every app page are password-protected; the
-  password lives in an editable `password.txt`. The only open page is Bill
-  Splitter's flatmate 2 page, so it can be shared with a link.
+- **Auth:** one shared password gates every page except the custom hub —
+  pages ticked onto the hub in Settings open without the password (Bill
+  Splitter's flatmate 2 page starts there, so it can be shared with a
+  link). The password lives in an editable `password.txt`.
 
 ---
 
@@ -146,11 +150,12 @@ folder to remove everything.
 
 ## Personalising it
 
-- **Names** — set both flatmates' names in the *Names* card on the Bill
-  Splitter generator page; they're used across the app and on the invoice.
-- **Bank details** — fill in the *Bank Details* card; they appear on the
-  invoice so the other flatmate knows where to send money. (The defaults are
-  placeholders.)
+- **Names** — set both flatmates' display names in Settings → Flatmates;
+  every app follows along (tabs, invoices, hub tiles). The code ships with
+  neutral "Flatmate 1/2" placeholders.
+- **Bank details** — save accounts in Settings → Bank accounts; Bill
+  Splitter and Rent pick from them, and they appear on the invoice so the
+  other flatmate knows where to send money. (The defaults are placeholders.)
 - **Bills** — edit the bill names/amounts on the generator page.
 
 ## Password
@@ -158,8 +163,8 @@ folder to remove everything.
 - The password is stored in **`password.txt`** in the project folder. It is
   created automatically on first run with the default `change-me`.
 - One password covers the whole panel: the dashboard and every app page ask
-  for it.
-- To change it, edit the file and restart the service:
+  for it (unless a page is ticked onto the custom hub).
+- Change it from **Settings → Password**, or edit the file and restart:
 
   ```bash
   nano password.txt
@@ -185,11 +190,11 @@ git-ignored):
 - `password.txt` — the login password
 - `backup-config.json` — USB backup settings
 - `reboot-config.json` — scheduled reboot settings
-- `logs.json` — the Logs app's activity record and retention setting
-- `temp-history.json` — the Server Status page's rolling 4-hour temperature log
+- `logs.json` — the activity record and its retention setting (Settings → Logs)
+- `temp-history.json` — the rolling 4-hour temperature log (Settings → Server)
 
-To back up, use the **USB Backup card** on the History page (scheduled backups
-to a USB stick, with restore), copy those files somewhere safe, or use
+To back up, use the **USB Backup card** on Settings' Server view (scheduled
+backups to a USB stick, with restore), copy those files somewhere safe, or use
 **History → Export CSV** from the app, which downloads the whole history as a
 spreadsheet-friendly file that can be re-imported with **Import CSV** (it
 merges by invoice id).
@@ -236,11 +241,13 @@ server.js              Express API + serves the built frontend from dist/
 install.sh             One-command Raspberry Pi installer (Node, systemd, mDNS)
 uninstall.sh           Removes the systemd service
 src/                   React source (one SPA for all FlatBrain apps)
-  api.js               Bill Splitter API client (/api/billsplitter/*)
+  api.js               API client (/api/billsplitter/* plus panel endpoints)
   App.jsx              Routes: dashboard at /, apps under their own paths
-  pages/               DashboardPage, MainPage (generator + history), UserExtrasPage
+  pages/               DashboardPage, HubPage, MainPage (generator + history),
+                       UserExtrasPage, RentPage, InvoicesPage, SettingsPage
   components/          InvoiceForm, InvoicePreview, InvoiceHistory, Dialog,
-                       CollapsibleCard, pickers, charts
+                       CollapsibleCard, BackupCard, RebootCard, LogsSection,
+                       ServerStatusSection, pickers, charts
   utils/
     calculations.js    Bill-splitting math (units × unit price, per-item split %)
     historyCsv.js      CSV export/import mapping

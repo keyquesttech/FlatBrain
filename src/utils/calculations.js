@@ -144,8 +144,8 @@ export function calculateInvoice(data) {
   // charged penny lands on exactly one flatmate and all totals reconcile.
   let flatmate1SharedShare = 0;
   let flatmate2SharedShare = 0;
-  let flatmate1DiscountedBills = 0; // portions discounted for Flatmate2 — Flatmate1 covers them
-  let flatmate2DiscountedBills = 0; // portions discounted for Flatmate1 — Flatmate2 covers them
+  let flatmate1DiscountedBills = 0; // portions discounted for flatmate 2 — flatmate 1 covers them
+  let flatmate2DiscountedBills = 0; // portions discounted for flatmate 1 — flatmate 2 covers them
   let billsRawTotal = 0;
   const billDiscountLines = [];
   (data.bills || []).forEach((b) => {
@@ -209,16 +209,16 @@ export function calculateInvoice(data) {
   const flatmate1TotalDue = round2(flatmate1BeforeDiscounts - flatmate1DiscountTotal);
   const flatmate2TotalDue = round2(flatmate2BeforeDiscounts - flatmate2DiscountTotal);
 
-  // The single bank transfer that settles the month, given that Flatmate1
+  // The single bank transfer that settles the month, given that flatmate 1
   // fronts all the bills. Whoever added an extra already paid the shop for
-  // it in full, so Flatmate2's transfer is her net total minus everything she
-  // spent on her own items (her kept share + the part Flatmate1 owes her).
-  // Positive = Flatmate2 pays Flatmate1; negative = Flatmate1 pays Flatmate2.
+  // it in full, so flatmate 2's transfer is their net total minus everything
+  // they spent on their own items (their kept share + the part flatmate 1
+  // owes them). Positive = flatmate 2 pays flatmate 1; negative = the reverse.
   const netTransfer = round2(flatmate2TotalDue - flatmate2OwnKept - flatmate1FromFlatmate2);
 
-  // What the month effectively costs Flatmate1, mirroring Flatmate2's terms from
-  // his side: his bills share, minus what she reimburses for his extras,
-  // plus what he owes for hers, minus his own discounts. Discounts only
+  // What the month effectively costs flatmate 1, mirroring flatmate 2's
+  // terms: their bills share, minus reimbursements for their extras,
+  // plus what they owe for the other's, minus their discounts. Discounts only
   // ever reduce their OWN flatmate's line — they represent money settled
   // outside the invoice, so the other side doesn't absorb them.
   const flatmate1EffectiveDue = round2(billsTotal - netTransfer - flatmate2DiscountTotal - flatmate1DiscountTotal);

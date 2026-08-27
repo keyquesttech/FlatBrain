@@ -42,7 +42,7 @@ const DEFAULT_PASSWORD = 'change-me';
 const defaultDraft = {
   period: '',
   dueDate: '',
-  names: { flatmate1: 'Flatmate1', flatmate2: 'Flatmate2' },
+  names: { flatmate1: 'Flatmate 1', flatmate2: 'Flatmate 2' },
   bills: [
     { id: '1', thing: 'Broadband', amount: '' },
     { id: '2', thing: 'Electricity', amount: '' },
@@ -183,16 +183,16 @@ app.delete('/api/logs', (req, res) => {
 function pageDisplayName(key) {
   if (typeof key !== 'string') return null;
   const s = readJSON(SETTINGS_FILE, defaultSettings);
-  const flatmate1 = (typeof s?.names?.flatmate1 === 'string' && s.names.flatmate1.trim()) || 'Flatmate1';
-  const flatmate2 = (typeof s?.names?.flatmate2 === 'string' && s.names.flatmate2.trim()) || 'Flatmate2';
+  const name1 = (typeof s?.names?.flatmate1 === 'string' && s.names.flatmate1.trim()) || 'Flatmate 1';
+  const name2 = (typeof s?.names?.flatmate2 === 'string' && s.names.flatmate2.trim()) || 'Flatmate 2';
   const hub = (typeof s?.hub?.name === 'string' && s.hub.name.trim()) || 'FlatBrain';
   const names = {
     dashboard: 'Dashboard',
     hub: `${hub} hub`,
     billsplitter: 'Bill Splitter page',
     history: 'Bills history page',
-    flatmate1: `${flatmate1}'s bills page`,
-    flatmate2: `${flatmate2}'s bills page`,
+    flatmate1: `${name1}'s bills page`,
+    flatmate2: `${name2}'s bills page`,
     rent: 'Rent page',
     invoices: 'Invoice generator page',
     settings: 'Settings page'

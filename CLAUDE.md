@@ -54,7 +54,8 @@ render.
 `src/utils/calculations.js` is the settlement engine. Invariants: every
 charged penny lands on exactly one flatmate; itemized lines always sum to
 their card totals; `round2` rounds the third decimal UP with a float-noise
-guard. Flatmate1 fronts the bills; whoever adds an extra already paid the shop
+guard. Flatmate 1 (the `flatmate1` key) fronts the bills; whoever adds an
+extra already paid the shop
 (the settlement transfers reflect that). There is a fuzz/invariant test
 approach: run `calculateInvoice` over random drafts and assert share sums,
 card reconciliation and live-data recomputation — do this after any maths

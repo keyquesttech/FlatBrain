@@ -1,6 +1,9 @@
 import { mergedExtras } from './calculations.js';
 
-export const DEFAULT_NAMES = { flatmate1: 'Flatmate1', flatmate2: 'Flatmate2' };
+// Placeholder display names — the real ones are set in Settings and live
+// in git-ignored settings.json. The flatmate1/flatmate2 keys are the data schema
+// (draft/history JSON, CSV columns), not anyone's name.
+export const DEFAULT_NAMES = { flatmate1: 'Flatmate 1', flatmate2: 'Flatmate 2' };
 
 export const DEFAULT_BANK = {
   name: 'Your Name',

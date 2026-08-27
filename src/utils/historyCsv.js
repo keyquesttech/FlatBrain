@@ -90,7 +90,7 @@ export function csvToHistory(text) {
       flatmate1TotalDue: num('flatmate1TotalDue'),
       flatmate2TotalDue: num('flatmate2TotalDue'),
       splitPercent: get('splitPercent') === '' ? 50 : num('splitPercent'),
-      names: { flatmate1: get('flatmate1Name') || 'Flatmate1', flatmate2: get('flatmate2Name') || 'Flatmate2' },
+      names: { flatmate1: get('flatmate1Name') || 'Flatmate 1', flatmate2: get('flatmate2Name') || 'Flatmate 2' },
       flatmate1Note: get('flatmate1Note'),
       flatmate2Note: get('flatmate2Note'),
       bankDetails: {
