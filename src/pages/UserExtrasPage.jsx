@@ -74,7 +74,7 @@ export default function UserExtrasPage({ personKey }) {
     const changes = pendingRef.current;
     if (Object.keys(changes).length === 0) return;
     pendingRef.current = {};
-    patchDraft(changes, personKey === 'flatmate1' ? 'flatmate1' : 'flatmate2').catch(() => {
+    patchDraft(changes, personKey).catch(() => {
       pendingRef.current = { ...changes, ...pendingRef.current };
     });
   };
@@ -132,7 +132,7 @@ export default function UserExtrasPage({ personKey }) {
 
   return (
     <div className="container animate-fade-in">
-      <Navigation activeTab={personKey === 'flatmate1' ? 'flatmate1' : 'flatmate2'} names={names} appLabel="Bill Splitter" />
+      <Navigation activeTab={personKey} names={names} appLabel="Bill Splitter" />
 
       {/* Full-width container above so the tab pills never move between
           Bill Splitter pages; the content keeps the narrow measure. */}

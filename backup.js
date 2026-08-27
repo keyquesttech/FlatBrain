@@ -8,6 +8,7 @@ import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { historyToCSV } from './src/utils/historyCsv.js';
+import { migrateHistoryKeys, migrateInvoiceKeys, migrateSettingsKeys } from './src/utils/legacyNames.js';
 
 // Everything that goes to the stick. backup-config.json rides along so the
 // schedule survives an SD-card death, but it is NOT restored (see
@@ -292,7 +293,7 @@ export function createBackupManager(baseDir, onEvent = () => {}) {
     for (const file of RESTORE_FILES) {
       const src = path.join(dir, file);
       if (!fs.existsSync(src)) continue;
-      const content = fs.readFileSync(src);
+      let content = fs.readFileSync(src);
       if (file.endsWith('.json')) {
         let parsed;
         try {
@@ -305,6 +306,13 @@ export function createBackupManager(baseDir, onEvent = () => {}) {
           : file === 'logs.json' ? isObj && Array.isArray(parsed.events)
           : isObj;
         if (!ok) throw new Error(`${file} in this backup has the wrong shape — not restoring anything`);
+        // Backups made before the person-key rename restore already
+        // migrated to the flatmate1/flatmate2 schema.
+        const migrated = file === 'draft.json' ? migrateInvoiceKeys(parsed)
+          : file === 'history.json' ? migrateHistoryKeys(parsed)
+          : file === 'settings.json' ? migrateSettingsKeys(parsed)
+          : parsed;
+        if (migrated !== parsed) content = Buffer.from(JSON.stringify(migrated, null, 2));
       }
       staged.push([file, content]);
     }

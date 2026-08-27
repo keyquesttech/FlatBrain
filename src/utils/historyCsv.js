@@ -1,4 +1,5 @@
 import { toCSV, parseCSV } from './csv.js';
+import { LEGACY_KEY_1, LEGACY_KEY_2, migrateInvoiceKeys } from './legacyNames.js';
 
 // History <-> CSV mapping. Scalar fields get their own columns; the nested
 // lists (bills, extras) are JSON-encoded into a single cell each, which keeps
@@ -75,11 +76,24 @@ export function csvToHistory(text) {
         return [];
       }
     };
+    // CSVs exported before the person-key rename used the old person
+    // column names — read whichever of the two columns has a value.
+    const legacyOf = { flatmate1: LEGACY_KEY_1, flatmate2: LEGACY_KEY_2 };
+    const getP = (p, suffix) => {
+      const v = get(`${p}${suffix}`);
+      return v !== '' ? v : get(`${legacyOf[p]}${suffix}`);
+    };
+    const numP = (p, suffix) => {
+      const n = parseFloat(getP(p, suffix));
+      return isNaN(n) ? 0 : n;
+    };
+    const listP = (p, suffix) => list(get(`${p}${suffix}`) !== '' ? `${p}${suffix}` : `${legacyOf[p]}${suffix}`);
 
     const id = get('id').trim();
     if (!id) continue; // skip blank/partial rows
 
-    invoices.push({
+    // migrateInvoiceKeys converts old bills[].discountedFrom values too
+    invoices.push(migrateInvoiceKeys({
       id,
       period: get('period'),
       dueDate: get('dueDate'),
@@ -87,12 +101,12 @@ export function csvToHistory(text) {
       paidDate: get('paidDate'),
       netTotal: num('netTotal'),
       eachNetTotal: num('eachNetTotal'),
-      flatmate1TotalDue: num('flatmate1TotalDue'),
-      flatmate2TotalDue: num('flatmate2TotalDue'),
+      flatmate1TotalDue: numP('flatmate1', 'TotalDue'),
+      flatmate2TotalDue: numP('flatmate2', 'TotalDue'),
       splitPercent: get('splitPercent') === '' ? 50 : num('splitPercent'),
-      names: { flatmate1: get('flatmate1Name') || 'Flatmate 1', flatmate2: get('flatmate2Name') || 'Flatmate 2' },
-      flatmate1Note: get('flatmate1Note'),
-      flatmate2Note: get('flatmate2Note'),
+      names: { flatmate1: getP('flatmate1', 'Name') || 'Flatmate 1', flatmate2: getP('flatmate2', 'Name') || 'Flatmate 2' },
+      flatmate1Note: getP('flatmate1', 'Note'),
+      flatmate2Note: getP('flatmate2', 'Note'),
       bankDetails: {
         name: get('bankName'),
         bankName: get('bankBankName'),
@@ -100,13 +114,13 @@ export function csvToHistory(text) {
         accountNumber: get('bankAccountNumber')
       },
       bills: list('bills'),
-      flatmate1Extras: list('flatmate1Extras'),
-      flatmate2Extras: list('flatmate2Extras'),
-      flatmate1FullPriceExtras: list('flatmate1FullPriceExtras'),
-      flatmate2FullPriceExtras: list('flatmate2FullPriceExtras'),
-      flatmate1Discounts: list('flatmate1Discounts'),
-      flatmate2Discounts: list('flatmate2Discounts')
-    });
+      flatmate1Extras: listP('flatmate1', 'Extras'),
+      flatmate2Extras: listP('flatmate2', 'Extras'),
+      flatmate1FullPriceExtras: listP('flatmate1', 'FullPriceExtras'),
+      flatmate2FullPriceExtras: listP('flatmate2', 'FullPriceExtras'),
+      flatmate1Discounts: listP('flatmate1', 'Discounts'),
+      flatmate2Discounts: listP('flatmate2', 'Discounts')
+    }));
   }
 
   if (invoices.length === 0) throw new Error('No valid invoices found in the file.');

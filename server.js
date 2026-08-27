@@ -6,6 +6,7 @@ import path from 'path';
 import { execFile } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createBackupManager } from './backup.js';
+import { migrateHistoryKeys, migrateInvoiceKeys, migrateSettingsKeys } from './src/utils/legacyNames.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -255,10 +256,11 @@ app.get('/api/draft', (req, res) => {
 });
 
 app.put('/api/draft', (req, res) => {
-  const newData = req.body;
-  if (!isPlainObject(newData)) {
+  if (!isPlainObject(req.body)) {
     return res.status(400).json({ success: false, error: 'Draft must be an object' });
   }
+  // A stale tab from before the person-key rename may still send old keys
+  const newData = migrateInvoiceKeys(req.body);
   writeJSON(DRAFT_FILE, newData);
   // ?from= names the page that saved (generator or a flatmate page), so
   // the log says who was editing; different pages coalesce separately.
@@ -271,10 +273,10 @@ app.put('/api/draft', (req, res) => {
 // different parts (generator page vs a flatmate page) can't clobber each
 // other's keys the way a full PUT can.
 app.patch('/api/draft', (req, res) => {
-  const changes = req.body;
-  if (!isPlainObject(changes)) {
+  if (!isPlainObject(req.body)) {
     return res.status(400).json({ success: false, error: 'Changes must be an object' });
   }
+  const changes = migrateInvoiceKeys(req.body);
   const merged = { ...readJSON(DRAFT_FILE, defaultDraft), ...changes };
   writeJSON(DRAFT_FILE, merged);
   logEvent('Bill Splitter', 'Draft updated', pageDisplayName(req.query.from) || undefined, true);
@@ -292,7 +294,7 @@ app.get('/api/history', (req, res) => {
 });
 
 app.post('/api/history', (req, res) => {
-  const invoice = req.body;
+  const invoice = migrateInvoiceKeys(req.body);
   if (!isPlainObject(invoice) || typeof invoice.id !== 'string' || !invoice.id) {
     return res.status(400).json({ success: false, error: 'Invoice must be an object with an id' });
   }
@@ -316,9 +318,9 @@ app.post('/api/history/import', (req, res) => {
   if (!Array.isArray(invoices)) {
     return res.status(400).json({ success: false, error: 'Body must contain an invoices array' });
   }
-  const valid = invoices.filter(
-    (inv) => isPlainObject(inv) && typeof inv.id === 'string' && inv.id
-  );
+  const valid = invoices
+    .filter((inv) => isPlainObject(inv) && typeof inv.id === 'string' && inv.id)
+    .map(migrateInvoiceKeys);
   const byId = new Map(readJSON(HISTORY_FILE, []).map((inv) => [inv.id, inv]));
   valid.forEach((inv) => byId.set(inv.id, inv));
   const updated = [...byId.values()].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -380,10 +382,10 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.put('/api/settings', (req, res) => {
-  const settings = req.body;
-  if (!isPlainObject(settings)) {
+  if (!isPlainObject(req.body)) {
     return res.status(400).json({ success: false, error: 'Settings data must be an object' });
   }
+  const settings = migrateSettingsKeys(req.body);
   // Name what changed so the log line says more than "updated" — compare
   // section by section against the doc being replaced.
   const prev = readJSON(SETTINGS_FILE, defaultSettings);
@@ -471,6 +473,22 @@ app.put('/api/invoices', (req, res) => {
 // Panel-level: one backup covers every app's data plus the password and
 // backup settings. Lives at the bare /api/backup/* (the old
 // /api/billsplitter/backup/* path still reaches it via the prefix strip).
+// One-shot migration at boot: data files written before the person-key
+// rename (draft, saved invoices, settings names) convert to the
+// flatmate1/flatmate2 schema the first time the new server starts — and
+// again any time an old-shaped file lands here by hand.
+(function migrateDataFilesAtBoot() {
+  const draft = readJSON(DRAFT_FILE, null);
+  const migratedDraft = migrateInvoiceKeys(draft);
+  if (migratedDraft !== draft) writeJSON(DRAFT_FILE, migratedDraft);
+  const history = readJSON(HISTORY_FILE, null);
+  const migratedHistory = migrateHistoryKeys(history);
+  if (migratedHistory !== history) writeJSON(HISTORY_FILE, migratedHistory);
+  const settings = readJSON(SETTINGS_FILE, null);
+  const migratedSettings = migrateSettingsKeys(settings);
+  if (migratedSettings !== settings) writeJSON(SETTINGS_FILE, migratedSettings);
+})();
+
 const backup = createBackupManager(__dirname, logEvent);
 
 app.get('/api/backup/status', (req, res) => {

@@ -110,8 +110,8 @@ export function chargedBillAmount(bill) {
   return round2(amount - round2((amount * billDiscountPercent(bill)) / 100));
 }
 
-// The split percent is flatmate 1 (flatmate1)'s share of all shared costs;
-// flatmate 2 (flatmate2) pays the remainder. Invalid input falls back to 50/50.
+// The split percent is flatmate 1's share of all shared costs; flatmate 2
+// pays the remainder. Invalid input falls back to 50/50.
 export function clampSplitPercent(value) {
   const n = parseFloat(value);
   if (isNaN(n)) return 50;
