@@ -24,7 +24,7 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
     <div className="history-grid">
       {invoices.map((invoice) => {
         const names = { ...DEFAULT_NAMES, ...(invoice.names || {}) };
-        // Recomputed from the invoice's own data (like PNG re-downloads),
+        // Recomputed from the invoice's own data (like PDF re-downloads),
         // so every card shows the current settlement semantics — the dues
         // stored on old invoices predate the transfer-amount model.
         const calc = calculateInvoice(normalizeDraft(invoice));
@@ -42,8 +42,8 @@ export default function InvoiceHistory({ invoices, onDelete, onLoad, onDownload,
                   className="btn-icon"
                   onClick={(e) => { e.stopPropagation(); onDownload(invoice); }}
                   disabled={downloadingId === invoice.id}
-                  title="Download this invoice as PNG"
-                  aria-label="Download this invoice as PNG"
+                  title="Download this invoice as PDF"
+                  aria-label="Download this invoice as PDF"
                 >
                   <Download size={16} />
                 </button>

@@ -13,7 +13,7 @@ import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getRent, updateRent } from '../api';
 import { formatCurrency, parseAmount, round2 } from '../utils/calculations';
 import { formatDay, formatPeriod, monthsBetween, periodUnits, periodUnitsLabel } from '../utils/dates';
-import { captureInvoicePng } from '../utils/invoicePng';
+import { captureInvoicePdf } from '../utils/invoicePdf';
 import { newId } from '../utils/id';
 
 const SAVE_DEBOUNCE_MS = 600;
@@ -155,13 +155,13 @@ export default function RentPage() {
     let cancelled = false;
     (async () => {
       try {
-        await captureInvoicePng(
+        await captureInvoicePdf(
           downloadPreviewRef.current,
-          `Rent-${(dataRef.current?.lodger || 'period').trim().replace(/\s+/g, '-')}-${periodDownload.periodFrom || 'period'}${periodDownload.paymentDate ? '-PAID' : ''}.png`
+          `Rent-${(dataRef.current?.lodger || 'period').trim().replace(/\s+/g, '-')}-${periodDownload.periodFrom || 'period'}${periodDownload.paymentDate ? '-PAID' : ''}.pdf`
         );
       } catch (err) {
-        console.error('Error generating rent invoice image', err);
-        if (!cancelled) appAlert('Failed to generate the invoice image. Please try again.', { title: 'Download failed', tone: 'error' });
+        console.error('Error generating rent invoice PDF', err);
+        if (!cancelled) appAlert('Failed to generate the invoice PDF. Please try again.', { title: 'Download failed', tone: 'error' });
       } finally {
         if (!cancelled) setPeriodDownload(null);
       }

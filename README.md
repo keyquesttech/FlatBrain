@@ -52,10 +52,10 @@ as apps under one domain:
   extras against the previous three saved months — stacked bars plus an
   up/down line vs the 3-month average, so every invoice shows at a glance
   whether household spending is rising or falling.
-- Live **invoice preview** that downloads as a fixed-size PNG — identical
+- Live **invoice preview** that downloads as a sharp one-page PDF — identical
   output whether generated from a phone, tablet or desktop.
 - **History** of saved invoices with:
-  - one-click **PNG re-download** of any past invoice,
+  - one-click **PDF re-download** of any past invoice,
   - **CSV export / import** (spreadsheet-friendly and losslessly re-importable
     — use it as your backup),
   - stacked **bills-breakdown chart** by month.
@@ -251,7 +251,7 @@ src/                   React source (one SPA for all FlatBrain apps)
   utils/
     calculations.js    Bill-splitting math (units × unit price, per-item split %)
     historyCsv.js      CSV export/import mapping
-    invoicePng.js      Fixed-size PNG capture of the invoice
+    invoicePdf.js      Fixed-size PDF capture of the invoice
     defaults.js        Draft shape + placeholder defaults
     sound.js           WebAudio UI sounds (mute toggle in the nav)
 dist/                  Production build output (committed so the Pi needn't build)

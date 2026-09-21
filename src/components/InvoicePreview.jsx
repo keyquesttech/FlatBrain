@@ -109,7 +109,7 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
 
   return (
     <div className="invoice-frame" ref={ref} id="invoice-preview">
-      {/* Animated on screen only — the PNG capture removes this whole
+      {/* Animated on screen only — the PDF capture removes this whole
           layer, so downloads stay static and identical everywhere */}
       <div className="invoice-orb-layer" aria-hidden="true">
         <span className="invoice-lava invoice-lava-lime"><span className="invoice-orb invoice-orb-lime" /></span>
@@ -282,7 +282,7 @@ const InvoicePreview = forwardRef(({ data, history = [] }, ref) => {
             Due by: {new Date(data.dueDate + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
           </p>
         )}
-        {/* Spelled out as text — the invoice travels as a PNG, so a
+        {/* Spelled out as text — the invoice travels as a PDF, so a
             clickable link wouldn't survive the download */}
         <p className="invoice-legend">
           To add items to the invoice visit <strong>http://flatbrain.local</strong> while connected to the Wi-Fi in the flat.

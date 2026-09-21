@@ -4,7 +4,7 @@ import { formatDay, formatPeriod, periodUnitsLabel } from '../utils/dates';
 import { DEFAULT_BANK } from '../utils/defaults';
 
 // The Rent app's invoice, built from the same frame and cards as Bill
-// Splitter's so it downloads through the identical PNG capture path.
+// Splitter's so it downloads through the identical PDF capture path.
 // `doc` is either the live draft (lodger, tenancy, the ticked payment
 // periods) or a history snapshot, in which case generatedAt fixes the
 // issued date.
@@ -30,7 +30,7 @@ const RentInvoicePreview = forwardRef(({ doc }, ref) => {
 
   return (
     <div className="invoice-frame" ref={ref} id="rent-invoice-preview">
-      {/* Animated on screen only — the PNG capture removes this whole
+      {/* Animated on screen only — the PDF capture removes this whole
           layer, so downloads stay static and identical everywhere */}
       <div className="invoice-orb-layer" aria-hidden="true">
         <span className="invoice-lava invoice-lava-lime"><span className="invoice-orb invoice-orb-lime" /></span>

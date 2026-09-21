@@ -7,7 +7,7 @@ import CustomInvoicePreview from '../components/CustomInvoicePreview';
 import DatePicker from '../components/DatePicker';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
 import { getInvoicesDoc, updateInvoicesDoc } from '../api';
-import { captureInvoicePng } from '../utils/invoicePng';
+import { captureInvoicePdf } from '../utils/invoicePdf';
 import { currencySymbol } from '../utils/currency';
 import { newId } from '../utils/id';
 import { playSuccess } from '../utils/sound';
@@ -40,7 +40,7 @@ function normalizeDoc(d) {
 }
 
 // Custom one-off invoice generator: build an itemized invoice like Bill
-// Splitter's and download it as a PNG. Deliberately no history — the
+// Splitter's and download it as a PDF. Deliberately no history — the
 // draft persists on the server so it survives reloads, but downloading
 // is the whole job.
 export default function InvoicesPage() {
@@ -112,13 +112,13 @@ export default function InvoicesPage() {
     }
     setBusy(true);
     try {
-      await captureInvoicePng(previewRef.current, `Invoice-${(doc.title || 'Custom').trim().replace(/\s+/g, '-')}.png`);
+      await captureInvoicePdf(previewRef.current, `Invoice-${(doc.title || 'Custom').trim().replace(/\s+/g, '-')}.pdf`);
       resetDoc();
       playSuccess();
       appToast('Invoice downloaded — form reset for the next one.');
     } catch (err) {
-      console.error('Error generating invoice image', err);
-      appAlert('Failed to generate the invoice image. See the browser console for details.', { title: 'Download failed', tone: 'error' });
+      console.error('Error generating invoice PDF', err);
+      appAlert('Failed to generate the invoice PDF. See the browser console for details.', { title: 'Download failed', tone: 'error' });
     } finally {
       setBusy(false);
     }

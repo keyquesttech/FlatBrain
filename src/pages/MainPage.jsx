@@ -14,7 +14,7 @@ import { normalizeDraft } from '../utils/defaults';
 import { flatmateNames } from '../utils/panelSettings';
 import { prefillBillsFromHistory } from '../utils/standingCharges';
 import { newId } from '../utils/id';
-import { captureInvoicePng } from '../utils/invoicePng';
+import { captureInvoicePdf } from '../utils/invoicePdf';
 import { historyToCSV, csvToHistory } from '../utils/historyCsv';
 import { playSuccess } from '../utils/sound';
 import { appAlert, appConfirm, appToast } from '../components/Dialog';
@@ -222,27 +222,27 @@ export default function MainPage() {
     appToast(`Invoice ${downloaded ? 'downloaded, ' : ''}${updating ? 'updated in' : 'saved to'} history — next month's bills pre-filled from recent averages.`);
   };
 
-  // Single action: download the PNG first (while the invoice is still on
+  // Single action: download the PDF first (while the invoice is still on
   // screen), then save it to history and reset the draft for next month.
   // The busy flag stops a double-click from saving the invoice twice.
   const saveAndDownload = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      const downloaded = await generateImage();
+      const downloaded = await generatePdf();
       if (downloaded) {
         await saveToHistory();
         playSuccess();
       }
     } catch (err) {
       console.error('Error saving invoice', err);
-      appAlert('The image was downloaded, but saving to history failed. Check the server and try again.', { title: 'Save failed', tone: 'error' });
+      appAlert('The PDF was downloaded, but saving to history failed. Check the server and try again.', { title: 'Save failed', tone: 'error' });
     } finally {
       setBusy(false);
     }
   };
 
-  // Save without the PNG: same filing + reset, the download can always
+  // Save without the PDF: same filing + reset, the download can always
   // happen later from history.
   const saveOnly = async () => {
     if (busy) return;
@@ -332,18 +332,18 @@ export default function MainPage() {
     }
   };
 
-  const generateImage = async () => {
+  const generatePdf = async () => {
     try {
-      await captureInvoicePng(previewRef.current, `Invoice-${formDataRef.current.period || 'Draft'}.png`);
+      await captureInvoicePdf(previewRef.current, `Invoice-${formDataRef.current.period || 'Draft'}.pdf`);
       return true;
     } catch (err) {
-      console.error('Error generating image', err);
-      appAlert('Failed to generate the invoice image. See the browser console for details.', { title: 'Download failed', tone: 'error' });
+      console.error('Error generating PDF', err);
+      appAlert('Failed to generate the invoice PDF. See the browser console for details.', { title: 'Download failed', tone: 'error' });
       return false;
     }
   };
 
-  // Re-download a saved invoice's PNG without touching the current draft:
+  // Re-download a saved invoice's PDF without touching the current draft:
   // render it into a hidden preview, capture that, then unmount it.
   const downloadFromHistory = (invoice) => {
     if (historyDownload) return;
@@ -355,13 +355,13 @@ export default function MainPage() {
     let cancelled = false;
     (async () => {
       try {
-        await captureInvoicePng(
+        await captureInvoicePdf(
           historyPreviewRef.current,
-          `Invoice-${historyDownload.period || 'Saved'}.png`
+          `Invoice-${historyDownload.period || 'Saved'}.pdf`
         );
       } catch (err) {
-        console.error('Error re-generating invoice image', err);
-        if (!cancelled) appAlert('Failed to generate the invoice image. Please try again.', { title: 'Download failed', tone: 'error' });
+        console.error('Error re-generating invoice PDF', err);
+        if (!cancelled) appAlert('Failed to generate the invoice PDF. Please try again.', { title: 'Download failed', tone: 'error' });
       } finally {
         if (!cancelled) setHistoryDownload(null);
       }

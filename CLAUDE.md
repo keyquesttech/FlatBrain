@@ -13,7 +13,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
   files (`draft.json`, `history.json`, `invoices.json`, `rent.json`,
   `payments.json`, `settings.json`, `password.txt`, `backup-config.json`,
   `reboot-config.json`, `temp-history.json`, `logs.json`).
-- **Frontend**: React 18 + Vite in `src/`, no chart/UI libraries — charts
+- **Frontend**: React 19 + Vite in `src/`, no chart/UI libraries — charts
   are hand-rolled SVG/divs, icons are `lucide-react@1.23` (check an icon
   exists before using it). `dist/` **is committed** on purpose (the Pi
   serves it without building; Vite's toolchain is weak on 32-bit ARM).
@@ -24,7 +24,7 @@ API and the pre-built React frontend. Two users (the flatmates); LAN only.
 
 | App | Route | Data | Notes |
 |---|---|---|---|
-| Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PNG invoices; history with paid dates; standing-charges pre-fill after save |
+| Bill Splitter | `/billsplitter` (+`/flatmate1`, open `/flatmate2`) | `draft.json`, `history.json` | Monthly bills + extras split between two flatmates; PDF invoices; history with paid dates; standing-charges pre-fill after save |
 | Rent | `/rent` | `rent.json` | Tenancy details, per-period payment schedule, one invoice per period from History, PAID stamp with date |
 | Invoice generator | `/invoices` | `invoices.json` | One-off custom invoices, download-only (no history); bank details typed per invoice, cleared on download/reset |
 | Settings | `/settings` — General, Server (`?view=server`), Logs (`?view=logs`) views; old `/status` and `/logs` redirect to their views | `payments.json` (accounts key), `settings.json`, `password.txt`, `logs.json`, `temp-history.json`, configs | General: Flatmates card (panel-wide display names), display currency picker, shared bank accounts as cards, Custom hub card (hub name + pages grouped by app as glass sub-cards), change the shared password (`POST /api/password`, no old password needed). Server view: Pi stats + 4h temp graph, USB backup card, scheduled reboots. Logs view: server-written activity record (log-ins/log-outs incl. failed attempts and guest visits — each named with the page it happened on — saves, backups, reboots), retention setting + filters, coalesced repeat events |
@@ -79,8 +79,12 @@ change.
   `payments.json`; Bill Splitter and Rent bank cards are pick-only (no
   manual inputs). The invoice generator has no picker — manual fields
   only, cleared after every download or reset (per-invoice, not standing).
-- **Invoice PNGs**: `utils/invoicePng.js` captures a 720px clone via
-  html2canvas (lazy-loaded). Invoice components share the
+- **Invoice PDFs**: `utils/invoicePdf.js` captures a 720px clone via
+  html2canvas (lazy-loaded) at up to 3× (scaled down to stay under iOS's
+  16.7M-px canvas cap) and wraps it in a hand-written one-page PDF
+  (lossless FlateDecode via CompressionStream, JPEG fallback). PDF, not
+  PNG, because galleries/chat apps shrink tall images and long invoices
+  went soft. Invoice components share the
   `invoice-frame`/`due-card` CSS; paid invoices get the `.paid-stamp`
   (rotated PAID + date). Hidden off-screen previews for history re-downloads.
 - **CurrencyInput** has a `formatted` mode (thousands commas in display,
