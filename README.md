@@ -49,8 +49,8 @@ as apps under one domain:
   paid for at the shop) and a final **total due** — the exact amount to
   transfer, with reimbursements for own purchases already netted off.
 - A **Spending Trend card on the invoice** comparing this month's bills and
-  extras against the previous three saved months — stacked bars plus an
-  up/down line vs the 3-month average, so every invoice shows at a glance
+  extras against the previous two saved months — three stacked bars
+  including this month, plus an up/down line vs those months' average, so every invoice shows at a glance
   whether household spending is rising or falling.
 - Live **invoice preview** that downloads as a sharp one-page PDF — identical
   output whether generated from a phone, tablet or desktop.

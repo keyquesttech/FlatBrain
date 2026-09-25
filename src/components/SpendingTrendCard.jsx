@@ -3,6 +3,10 @@ import { calculateInvoice, formatCurrency } from '../utils/calculations';
 import { currencySymbol } from '../utils/currency';
 import { normalizeDraft } from '../utils/defaults';
 
+// Columns on the chart, this month included — the two before it plus now.
+const TREND_MONTHS = 3;
+const PAST_MONTHS = TREND_MONTHS - 1;
+
 function monthLabel(period) {
   const d = new Date(period + '-01T00:00:00Z');
   return isNaN(d) ? period : d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' });
@@ -15,8 +19,8 @@ function fmtDiff(diff) {
 }
 
 // Invoice card comparing this month's bills + extras against the previous
-// (up to) three saved months, so the invoice itself shows whether household
-// spending is going up or down. Past months are recomputed from their own
+// (up to) two saved months — three columns including this one, so the
+// invoice shows the recent trend without turning into a wall of bars. Past months are recomputed from their own
 // data — same as the history cards — and only months BEFORE the invoice's
 // period count, so re-downloads of old invoices show the trend as it was.
 // Renders nothing when there are no earlier months to compare against.
@@ -31,7 +35,7 @@ export default function SpendingTrendCard({ history, currentCalc, currentPeriod 
     });
     return Object.values(byPeriod)
       .sort((a, b) => a.period.localeCompare(b.period))
-      .slice(-3)
+      .slice(-PAST_MONTHS)
       .map((inv) => {
         const calc = calculateInvoice(normalizeDraft(inv));
         return {
